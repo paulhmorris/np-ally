@@ -1,0 +1,4 @@
+{
+  "typescript.preferences.autoImportFileExcludePatterns": ["node_modules/@radix-ui", "node_modules/postcss"],
+  "typescript.tsdk": "node_modules/typescript/lib"
+}

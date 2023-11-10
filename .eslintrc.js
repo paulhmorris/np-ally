@@ -29,13 +29,7 @@ module.exports = {
     {
       files: ["**/*.{js,jsx,ts,tsx}"],
       plugins: ["react", "jsx-a11y"],
-      extends: [
-        "plugin:react/recommended",
-        "plugin:react/jsx-runtime",
-        "plugin:react-hooks/recommended",
-        "plugin:jsx-a11y/recommended",
-        "prettier",
-      ],
+      extends: ["plugin:react/recommended", "plugin:react/jsx-runtime", "plugin:react-hooks/recommended", "plugin:jsx-a11y/recommended", "prettier"],
       settings: {
         react: {
           version: "detect",
@@ -47,10 +41,8 @@ module.exports = {
         ],
       },
       rules: {
-        "react/jsx-no-leaked-render": [
-          "warn",
-          { validStrategies: ["ternary"] },
-        ],
+        "react/jsx-no-leaked-render": ["warn", { validStrategies: ["ternary"] }],
+        "react/prop-types": "off",
       },
     },
 
@@ -74,13 +66,7 @@ module.exports = {
           },
         },
       },
-      extends: [
-        "plugin:@typescript-eslint/recommended-type-checked",
-        "plugin:@typescript-eslint/stylistic",
-        "plugin:import/recommended",
-        "plugin:import/typescript",
-        "prettier",
-      ],
+      extends: ["plugin:@typescript-eslint/recommended-type-checked", "plugin:@typescript-eslint/stylistic", "plugin:import/recommended", "plugin:import/typescript", "prettier"],
       rules: {
         "import/order": [
           "error",
@@ -90,6 +76,7 @@ module.exports = {
             "newlines-between": "always",
           },
         ],
+        "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_" }],
       },
     },
 
@@ -104,12 +91,7 @@ module.exports = {
     {
       files: ["**/*.test.{js,jsx,ts,tsx}"],
       plugins: ["jest", "jest-dom", "testing-library"],
-      extends: [
-        "plugin:jest/recommended",
-        "plugin:jest-dom/recommended",
-        "plugin:testing-library/react",
-        "prettier",
-      ],
+      extends: ["plugin:jest/recommended", "plugin:jest-dom/recommended", "plugin:testing-library/react", "prettier"],
       env: {
         "jest/globals": true,
       },

@@ -1,21 +1,16 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import {
-  Links,
-  LiveReload,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-} from "@remix-run/react";
+import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 
-import { getUser } from "~/session.server";
+import "@fontsource-variable/dm-sans/wght.css";
 import stylesheet from "~/tailwind.css";
+import { getUser } from "~/utils/session.server";
 
+// prettier-ignore
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
-  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : [])
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -31,7 +26,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="h-full">
+      <body className="h-full font-sans">
         <Outlet />
         <ScrollRestoration />
         <Scripts />
