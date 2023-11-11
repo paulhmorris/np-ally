@@ -81,7 +81,7 @@ interface Props {
   name: string;
   label: string;
   placeholder: string;
-  options: { value: string; label: string }[];
+  options: Array<{ value: string; label: string }>;
 }
 function FormSelect(props: Props) {
   const { error, getInputProps } = useField(props.name);

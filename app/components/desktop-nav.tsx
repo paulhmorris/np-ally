@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { Form, Link, NavLink } from "@remix-run/react";
+import { IconSettings } from "@tabler/icons-react";
 import type { ComponentPropsWithoutRef } from "react";
 
 import { ThemeModeToggle } from "~/components/theme-mode-toggle";
@@ -8,11 +9,11 @@ import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { cn, useUser } from "~/utils/utils";
 
-export const links: readonly {
+export const links: ReadonlyArray<{
   name: string;
   href: string;
-  access: readonly UserRole[];
-}[] = [
+  access: ReadonlyArray<UserRole>;
+}> = [
   { name: "Accounts", href: "/accounts", access: ["ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"] },
   { name: "Transactions", href: "/transactions", access: ["ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"] },
   { name: "Donors", href: "/donors", access: ["ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"] },
@@ -43,7 +44,13 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
             );
           })}
       </ul>
-      <Separator className="mb-8 mt-auto" />
+      {["OWNER", "SUPERADMIN"].includes(user?.role) ? (
+        <NavLink to="/settings" className={({ isActive }) => cn("mt-auto flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary", isActive && "bg-secondary")}>
+          <IconSettings className="mr-2 h-5 w-5" />
+          <span>Settings</span>
+        </NavLink>
+      ) : null}
+      <Separator className="mb-8 mt-2" />
       <div className="space-y-4">
         <Link to={`/users/${user.id}`} className="flex gap-2">
           <Avatar>

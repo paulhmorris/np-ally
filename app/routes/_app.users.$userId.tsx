@@ -90,7 +90,7 @@ export default function UserDetailsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const fetcher = useFetcher();
 
-  const allowedRoles: Partial<UserRole[]> = sessionUser.role === "SUPERADMIN" ? ["USER", "ACCOUNTANT", "ADMIN", "OWNER", "SUPERADMIN"] : ["USER", "ACCOUNTANT", "ADMIN"];
+  const allowedRoles: Partial<Array<UserRole>> = sessionUser.role === "SUPERADMIN" ? ["USER", "ACCOUNTANT", "ADMIN", "OWNER", "SUPERADMIN"] : ["USER", "ACCOUNTANT", "ADMIN"];
 
   return (
     <>

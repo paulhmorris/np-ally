@@ -4,7 +4,7 @@ import { IconChevronRight } from "@tabler/icons-react";
 
 import { normalizeEnum } from "~/utils/utils";
 
-function UsersList({ users }: { users: User[] }) {
+function UsersList({ users }: { users: Array<User> }) {
   return (
     <div>
       <h2 className="mb-2">Users</h2>

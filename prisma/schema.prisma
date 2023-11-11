@@ -87,22 +87,27 @@ model Transaction {
 }
 
 model TransactionItem {
-  id            String      @id @default(cuid())
-  amount        Int
-  transactionId String
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-  description   String?
-  donor         Donor?      @relation(fields: [donorId], references: [id])
+  id                    String              @id @default(cuid())
+  amount                Int
+  transactionId         String
+  transaction           Transaction         @relation(fields: [transactionId], references: [id])
+  description           String?
+  donor                 Donor?              @relation(fields: [donorId], references: [id])
+  type                  TransactionItemType @relation(fields: [transactionItemTypeId], references: [id])
+  transactionItemTypeId Int
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   donorId   String?
 }
 
-enum TransactionItemType {
-  CREDIT
-  DEBIT
-  OTHER
+model TransactionItemType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  transactionItems TransactionItem[]
 }
 
 model Reimbursement {

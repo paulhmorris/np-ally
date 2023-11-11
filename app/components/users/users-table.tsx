@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { normalizeEnum } from "~/utils/utils";
 
-export function UsersTable({ users }: { users: Prisma.UserGetPayload<{ include: { account: true } }>[] }) {
+export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ include: { account: true } }>> }) {
   return (
     <Table>
       <TableHeader>

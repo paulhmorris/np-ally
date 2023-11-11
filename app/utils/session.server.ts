@@ -54,8 +54,8 @@ export async function requireUserId(request: Request, redirectTo: string = new U
   return userId;
 }
 
-export async function requireUser(request: Request, allowedRoles?: UserRole[]) {
-  const defaultAllowedRoles: UserRole[] = ["USER", "ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"];
+export async function requireUser(request: Request, allowedRoles?: Array<UserRole>) {
+  const defaultAllowedRoles: Array<UserRole> = ["USER", "ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"];
   const userId = await requireUserId(request);
 
   const user = await getUserById(userId);

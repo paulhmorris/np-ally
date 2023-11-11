@@ -16,19 +16,24 @@ import { prisma } from "~/utils/db.server";
 import { requireUser } from "~/utils/session.server";
 
 const validator = withZod(
-  z.object({
-    firstName: z.string().min(1, { message: "First name is required" }),
-    lastName: z.string().optional(),
-    email: z.string().email({ message: "Invalid email address" }),
-    role: z.nativeEnum(UserRole),
-    clientId: z.string().optional(),
-  }),
+  z
+    .object({
+      firstName: z.string().min(1, { message: "First name is required" }),
+      lastName: z.string().optional(),
+      email: z.string().email({ message: "Invalid email address" }),
+      role: z.nativeEnum(UserRole),
+      accountId: z.string().optional(),
+    })
+    .refine((schema) => schema.role === "USER" && schema.accountId, {
+      message: "Users must be assigned to an account",
+      path: ["accountId"],
+    }),
 );
 
 export const meta: MetaFunction = () => [{ title: "New User • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["SUPERADMIN"]);
+  await requireUser(request, ["OWNER", "SUPERADMIN"]);
   return typedjson({ accounts: await prisma.account.findMany() });
 };
 
@@ -47,8 +52,7 @@ export default function NewUserPage() {
   return (
     <>
       <PageHeader title="New User" />
-
-      <ValidatedForm validator={validator} method="post" className="space-y-4 sm:max-w-md">
+      <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
         <Input label="First name" id="firstName" name="firstName" required />
         <Input label="Last name" id="lastName" name="lastName" />
         <Input label="Email" id="email" name="email" />
@@ -61,7 +65,7 @@ export default function NewUserPage() {
             label: value,
           }))}
         />
-        <Select name="clientId" label="Client" placeholder="Select a client" options={accounts.map((c) => ({ value: c.id, label: c.name }))} />
+        <Select name="accountId" label="Account" placeholder="Select an account" options={accounts.map((c) => ({ value: c.id, label: c.name }))} />
         <div className="flex items-center gap-2">
           <SubmitButton>Create</SubmitButton>
           <Button type="reset" variant="outline">

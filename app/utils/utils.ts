@@ -62,7 +62,7 @@ export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
 
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: Array<ClassValue>) {
   return twMerge(clsx(inputs));
 }
 
@@ -90,3 +90,15 @@ export function getAllSearchParams(param: string, request: Request) {
   const url = new URL(request.url);
   return url.searchParams.getAll(param);
 }
+
+export const formatCurrency = (value: number, decimals?: 0 | 2) => {
+  const decimalPlaces = decimals ? decimals : value % 1 !== 0 ? 2 : 0;
+  const formattedValue = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
+  }).format(value);
+
+  return formattedValue;
+};
