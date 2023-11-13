@@ -11,6 +11,7 @@ import invariant from "tiny-invariant";
 import { z } from "zod";
 
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
+import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
@@ -111,30 +112,32 @@ export default function UserDetailsPage() {
         </div>
       </PageHeader>
 
-      <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-        <Input label="First name" id="firstName" name="firstName" required />
-        <Input label="Last name" id="lastName" name="lastName" />
-        <Input label="Email" id="email" name="email" />
-        <Select
-          name="role"
-          label="Role"
-          placeholder="Select a role"
-          options={Object.entries(UserRole)
-            .filter(([key]) => allowedRoles.includes(key.toUpperCase() as UserRole))
-            .map(([key, value]) => ({
-              value: key,
-              label: value,
-            }))}
-        />
-        <ButtonGroup>
-          <SubmitButton className="w-full" name="_action" value="update">
-            Save User
-          </SubmitButton>
-          <Button type="reset" variant="outline">
-            Reset
-          </Button>
-        </ButtonGroup>
-      </ValidatedForm>
+      <PageContainer>
+        <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
+          <Input label="First name" id="firstName" name="firstName" required />
+          <Input label="Last name" id="lastName" name="lastName" />
+          <Input label="Email" id="email" name="email" />
+          <Select
+            name="role"
+            label="Role"
+            placeholder="Select a role"
+            options={Object.entries(UserRole)
+              .filter(([key]) => allowedRoles.includes(key.toUpperCase() as UserRole))
+              .map(([key, value]) => ({
+                value: key,
+                label: value,
+              }))}
+          />
+          <ButtonGroup>
+            <SubmitButton className="w-full" name="_action" value="update">
+              Save User
+            </SubmitButton>
+            <Button type="reset" variant="outline">
+              Reset
+            </Button>
+          </ButtonGroup>
+        </ValidatedForm>
+      </PageContainer>
     </>
   );
 }

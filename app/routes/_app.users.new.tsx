@@ -7,6 +7,7 @@ import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -52,27 +53,29 @@ export default function NewUserPage() {
   return (
     <>
       <PageHeader title="New User" />
-      <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-        <Input label="First name" id="firstName" name="firstName" required />
-        <Input label="Last name" id="lastName" name="lastName" />
-        <Input label="Email" id="email" name="email" />
-        <Select
-          name="role"
-          label="Role"
-          placeholder="Select a role"
-          options={Object.entries(UserRole).map(([key, value]) => ({
-            value: key,
-            label: value,
-          }))}
-        />
-        <Select name="accountId" label="Account" placeholder="Select an account" options={accounts.map((c) => ({ value: c.id, label: c.name }))} />
-        <div className="flex items-center gap-2">
-          <SubmitButton>Create</SubmitButton>
-          <Button type="reset" variant="outline">
-            Reset
-          </Button>
-        </div>
-      </ValidatedForm>
+      <PageContainer>
+        <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
+          <Input label="First name" id="firstName" name="firstName" required />
+          <Input label="Last name" id="lastName" name="lastName" />
+          <Input label="Email" id="email" name="email" />
+          <Select
+            name="role"
+            label="Role"
+            placeholder="Select a role"
+            options={Object.entries(UserRole).map(([key, value]) => ({
+              value: key,
+              label: value,
+            }))}
+          />
+          <Select name="accountId" label="Account" placeholder="Select an account" options={accounts.map((c) => ({ value: c.id, label: c.name }))} />
+          <div className="flex items-center gap-2">
+            <SubmitButton>Create</SubmitButton>
+            <Button type="reset" variant="outline">
+              Reset
+            </Button>
+          </div>
+        </ValidatedForm>
+      </PageContainer>
     </>
   );
 }

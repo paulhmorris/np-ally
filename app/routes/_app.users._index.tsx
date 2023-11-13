@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
+import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { UsersTable } from "~/components/users/users-table";
@@ -28,7 +29,10 @@ export default function UserIndexPage() {
           <Link to="/users/new">New User</Link>
         </Button>
       </PageHeader>
-      <UsersTable users={users} />
+
+      <PageContainer>
+        <UsersTable users={users} />
+      </PageContainer>
     </>
   );
 }

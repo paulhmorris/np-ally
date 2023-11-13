@@ -9,6 +9,7 @@ import invariant from "tiny-invariant";
 import { z } from "zod";
 
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
+import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
@@ -82,7 +83,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     data,
   });
 
-  return toast.json(request, { user: updatedTransaction }, { variant: "default", title: "User updated", description: "Great job." });
+  return toast.json(request, { user: updatedTransaction }, { variant: "default", title: "Transaction updated", description: "Great job." });
 };
 
 export default function UserDetailsPage() {
@@ -99,59 +100,61 @@ export default function UserDetailsPage() {
               open={modalOpen}
               onOpenChange={setModalOpen}
               description="This action cannot be undone. This will permanently delete the
-                  user and remove the data from the server."
+                  transaction and its items, and remove the data from the server."
             />
           ) : null}
         </div>
       </PageHeader>
 
-      <div className="space-y-8">
-        <div>
-          <h2 className="sr-only">Details</h2>
-          <dl className="divide-y divide-muted">
-            <DetailItem label="Total" value={formatCurrency(transaction.amount, 2)} />
-            <DetailItem label="Created" value={dayjs(transaction.createdAt).format("MM/DD/YYYY")} />
-          </dl>
+      <PageContainer>
+        <div className="space-y-8">
+          <div>
+            <h2 className="sr-only">Details</h2>
+            <dl className="divide-y divide-muted">
+              <DetailItem label="Total" value={formatCurrency(transaction.amount, 2)} />
+              <DetailItem label="Created" value={dayjs(transaction.createdAt).format("MM/DD/YYYY")} />
+            </dl>
+          </div>
+
+          <div>
+            <h2>Line Items</h2>
+            <dl className="divide-y divide-muted">
+              {transaction.transactionItems.map((item, index) => {
+                return (
+                  <Fragment key={item.id}>
+                    <span>{index + 1}</span>
+                    <DetailItem label="Amount" value={formatCurrency(item.amount, 2)} />
+                    <DetailItem label="Type" value={item.type.name} />
+                    {item.donor ? <DetailItem label="Donor" value={item.donor.name} /> : null}
+                  </Fragment>
+                );
+              })}
+            </dl>
+          </div>
         </div>
 
-        <div>
-          <h2>Line Items</h2>
-          <dl className="divide-y divide-muted">
-            {transaction.transactionItems.map((item, index) => {
-              return (
-                <Fragment key={item.id}>
-                  <span>{index + 1}</span>
-                  <DetailItem label="Amount" value={formatCurrency(item.amount, 2)} />
-                  <DetailItem label="Type" value={item.type.name} />
-                  {item.donor ? <DetailItem label="Donor" value={item.donor.name} /> : null}
-                </Fragment>
-              );
-            })}
-          </dl>
-        </div>
-      </div>
-
-      <ValidatedForm id="transactionForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-        <input type="hidden" name="id" value={transaction.id} />
-        <Input label="Description" name="description" />
-        <Select
-          name="accountId"
-          label="Account"
-          placeholder="Select an account"
-          options={accounts.map((a) => ({
-            value: a.id,
-            label: a.name,
-          }))}
-        />
-        <ButtonGroup>
-          <SubmitButton className="w-full" name="_action" value="update">
-            Save Transaction
-          </SubmitButton>
-          <Button type="reset" variant="outline">
-            Reset
-          </Button>
-        </ButtonGroup>
-      </ValidatedForm>
+        <ValidatedForm id="transactionForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
+          <input type="hidden" name="id" value={transaction.id} />
+          <Input label="Description" name="description" />
+          <Select
+            name="accountId"
+            label="Account"
+            placeholder="Select an account"
+            options={accounts.map((a) => ({
+              value: a.id,
+              label: a.name,
+            }))}
+          />
+          <ButtonGroup>
+            <SubmitButton className="w-full" name="_action" value="update">
+              Save Transaction
+            </SubmitButton>
+            <Button type="reset" variant="outline">
+              Reset
+            </Button>
+          </ButtonGroup>
+        </ValidatedForm>
+      </PageContainer>
     </>
   );
 }

@@ -3,6 +3,7 @@ import { Link } from "@remix-run/react";
 import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
+import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { TransactionsTable } from "~/components/transactions/transactions-table";
 import { Button } from "~/components/ui/button";
@@ -32,7 +33,10 @@ export default function TransactionsIndexPage() {
           </Link>
         </Button>
       </PageHeader>
-      <TransactionsTable transactions={transactions} />
+
+      <PageContainer>
+        <TransactionsTable transactions={transactions} />
+      </PageContainer>
     </>
   );
 }

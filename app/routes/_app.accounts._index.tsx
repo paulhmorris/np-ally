@@ -4,6 +4,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { AccountsTable } from "~/components/accounts/accounts-table";
+import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { prisma } from "~/utils/db.server";
@@ -32,7 +33,10 @@ export default function AccountssIndexPage() {
           </Link>
         </Button>
       </PageHeader>
-      <AccountsTable accounts={accounts} />
+
+      <PageContainer>
+        <AccountsTable accounts={accounts} />
+      </PageContainer>
     </>
   );
 }
