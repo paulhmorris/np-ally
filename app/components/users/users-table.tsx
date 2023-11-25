@@ -3,7 +3,7 @@ import { Link } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { normalizeEnum } from "~/utils/utils";
+import { normalizeEnum } from "~/lib/utils";
 
 export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ include: { account: true } }>> }) {
   return (

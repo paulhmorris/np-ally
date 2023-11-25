@@ -6,12 +6,12 @@ import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
 import { Checkbox } from "~/components/ui/checkbox";
-import { Input } from "~/components/ui/input";
+import { Field } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { createUserSession, getUserId } from "~/lib/session.server";
+import { safeRedirect } from "~/lib/utils";
 import { verifyLogin } from "~/models/user.server";
-import { createUserSession, getUserId } from "~/utils/session.server";
-import { safeRedirect } from "~/utils/utils";
 
 const validator = withZod(
   z.object({
@@ -63,8 +63,8 @@ export default function LoginPage() {
       <div className="max-w-lg px-8">
         <h1 className="text-4xl font-extrabold">Alliance 436 Admin</h1>
         <ValidatedForm validator={validator} method="post" className="mt-4 space-y-3">
-          <Input label="Email" id="email" name="email" type="email" autoComplete="email" required defaultValue="paul@remix.run" />
-          <Input label="Password" id="password" name="password" type="password" autoComplete="current-password" required defaultValue="password" />
+          <Field label="Email" id="email" name="email" type="email" autoComplete="email" required defaultValue="paul@remix.run" />
+          <Field label="Password" id="password" name="password" type="password" autoComplete="current-password" required defaultValue="password" />
 
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div className="flex items-center justify-between">

@@ -13,14 +13,14 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
-import { Input } from "~/components/ui/input";
+import { Field } from "~/components/ui/form";
 import { Select } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/utils/db.server";
-import { notFound } from "~/utils/responses";
-import { requireUser } from "~/utils/session.server";
-import { toast } from "~/utils/toast.server";
-import { cn, formatCurrency, useUser } from "~/utils/utils";
+import { prisma } from "~/integrations/prisma.server";
+import { notFound } from "~/lib/responses.server";
+import { requireUser } from "~/lib/session.server";
+import { toast } from "~/lib/toast.server";
+import { cn, formatCurrency, useUser } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
@@ -135,7 +135,7 @@ export default function UserDetailsPage() {
 
         <ValidatedForm id="transactionForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
           <input type="hidden" name="id" value={transaction.id} />
-          <Input label="Description" name="description" />
+          <Field label="Description" name="description" />
           <Select
             name="accountId"
             label="Account"

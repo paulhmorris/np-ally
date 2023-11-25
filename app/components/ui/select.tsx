@@ -5,7 +5,7 @@ import * as React from "react";
 import { useField } from "remix-validated-form";
 
 import { Label } from "~/components/ui/label";
-import { cn, normalizeEnum } from "~/utils/utils";
+import { cn, normalizeEnum } from "~/lib/utils";
 
 const Select = SelectPrimitive.Root;
 
@@ -81,7 +81,7 @@ interface Props {
   name: string;
   label: string;
   placeholder: string;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string | number | null; label: string | null }>;
 }
 function FormSelect(props: Props) {
   const { error, getInputProps } = useField(props.name);
@@ -95,11 +95,15 @@ function FormSelect(props: Props) {
           <SelectValue placeholder={props.placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {props.options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {normalizeEnum(o.label)}
-            </SelectItem>
-          ))}
+          {props.options.map((o) => {
+            if (o.value === null || o.label === null) return null;
+
+            return (
+              <SelectItem key={o.value} value={o.value.toString()}>
+                {normalizeEnum(o.label)}
+              </SelectItem>
+            );
+          })}
         </SelectContent>
         {error ? (
           <p className="mt-0.5 text-xs font-medium text-destructive" id={`${props.name}-error`}>

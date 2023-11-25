@@ -15,14 +15,14 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
-import { Input } from "~/components/ui/input";
+import { Field } from "~/components/ui/form";
 import { Select } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/utils/db.server";
-import { notFound } from "~/utils/responses";
-import { requireUser } from "~/utils/session.server";
-import { toast } from "~/utils/toast.server";
-import { useUser } from "~/utils/utils";
+import { prisma } from "~/integrations/prisma.server";
+import { notFound } from "~/lib/responses.server";
+import { requireUser } from "~/lib/session.server";
+import { toast } from "~/lib/toast.server";
+import { useUser } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
@@ -114,9 +114,9 @@ export default function UserDetailsPage() {
 
       <PageContainer>
         <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-          <Input label="First name" id="firstName" name="firstName" required />
-          <Input label="Last name" id="lastName" name="lastName" />
-          <Input label="Email" id="email" name="email" />
+          <Field label="First name" id="firstName" name="firstName" required />
+          <Field label="Last name" id="lastName" name="lastName" />
+          <Field label="Email" id="email" name="email" />
           <Select
             name="role"
             label="Role"

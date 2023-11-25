@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Separator } from "~/components/ui/separator";
-import { cn, useUser } from "~/utils/utils";
+import { cn, useUser } from "~/lib/utils";
 
 export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();

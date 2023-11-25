@@ -6,8 +6,8 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { UsersTable } from "~/components/users/users-table";
-import { prisma } from "~/utils/db.server";
-import { requireUser } from "~/utils/session.server";
+import { prisma } from "~/integrations/prisma.server";
+import { requireUser } from "~/lib/session.server";
 
 export const meta: MetaFunction = () => [{ title: "Users • Alliance 436" }];
 

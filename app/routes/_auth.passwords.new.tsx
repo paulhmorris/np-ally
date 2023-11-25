@@ -5,12 +5,12 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
-import { Input } from "~/components/ui/input";
+import { Field } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { toast } from "~/lib/toast.server";
+import { getSearchParam } from "~/lib/utils";
 import { expirePasswordReset, getPasswordResetByToken } from "~/models/password_reset.server";
 import { getUserById, resetUserPassword, verifyLogin } from "~/models/user.server";
-import { toast } from "~/utils/toast.server";
-import { getSearchParam } from "~/utils/utils";
 
 const validator = withZod(
   z
@@ -110,9 +110,9 @@ export default function NewPassword() {
         <h1 className="text-4xl font-extrabold">Set a new password.</h1>
         <ValidatedForm validator={validator} method="post" className="mt-4 space-y-3">
           <input type="hidden" name="token" value={searchParams.get("token") ?? ""} />
-          <Input label="Old password" name="oldPassword" type="password" autoComplete="current-password" required />
-          <Input label="New Password" name="newPassword" type="password" autoComplete="new-password" required />
-          <Input label="Confirm New Password" name="confirmation" type="password" autoComplete="new-password" required />
+          <Field label="Old password" name="oldPassword" type="password" autoComplete="current-password" required />
+          <Field label="New Password" name="newPassword" type="password" autoComplete="new-password" required />
+          <Field label="Confirm New Password" name="confirmation" type="password" autoComplete="new-password" required />
           <SubmitButton>Reset Password</SubmitButton>
         </ValidatedForm>
       </div>

@@ -4,8 +4,8 @@ import { json } from "@remix-run/node";
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 
 import "@fontsource-variable/dm-sans/wght.css";
+import { getUser } from "~/lib/session.server";
 import stylesheet from "~/tailwind.css";
-import { getUser } from "~/utils/session.server";
 
 // prettier-ignore
 export const links: LinksFunction = () => [

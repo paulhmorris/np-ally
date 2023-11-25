@@ -2,7 +2,7 @@ import type { User } from "@prisma/client";
 import { Link } from "@remix-run/react";
 import { IconChevronRight } from "@tabler/icons-react";
 
-import { normalizeEnum } from "~/utils/utils";
+import { normalizeEnum } from "~/lib/utils";
 
 function UsersList({ users }: { users: Array<User> }) {
   return (

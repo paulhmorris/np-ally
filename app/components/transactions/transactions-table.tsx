@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 
 import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { formatCurrency } from "~/utils/utils";
+import { formatCurrency } from "~/lib/utils";
 
 export function TransactionsTable({ transactions }: { transactions: Array<Prisma.TransactionGetPayload<{ include: { account: true } }>> }) {
   return (

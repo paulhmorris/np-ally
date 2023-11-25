@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef } from "react";
 
-import { cn } from "~/utils/utils";
+import { cn } from "~/lib/utils";
 
 interface Props extends ComponentPropsWithoutRef<"header"> {
   title: string;

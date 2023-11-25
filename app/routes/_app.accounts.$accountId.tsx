@@ -16,15 +16,15 @@ import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { Checkbox } from "~/components/ui/checkbox";
-import { Input } from "~/components/ui/input";
+import { Field } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { prisma } from "~/utils/db.server";
-import { notFound } from "~/utils/responses";
-import { requireUser } from "~/utils/session.server";
-import { toast } from "~/utils/toast.server";
-import { formatCurrency, useUser } from "~/utils/utils";
+import { prisma } from "~/integrations/prisma.server";
+import { notFound } from "~/lib/responses.server";
+import { requireUser } from "~/lib/session.server";
+import { toast } from "~/lib/toast.server";
+import { formatCurrency, useUser } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
@@ -123,7 +123,7 @@ export default function UserDetailsPage() {
 
       <PageContainer>
         <ValidatedForm id="accountForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-          <Input label="Name" id="name" name="name" required />
+          <Field label="Name" id="name" name="name" required />
           <div className="flex items-center space-x-2">
             <Checkbox id="isActive" name="isActive" defaultChecked={account.isActive} />
             <Label className="cursor-pointer" htmlFor="isActive">

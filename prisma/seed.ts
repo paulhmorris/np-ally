@@ -77,13 +77,13 @@ async function seed() {
               {
                 amount: faker.number.int({ min: 1, max: 1000 }),
                 description: faker.lorem.word(),
-                transactionItemTypeId: 1,
+                typeId: 1,
                 donorId: donor.id,
               },
               {
                 amount: faker.number.int({ min: 1, max: 1000 }),
                 description: faker.lorem.word(),
-                transactionItemTypeId: 2,
+                typeId: 2,
                 donorId: donor.id,
               },
             ],

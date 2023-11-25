@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 
 import { PageHeader } from "~/components/page-header";
-import { requireUserId } from "~/utils/session.server";
+import { requireUserId } from "~/lib/session.server";
 
 export const meta: MetaFunction = () => [{ title: "Dashboard • Alliance 436" }];
 

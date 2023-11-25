@@ -1,7 +1,7 @@
 import type { PasswordReset, User } from "@prisma/client";
 import dayjs from "dayjs";
 
-import { prisma } from "~/utils/db.server";
+import { prisma } from "~/integrations/prisma.server";
 
 export function getPasswordResetByToken({ token }: { token: PasswordReset["token"] }) {
   return prisma.passwordReset.findUnique({

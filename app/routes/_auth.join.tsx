@@ -6,11 +6,11 @@ import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
+import { Field } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { createUserSession, getUserId } from "~/lib/session.server";
+import { safeRedirect } from "~/lib/utils";
 import { createUser } from "~/models/user.server";
-import { createUserSession, getUserId } from "~/utils/session.server";
-import { safeRedirect } from "~/utils/utils";
 
 const validator = withZod(
   z.object({
@@ -60,11 +60,11 @@ export default function Join() {
         <h1 className="text-4xl font-extrabold">Create an Account</h1>
         <ValidatedForm validator={validator} method="post" className="mt-8 space-y-3">
           <div className="flex w-full gap-3">
-            <Input label="First Name" id="firstName" name="firstName" autoComplete="given-name" required />
-            <Input label="Last Name" id="lastName" name="lastName" autoComplete="family-name" />
+            <Field label="First Name" id="firstName" name="firstName" autoComplete="given-name" required />
+            <Field label="Last Name" id="lastName" name="lastName" autoComplete="family-name" />
           </div>
-          <Input label="Email" id="email" name="email" type="email" autoComplete="email" required />
-          <Input label="Password" id="password" name="password" type="password" autoComplete="new-password" required />
+          <Field label="Email" id="email" name="email" type="email" autoComplete="email" required />
+          <Field label="Password" id="password" name="password" type="password" autoComplete="new-password" required />
 
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <SubmitButton className="w-full">Create Account</SubmitButton>

@@ -7,7 +7,7 @@ import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { cn, useUser } from "~/utils/utils";
+import { cn, useUser } from "~/lib/utils";
 
 export const links: ReadonlyArray<{
   name: string;

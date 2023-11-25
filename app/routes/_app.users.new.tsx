@@ -10,11 +10,11 @@ import { z } from "zod";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
+import { Field } from "~/components/ui/form";
 import { Select } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/utils/db.server";
-import { requireUser } from "~/utils/session.server";
+import { prisma } from "~/integrations/prisma.server";
+import { requireUser } from "~/lib/session.server";
 
 const validator = withZod(
   z
@@ -55,9 +55,9 @@ export default function NewUserPage() {
       <PageHeader title="New User" />
       <PageContainer>
         <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-          <Input label="First name" id="firstName" name="firstName" required />
-          <Input label="Last name" id="lastName" name="lastName" />
-          <Input label="Email" id="email" name="email" />
+          <Field label="First name" id="firstName" name="firstName" required />
+          <Field label="Last name" id="lastName" name="lastName" />
+          <Field label="Email" id="email" name="email" />
           <Select
             name="role"
             label="Role"
