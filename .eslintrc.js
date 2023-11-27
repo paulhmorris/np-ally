@@ -6,54 +6,69 @@
 
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
-  root: true,
-  ignorePatterns: ["./cypress", "./cypress.config.ts"],
-  parserOptions: {
-    ecmaVersion: "latest",
-    sourceType: "module",
-    ecmaFeatures: {
-      jsx: true,
-    },
-  },
   env: {
     browser: true,
     commonjs: true,
     es6: true,
   },
-
   // Base config
   extends: ["eslint:recommended"],
-
+  ignorePatterns: ["./cypress", "./cypress.config.ts"],
   overrides: [
     // React
     {
+      extends: [
+        "plugin:react/recommended",
+        "plugin:react/jsx-runtime",
+        "plugin:react-hooks/recommended",
+        "plugin:jsx-a11y/recommended",
+        "prettier",
+      ],
       files: ["**/*.{js,jsx,ts,tsx}"],
       plugins: ["react", "jsx-a11y"],
-      extends: ["plugin:react/recommended", "plugin:react/jsx-runtime", "plugin:react-hooks/recommended", "plugin:jsx-a11y/recommended", "prettier"],
-      settings: {
-        react: {
-          version: "detect",
-        },
-        formComponents: ["Form"],
-        linkComponents: [
-          { name: "Link", linkAttribute: "to" },
-          { name: "NavLink", linkAttribute: "to" },
-        ],
-      },
       rules: {
         "react/jsx-no-leaked-render": ["warn", { validStrategies: ["ternary"] }],
         "react/prop-types": "off",
+      },
+      settings: {
+        formComponents: ["Form"],
+        linkComponents: [
+          { linkAttribute: "to", name: "Link" },
+          { linkAttribute: "to", name: "NavLink" },
+        ],
+        react: {
+          version: "detect",
+        },
       },
     },
 
     // Typescript
     {
+      extends: [
+        "plugin:@typescript-eslint/recommended-type-checked",
+        "plugin:@typescript-eslint/stylistic",
+        "plugin:import/recommended",
+        "plugin:import/typescript",
+        "prettier",
+      ],
       files: ["**/*.{ts,tsx}"],
-      plugins: ["@typescript-eslint", "import"],
       parser: "@typescript-eslint/parser",
       parserOptions: {
         project: "./tsconfig.json",
         tsconfigRootDir: __dirname,
+      },
+      plugins: ["@typescript-eslint", "import"],
+      rules: {
+        "@typescript-eslint/array-type": ["error", { default: "generic" }],
+        "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_" }],
+        "import/order": [
+          "error",
+          {
+            alphabetize: { caseInsensitive: true, order: "asc" },
+            groups: ["builtin", "external", "internal", "parent", "sibling"],
+            "newlines-between": "always",
+          },
+        ],
       },
       settings: {
         "import/internal-regex": "^~/",
@@ -66,36 +81,23 @@ module.exports = {
           },
         },
       },
-      extends: ["plugin:@typescript-eslint/recommended-type-checked", "plugin:@typescript-eslint/stylistic", "plugin:import/recommended", "plugin:import/typescript", "prettier"],
-      rules: {
-        "import/order": [
-          "error",
-          {
-            alphabetize: { caseInsensitive: true, order: "asc" },
-            groups: ["builtin", "external", "internal", "parent", "sibling"],
-            "newlines-between": "always",
-          },
-        ],
-        "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_" }],
-        "@typescript-eslint/array-type": ["error", { default: "generic" }],
-      },
     },
 
     // Markdown
     {
+      extends: ["plugin:markdown/recommended", "prettier"],
       files: ["**/*.md"],
       plugins: ["markdown"],
-      extends: ["plugin:markdown/recommended", "prettier"],
     },
 
     // Jest/Vitest
     {
-      files: ["**/*.test.{js,jsx,ts,tsx}"],
-      plugins: ["jest", "jest-dom", "testing-library"],
-      extends: ["plugin:jest/recommended", "plugin:jest-dom/recommended", "plugin:testing-library/react", "prettier"],
       env: {
         "jest/globals": true,
       },
+      extends: ["plugin:jest/recommended", "plugin:jest-dom/recommended", "plugin:testing-library/react", "prettier"],
+      files: ["**/*.test.{js,jsx,ts,tsx}"],
+      plugins: ["jest", "jest-dom", "testing-library"],
       settings: {
         jest: {
           // we're using vitest which has a very similar API to jest
@@ -108,17 +110,27 @@ module.exports = {
 
     // Cypress
     {
+      extends: ["plugin:cypress/recommended", "prettier"],
       files: ["cypress/**/*.ts"],
       plugins: ["cypress"],
-      extends: ["plugin:cypress/recommended", "prettier"],
     },
 
     // Node
     {
-      files: [".eslintrc.js", "mocks/**/*.js"],
       env: {
         node: true,
       },
+      files: [".eslintrc.js", "mocks/**/*.js"],
     },
   ],
+
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: "latest",
+    sourceType: "module",
+  },
+
+  root: true,
 };

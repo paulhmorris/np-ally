@@ -83,7 +83,15 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     data,
   });
 
-  return toast.json(request, { user: updatedTransaction }, { variant: "default", title: "Transaction updated", description: "Great job." });
+  return toast.json(
+    request,
+    { user: updatedTransaction },
+    {
+      variant: "default",
+      title: "Transaction updated",
+      description: "Great job.",
+    },
+  );
 };
 
 export default function UserDetailsPage() {
@@ -163,7 +171,9 @@ function DetailItem({ label, value }: { label: string; value: Prisma.JsonValue }
   return (
     <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
       <dt className="text-sm font-semibold capitalize">{label}</dt>
-      <dd className={cn("mt-1 text-sm sm:col-span-2 sm:mt-0", value ? "" : "text-muted-foreground")}>{String(value)}</dd>
+      <dd className={cn("mt-1 text-sm sm:col-span-2 sm:mt-0", value ? "" : "text-muted-foreground")}>
+        {String(value)}
+      </dd>
     </div>
   );
 }

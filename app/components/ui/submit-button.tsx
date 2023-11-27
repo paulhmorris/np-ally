@@ -4,8 +4,8 @@ import { useIsSubmitting } from "remix-validated-form";
 import type { ButtonProps } from "~/components/ui/button";
 import { Button } from "~/components/ui/button";
 
-export function SubmitButton(props: ButtonProps) {
-  const isSubmitting = useIsSubmitting();
+export function SubmitButton(props: ButtonProps & { formId?: string }) {
+  const isSubmitting = useIsSubmitting(props.formId);
   const isDisabled = props.disabled || isSubmitting;
 
   return (

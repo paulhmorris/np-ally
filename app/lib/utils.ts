@@ -14,7 +14,10 @@ const DEFAULT_REDIRECT = "/";
  * @param {string} to The redirect destination
  * @param {string} defaultRedirect The redirect to use if the to is unsafe.
  */
-export function safeRedirect(to: FormDataEntryValue | string | null | undefined, defaultRedirect: string = DEFAULT_REDIRECT) {
+export function safeRedirect(
+  to: FormDataEntryValue | string | null | undefined,
+  defaultRedirect: string = DEFAULT_REDIRECT,
+) {
   if (!to || typeof to !== "string") {
     return defaultRedirect;
   }
@@ -53,7 +56,9 @@ export function useOptionalUser(): User | undefined {
 export function useUser(): User {
   const maybeUser = useOptionalUser();
   if (!maybeUser) {
-    throw new Error("No user found in root loader, but user is required by useUser. If user is optional, try useOptionalUser instead.");
+    throw new Error(
+      "No user found in root loader, but user is required by useUser. If user is optional, try useOptionalUser instead.",
+    );
   }
   return maybeUser;
 }
@@ -102,3 +107,11 @@ export const formatCurrency = (value: number, decimals?: 0 | 2) => {
 
   return formattedValue;
 };
+
+export function getToday() {
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, "0");
+  const mm = String(today.getMonth() + 1).padStart(2, "0"); // January is 0
+  const yyyy = today.getFullYear();
+  return `${yyyy}-${mm}-${dd}`;
+}
