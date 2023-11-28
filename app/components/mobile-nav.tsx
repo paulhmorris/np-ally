@@ -30,21 +30,24 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
         <DialogContent className="top-0 max-w-full translate-y-0">
           <DialogTitle className="sr-only">Navigation links</DialogTitle>
           <ul className="mt-4 space-x-0 space-y-1">
-            {links
-              .filter((link) => user?.role && link.access.includes(user.role))
-              .map((link) => {
-                return (
-                  <li key={link.href}>
-                    <NavLink
-                      onClick={close}
-                      to={link.href}
-                      className={({ isActive }) => cn("-mx-3 flex items-center rounded-md px-3 py-2 text-base font-medium text-secondary-foreground hover:bg-secondary", isActive && "bg-secondary")}
-                    >
-                      {link.name}
-                    </NavLink>
-                  </li>
-                );
-              })}
+            {links.map((link) => {
+              return (
+                <li key={link.href}>
+                  <NavLink
+                    onClick={close}
+                    to={link.href}
+                    className={({ isActive }) =>
+                      cn(
+                        "-mx-3 flex items-center rounded-md px-3 py-2 text-base font-medium text-secondary-foreground hover:bg-secondary",
+                        isActive && "bg-secondary",
+                      )
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                </li>
+              );
+            })}
           </ul>
           <Separator />
           <div>
@@ -53,16 +56,16 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
                 <Avatar>
                   <AvatarImage src="https://github.com/paulhmorris.png" alt="@paulhmorris" />
                   <AvatarFallback>
-                    {user.firstName?.charAt(0).toUpperCase()}
-                    {user.lastName?.charAt(0).toUpperCase()}
+                    {user.contact.firstName?.charAt(0).toUpperCase()}
+                    {user.contact.lastName?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="text-base font-medium text-secondary-foreground">
-                    {user.firstName}
-                    {user.lastName ? ` ${user.lastName}` : null}
+                    {user.contact.firstName}
+                    {user.contact.lastName ? ` ${user.contact.lastName}` : null}
                   </div>
-                  <div className="text-sm text-muted-foreground">{user.email}</div>
+                  <div className="text-sm text-muted-foreground">{user.contact.email}</div>
                 </div>
               </div>
               <ThemeModeToggle />

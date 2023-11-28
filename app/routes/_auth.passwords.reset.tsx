@@ -14,7 +14,13 @@ export default function ResetPassword() {
     <div className="grid h-full place-items-center">
       <div className="max-w-lg px-8">
         <h1 className="text-4xl font-extrabold">Reset your password.</h1>
-        <ValidatedForm fetcher={fetcher} validator={validator} method="post" action="/reset-password" className="mt-4 space-y-3">
+        <ValidatedForm
+          fetcher={fetcher}
+          validator={validator}
+          method="post"
+          action="/reset-password"
+          className="mt-4 space-y-3"
+        >
           <Field label="Email" name="email" type="email" autoComplete="username" required />
           <SubmitButton>Get Reset Link</SubmitButton>
         </ValidatedForm>

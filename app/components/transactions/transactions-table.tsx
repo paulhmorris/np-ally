@@ -6,7 +6,11 @@ import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { formatCurrency } from "~/lib/utils";
 
-export function TransactionsTable({ transactions }: { transactions: Array<Prisma.TransactionGetPayload<{ include: { account: true } }>> }) {
+export function TransactionsTable({
+  transactions,
+}: {
+  transactions: Array<Prisma.TransactionGetPayload<{ include: { account: true } }>>;
+}) {
   return (
     <Table>
       <TableHeader>
@@ -24,7 +28,7 @@ export function TransactionsTable({ transactions }: { transactions: Array<Prisma
             <TableRow key={t.id}>
               <TableCell>
                 <Button asChild variant="link">
-                  <Link to={`/accounts/${t.account.id}`}>{t.account.name}</Link>
+                  <Link to={`/accounts/${t.account.id}`}>{t.account.code}</Link>
                 </Button>
               </TableCell>
               <TableCell>{dayjs(t.date).format("MM/DD/YYYY")}</TableCell>

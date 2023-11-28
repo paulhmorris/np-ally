@@ -13,10 +13,10 @@ import { requireUser } from "~/lib/session.server";
 export const meta: MetaFunction = () => [{ title: "Users • Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUser(request, ["ACCOUNTANT", "ADMIN", "OWNER", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   const accounts = await prisma.account.findMany({
     include: { transactions: true },
-    orderBy: { name: "desc" },
+    orderBy: { code: "desc" },
   });
   return typedjson({ accounts });
 }

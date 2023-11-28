@@ -1,4 +1,4 @@
-import type { Password, Prisma, User } from "@prisma/client";
+import type { Contact, Password, Prisma, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "~/integrations/prisma.server";
@@ -8,11 +8,15 @@ export type { User } from "@prisma/client";
 export async function getUserById(id: User["id"]) {
   return prisma.user.findUnique({
     where: { id },
+    include: { contact: true },
   });
 }
 
-export async function getUserByEmail(email: User["email"]) {
-  return prisma.user.findUnique({ where: { email } });
+export async function getUserByEmail(email: NonNullable<Contact["email"]>) {
+  const contact = await prisma.contact.findUniqueOrThrow({ where: { email } });
+  return prisma.user.findUnique({
+    where: { contactId: contact.id },
+  });
 }
 
 export async function createUser(data: Prisma.UserUncheckedCreateInput & { password: Password["hash"] }) {
@@ -53,13 +57,15 @@ export async function setupUserPassword({ userId, password }: { userId: User["id
   });
 }
 
-export async function deleteUserByEmail(email: User["email"]) {
-  return prisma.user.delete({ where: { email } });
+export async function deleteUserByEmail(email: NonNullable<Contact["email"]>) {
+  const contact = await prisma.contact.findUniqueOrThrow({ where: { email } });
+  return prisma.user.delete({ where: { contactId: contact.id } });
 }
 
-export async function verifyLogin(email: User["email"], password: Password["hash"]) {
+export async function verifyLogin(email: NonNullable<Contact["email"]>, password: Password["hash"]) {
+  const contact = await prisma.contact.findUniqueOrThrow({ where: { email } });
   const userWithPassword = await prisma.user.findUnique({
-    where: { email },
+    where: { contactId: contact.id },
     include: { password: true },
   });
 

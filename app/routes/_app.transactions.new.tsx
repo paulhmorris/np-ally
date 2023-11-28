@@ -19,17 +19,19 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { requireUser } from "~/lib/session.server";
+import { ContactType } from "~/models/contact.server";
 
 const validator = withZod(
   z.object({
     date: z.string().datetime(),
     amount: z.number(),
+    description: z.string().optional(),
     accountId: z.string().min(1, { message: "Please select an account" }),
     transactionItems: z.array(
       z.object({
         amount: z.number(),
         description: z.string().optional(),
-        donorId: z.string().cuid().optional(),
+        contactId: z.string().cuid().optional(),
         typeId: z.string(),
       }),
     ),
@@ -39,24 +41,24 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["OWNER", "SUPERADMIN", "ACCOUNTANT"]);
-  const [donors, transactionItemTypes] = await Promise.all([
-    prisma.donor.findMany({
-      where: { isActive: true },
+  await requireUser(request, ["SUPERADMIN", "ADMIN"]);
+  const [donors, transactionItemMethods] = await Promise.all([
+    prisma.contact.findMany({
+      where: { typeId: ContactType.Donor },
     }),
-    prisma.transactionItemType.findMany(),
+    prisma.transactionItemMethod.findMany(),
   ]);
   return typedjson({
     donors,
-    transactionItemTypes,
-    ...setFormDefaults("transactionForm", {
+    transactionItemMethods,
+    ...setFormDefaults("transaction-form", {
       transactionItems: [{ id: nanoid() }],
     }),
   });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
@@ -77,8 +79,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function NewUserPage() {
-  const { donors, transactionItemTypes } = useTypedLoaderData<typeof loader>();
-  const [items, { push }] = useFieldArray("transactionItems", { formId: "transactionForm" });
+  const { donors, transactionItemMethods } = useTypedLoaderData<typeof loader>();
+  const [items, { push }] = useFieldArray("transactionItems", { formId: "transaction-form" });
 
   useEffect(() => {
     console.log(items);
@@ -86,12 +88,17 @@ export default function NewUserPage() {
 
   return (
     <>
-      <PageHeader title="New Transaction" />
+      <PageHeader title="New Donation" />
       <PageContainer>
-        <ValidatedForm id="transactionForm" validator={validator} method="post" className="sm:max-w-md">
+        <ValidatedForm id="transaction-form" validator={validator} method="post" className="sm:max-w-md">
           <div className="mb-8 flex items-center gap-2">
             <SubmitButton>Create</SubmitButton>
-            <Button variant="outline" type="button" className="flex items-center gap-2" onClick={() => push({ id: nanoid() })}>
+            <Button
+              variant="outline"
+              type="button"
+              className="flex items-center gap-2"
+              onClick={() => push({ id: nanoid() })}
+            >
               <IconPlus className="h-4 w-4" />
               <span>Add item</span>
             </Button>
@@ -111,12 +118,17 @@ export default function NewUserPage() {
                     name={`transactionItems[${index}].typeId`}
                     label="Type"
                     placeholder="Select a type"
-                    options={transactionItemTypes.map((t) => ({
+                    options={transactionItemMethods.map((t) => ({
                       value: t.id,
                       label: t.name,
                     }))}
                   />
-                  <Select name="donorId" label="Donor" placeholder="Select a donor" options={donors.map((c) => ({ value: c.id, label: c.name }))} />
+                  <Select
+                    name="donorId"
+                    label="Donor"
+                    placeholder="Select a donor"
+                    options={donors.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName}` }))}
+                  />
                   <input
                     type="hidden"
                     name={`todos[${index}].id`}

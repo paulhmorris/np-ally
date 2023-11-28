@@ -6,12 +6,17 @@ import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { formatCurrency } from "~/lib/utils";
 
-export function AccountsTable({ accounts }: { accounts: Array<Prisma.AccountGetPayload<{ include: { transactions: true } }>> }) {
+export function AccountsTable({
+  accounts,
+}: {
+  accounts: Array<Prisma.AccountGetPayload<{ include: { transactions: true } }>>;
+}) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
+          <TableHead>Code</TableHead>
+          <TableHead>Description</TableHead>
           <TableHead>Balance</TableHead>
           <TableHead>Created</TableHead>
           <TableHead />
@@ -22,7 +27,8 @@ export function AccountsTable({ accounts }: { accounts: Array<Prisma.AccountGetP
           const balance = a.transactions.reduce((acc, t) => acc + t.amount, 0);
           return (
             <TableRow key={a.id}>
-              <TableCell>{a.name}</TableCell>
+              <TableCell>{a.code}</TableCell>
+              <TableCell>{a.description}</TableCell>
               <TableCell>{formatCurrency(balance, 2)}</TableCell>
               <TableCell>{dayjs(a.createdAt).format("MM/DD/YYYY")}</TableCell>
               <TableCell>

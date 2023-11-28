@@ -14,7 +14,6 @@ import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { Field } from "~/components/ui/form";
-import { Select } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
@@ -25,34 +24,27 @@ import { cn, formatCurrency, useUser } from "~/lib/utils";
 const validator = withZod(
   z.object({
     id: z.string().cuid(),
-    accountId: z.string(),
     description: z.string().optional(),
     _action: z.enum(["delete", "update"]),
   }),
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   invariant(params.transactionId, "transactionId not found");
 
   const transaction = await prisma.transaction.findUnique({
     where: { id: params.transactionId },
     include: {
-      account: true,
       transactionItems: {
-        include: { donor: true, type: true },
+        include: { contact: true, type: true },
       },
     },
   });
   if (!transaction) throw notFound({ message: "Transaction not found" });
 
-  const accounts = await prisma.account.findMany({
-    where: { organizationId: transaction.account.organizationId },
-  });
-
   return typedjson({
     transaction,
-    accounts,
     ...setFormDefaults("transactionForm", { ...transaction }),
   });
 };
@@ -60,7 +52,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction = () => [{ title: "Transaction Details • Alliance 436" }];
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ACCOUNTANT", "ADMIN", "OWNER", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
@@ -96,7 +88,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
 export default function UserDetailsPage() {
   const sessionUser = useUser();
-  const { transaction, accounts } = useTypedLoaderData<typeof loader>();
+  const { transaction } = useTypedLoaderData<typeof loader>();
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -133,7 +125,12 @@ export default function UserDetailsPage() {
                     <span>{index + 1}</span>
                     <DetailItem label="Amount" value={formatCurrency(item.amount, 2)} />
                     <DetailItem label="Type" value={item.type.name} />
-                    {item.donor ? <DetailItem label="Donor" value={item.donor.name} /> : null}
+                    {item.contact ? (
+                      <DetailItem
+                        label="Donor"
+                        value={`${item.contact.firstName}${item.contact.lastName ? " " + item.contact.lastName : null}`}
+                      />
+                    ) : null}
                   </Fragment>
                 );
               })}
@@ -144,15 +141,6 @@ export default function UserDetailsPage() {
         <ValidatedForm id="transactionForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
           <input type="hidden" name="id" value={transaction.id} />
           <Field label="Description" name="description" />
-          <Select
-            name="accountId"
-            label="Account"
-            placeholder="Select an account"
-            options={accounts.map((a) => ({
-              value: a.id,
-              label: a.name,
-            }))}
-          />
           <ButtonGroup>
             <SubmitButton className="w-full" name="_action" value="update">
               Save Transaction

@@ -1,9 +1,25 @@
 import { Form } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 
-export function ConfirmDestructiveModal({ open, onOpenChange, description }: { open: boolean; onOpenChange: (open: boolean) => void; description: string }) {
+export function ConfirmDestructiveModal({
+  open,
+  onOpenChange,
+  description,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  description: string;
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>

@@ -1,10 +1,12 @@
-import type { User } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
 import { IconChevronRight } from "@tabler/icons-react";
 
 import { normalizeEnum } from "~/lib/utils";
 
-function UsersList({ users }: { users: Array<User> }) {
+type UserWithContact = Prisma.UserGetPayload<{ include: { contact: true } }>;
+
+function UsersList({ users }: { users: Array<UserWithContact> }) {
   return (
     <div>
       <h2 className="mb-2">Users</h2>
@@ -19,14 +21,17 @@ function UsersList({ users }: { users: Array<User> }) {
   );
 }
 
-function UserCard(user: User) {
+function UserCard(user: UserWithContact) {
   return (
-    <Link to={`/users/${user.id}`} className="relative flex items-center space-x-4 rounded-xl border p-4 transition-colors hover:bg-muted">
+    <Link
+      to={`/users/${user.id}`}
+      className="relative flex items-center space-x-4 rounded-xl border p-4 transition-colors hover:bg-muted"
+    >
       <div className="min-w-0 flex-auto">
         <h2 className="min-w-0 text-sm font-semibold leading-6">
           <span>
-            {user.firstName}
-            {user.lastName ? ` ${user.lastName}` : ""}
+            {user.contact.firstName}
+            {user.contact.lastName ? ` ${user.contact.lastName}` : ""}
           </span>
         </h2>
         <div className="mt-1 flex items-center gap-x-2.5 text-xs leading-5 text-muted-foreground">

@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { normalizeEnum } from "~/lib/utils";
 
-export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ include: { account: true } }>> }) {
+export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ include: { contact: true } }>> }) {
   return (
     <Table>
       <TableHeader>
@@ -14,7 +14,6 @@ export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ inc
           <TableHead>Email</TableHead>
           <TableHead>Role</TableHead>
           <TableHead>Created</TableHead>
-          <TableHead>Account</TableHead>
           <TableHead />
         </TableRow>
       </TableHeader>
@@ -23,17 +22,12 @@ export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ inc
           return (
             <TableRow key={user.id}>
               <TableCell>
-                {user.firstName}
-                {user.lastName ? ` ${user.lastName}` : ""}
+                {user.contact.firstName}
+                {user.contact.lastName ? ` ${user.contact.lastName}` : ""}
               </TableCell>
-              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.contact.email}</TableCell>
               <TableCell>{normalizeEnum(user.role)}</TableCell>
               <TableCell>{new Date(user.createdAt).toLocaleString()}</TableCell>
-              <TableCell>
-                <Button asChild variant="link">
-                  <Link to={`/accounts/${user.account?.id}`}>{user.account?.name}</Link>
-                </Button>
-              </TableCell>
               <TableCell>
                 <Button asChild variant="link">
                   <Link to={`/users/${user.id}`}>View</Link>

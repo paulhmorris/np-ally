@@ -63,8 +63,24 @@ export default function LoginPage() {
       <div className="max-w-lg px-8">
         <h1 className="text-4xl font-extrabold">Alliance 436 Admin</h1>
         <ValidatedForm validator={validator} method="post" className="mt-4 space-y-3">
-          <Field label="Email" id="email" name="email" type="email" autoComplete="email" required defaultValue="paul@remix.run" />
-          <Field label="Password" id="password" name="password" type="password" autoComplete="current-password" required defaultValue="password" />
+          <Field
+            label="Email"
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            defaultValue="paul@remix.run"
+          />
+          <Field
+            label="Password"
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            defaultValue="password"
+          />
 
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div className="flex items-center justify-between">
