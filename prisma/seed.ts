@@ -103,7 +103,6 @@ async function seed() {
       data: {
         amount: faker.number.int({ min: 1, max: 1000 }),
         date: faker.date.past(),
-        accountId: account.id,
         description: faker.lorem.word(),
         transactionItems: {
           createMany: {
@@ -113,12 +112,14 @@ async function seed() {
                 description: faker.lorem.word(),
                 typeId: 1,
                 contactId: donorContact.id,
+                accountId: account.id,
               },
               {
                 amount: faker.number.int({ min: 1, max: 1000 }),
                 description: faker.lorem.word(),
                 typeId: 2,
                 contactId: donorContact.id,
+                accountId: account.id,
               },
             ],
           },
