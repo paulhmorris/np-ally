@@ -1,10 +1,8 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
-import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
-import { useEffect } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
 import { z } from "zod";
@@ -12,29 +10,30 @@ import { z } from "zod";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { DatePicker } from "~/components/ui/date-picker";
-import { Label } from "~/components/ui/label";
+import { Field } from "~/components/ui/form";
 import { Select } from "~/components/ui/select";
-import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { requireUser } from "~/lib/session.server";
+import { getToday } from "~/lib/utils";
 import { ContactType } from "~/models/contact.server";
+
+const transactionItemSchema = z.object({
+  typeId: z.string().min(1, { message: "Type required" }),
+  accountId: z.string().cuid({ message: "Account required" }),
+  donorId: z.string().cuid({ message: "Invalid Donor ID" }).or(z.literal("")),
+  amount: z.coerce
+    .number()
+    .min(0, { message: "Amount must be greater than $0" })
+    .max(99_999, { message: "Amount must be less than $100,000" }),
+  description: z.string().optional(),
+  methodId: z.string().min(1, { message: "Method required" }),
+});
 
 const validator = withZod(
   z.object({
-    date: z.string().datetime(),
-    amount: z.number(),
-    description: z.string().optional(),
-    accountId: z.string().min(1, { message: "Please select an account" }),
-    transactionItems: z.array(
-      z.object({
-        amount: z.number(),
-        description: z.string().optional(),
-        contactId: z.string().cuid().optional(),
-        typeId: z.string(),
-      }),
-    ),
+    date: z.coerce.date(),
+    transactionItems: z.array(transactionItemSchema),
   }),
 );
 
@@ -42,14 +41,16 @@ export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUser(request, ["SUPERADMIN", "ADMIN"]);
-  const [donors, transactionItemMethods] = await Promise.all([
+  const [donors, accounts, transactionItemMethods] = await Promise.all([
     prisma.contact.findMany({
       where: { typeId: ContactType.Donor },
     }),
+    prisma.account.findMany(),
     prisma.transactionItemMethod.findMany(),
   ]);
   return typedjson({
     donors,
+    accounts,
     transactionItemMethods,
     ...setFormDefaults("transaction-form", {
       transactionItems: [{ id: nanoid() }],
@@ -60,9 +61,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   const result = await validator.validate(await request.formData());
-  if (result.error) return validationError(result.error);
+  if (result.error) {
+    return validationError(result.error);
+  }
 
-  console.log(result);
   // const { transactionItems, ...rest } = result.data;
   // const trx = await prisma.transaction.create({
   //   data: {
@@ -75,91 +77,103 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   //   },
   // });
   // return redirect(`/transactions/${trx.id}`);
+
   return typedjson({});
 };
 
 export default function NewUserPage() {
-  const { donors, transactionItemMethods } = useTypedLoaderData<typeof loader>();
-  const [items, { push }] = useFieldArray("transactionItems", { formId: "transaction-form" });
-
-  useEffect(() => {
-    console.log(items);
-  }, [items]);
+  const { donors, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
+  const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "transaction-form" });
 
   return (
     <>
       <PageHeader title="New Donation" />
       <PageContainer>
-        <ValidatedForm id="transaction-form" validator={validator} method="post" className="sm:max-w-md">
-          <div className="mb-8 flex items-center gap-2">
-            <SubmitButton>Create</SubmitButton>
+        <ValidatedForm
+          onSubmit={(data) => console.log(data)}
+          id="transaction-form"
+          method="post"
+          validator={validator}
+          className="sm:max-w-xl"
+        >
+          <SubmitButton disabled={items.length === 0}>Create Transaction</SubmitButton>
+          <div className="mt-8 space-y-8">
+            <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
+              <div className="w-auto">
+                <Field name="date" label="Date" type="date" defaultValue={getToday()} />
+              </div>
+              <Field name="description" label="Description" />
+            </div>
+            <ul className="flex flex-col gap-4">
+              {items.map(({ key }, index) => {
+                return (
+                  <li key={key} className="rounded-xl border border-border p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="font-bold tracking-wider">Item {index + 1}</p>
+                      <Button className="group" onClick={() => remove(index)} variant="link" type="button">
+                        <span className="sr-only">Remove transaction item</span>
+                        <IconTrash className="h-4 w-4 text-foreground opacity-50 group-hover:text-destructive group-hover:opacity-100" />
+                      </Button>
+                    </div>
+                    <input type="hidden" name={`transactionItems[${index}].id`} />
+                    <input type="hidden" name={`transactionItems[${index}].typeId`} value="1" />
+                    <fieldset className="space-y-3">
+                      <div className="flex w-full items-start gap-2">
+                        <Select
+                          required
+                          name={`transactionItems[${index}].methodId`}
+                          label="Method"
+                          placeholder="Select method"
+                          options={transactionItemMethods.map((t) => ({
+                            value: t.id,
+                            label: t.name,
+                          }))}
+                        />
+                        <Select
+                          required
+                          name={`transactionItems[${index}].accountId`}
+                          label="Account"
+                          placeholder="Select account"
+                          options={accounts.map((a) => ({
+                            value: a.id,
+                            label: `${a.code} - ${a.description}`,
+                          }))}
+                        />
+                        <Select
+                          name={`transactionItems[${index}].donorId`}
+                          label="Donor"
+                          placeholder="Select donor"
+                          options={donors.map((c) => ({
+                            value: c.id,
+                            label: `${c.firstName} ${c.lastName}`,
+                          }))}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-start gap-2">
+                        <div className="col-span-1">
+                          <Field required name={`transactionItems[${index}].amount`} label="Amount" isCurrency />
+                        </div>
+                        <div className="col-span-3">
+                          <Field name={`transactionItems[${index}].description`} label="Description" />
+                        </div>
+                      </div>
+                    </fieldset>
+                  </li>
+                );
+              })}
+            </ul>
             <Button
-              variant="outline"
-              type="button"
-              className="flex items-center gap-2"
               onClick={() => push({ id: nanoid() })}
+              variant="outline"
+              className="flex items-center gap-2"
+              type="button"
             >
               <IconPlus className="h-4 w-4" />
               <span>Add item</span>
             </Button>
           </div>
-          {items.map(({ defaultValue, key }, index) => {
-            return (
-              <div key={key}>
-                <p className="mb-2 text-lg">Item {index}</p>
-                <div className="space-y-4">
-                  <div className="w-full space-y-1">
-                    <Label htmlFor="date" className="block">
-                      Date
-                    </Label>
-                    <DatePicker name={`transactionItems[${index}].date`} />
-                  </div>
-                  <Select
-                    name={`transactionItems[${index}].typeId`}
-                    label="Type"
-                    placeholder="Select a type"
-                    options={transactionItemMethods.map((t) => ({
-                      value: t.id,
-                      label: t.name,
-                    }))}
-                  />
-                  <Select
-                    name="donorId"
-                    label="Donor"
-                    placeholder="Select a donor"
-                    options={donors.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName}` }))}
-                  />
-                  <input
-                    type="hidden"
-                    name={`todos[${index}].id`}
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    value={defaultValue.id}
-                  />
-                </div>
-                {items.length > 1 ? <Separator className="my-8" /> : null}
-              </div>
-            );
-          })}
         </ValidatedForm>
       </PageContainer>
     </>
   );
-}
-
-export function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (error instanceof Error) {
-    return <p className="font-medium text-destructive">An unexpected error occurred: {error.message}</p>;
-  }
-
-  if (!isRouteErrorResponse(error)) {
-    return <h1>Unknown Error</h1>;
-  }
-
-  if (error.status === 404) {
-    return <div>Client not found</div>;
-  }
-
-  return <div>An unexpected error occurred: {error.statusText}</div>;
 }
