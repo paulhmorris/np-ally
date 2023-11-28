@@ -5,13 +5,36 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function seed() {
-  const email = "paul@remix.run";
-
   // cleanup the existing database
-  await prisma.user.delete({ where: { email } }).catch(() => {
-    // no worries if it doesn't exist yet
-  });
+  await Promise.all([
+    await prisma.transactionItem.deleteMany(),
+    await prisma.transaction.deleteMany(),
+    await prisma.user.deleteMany(),
+    await prisma.account.deleteMany(),
+    await prisma.contact.deleteMany(),
+    await prisma.organization.deleteMany(),
+    await prisma.transactionItemType.deleteMany(),
+    await prisma.contactType.deleteMany(),
+    await prisma.accountType.deleteMany(),
+    await prisma.transactionItemMethod.deleteMany(),
+  ]);
 
+  await Promise.all([
+    await prisma.transactionItemType.createMany({
+      data: transactionItemTypes,
+    }),
+    await prisma.transactionItemMethod.createMany({
+      data: transactionItemMethods,
+    }),
+    await prisma.contactType.createMany({
+      data: contactTypes,
+    }),
+    await prisma.accountType.createMany({
+      data: accountTypes,
+    }),
+  ]);
+
+  const email = "paul@remix.run";
   const org = await prisma.organization.create({ data: { name: "Alliance 436" } });
 
   const hashedPassword = await bcrypt.hash("password", 10);
@@ -19,9 +42,14 @@ async function seed() {
   await prisma.user.create({
     data: {
       role: "SUPERADMIN",
-      firstName: "Paul",
-      lastName: "Morris",
-      email,
+      contact: {
+        create: {
+          firstName: "Paul",
+          lastName: "Morris",
+          email,
+          typeId: 4,
+        },
+      },
       password: {
         create: {
           hash: hashedPassword,
@@ -30,38 +58,44 @@ async function seed() {
     },
   });
 
-  const user = await prisma.user.create({
-    data: {
-      role: "USER",
-      email: "test@example.com",
-      password: {
-        create: {
-          hash: hashedPassword,
+  const [user, donorContact] = await Promise.all([
+    await prisma.user.create({
+      data: {
+        role: "USER",
+        contact: {
+          create: {
+            firstName: "Jessica",
+            lastName: "Caudle",
+            email: "test@example.com",
+            typeId: 4,
+          },
+        },
+        password: {
+          create: {
+            hash: hashedPassword,
+          },
         },
       },
-      firstName: "Jessica",
-      lastName: "Caudle",
-    },
-  });
+    }),
+    await prisma.contact.create({
+      data: {
+        firstName: "Joe",
+        lastName: "Donor",
+        email: "mr@donor.com",
+        phone: "555-555-5555",
+        typeId: 1,
+      },
+    }),
+  ]);
 
   const account = await prisma.account.create({
     data: {
-      name: "Jessica Caudle",
+      typeId: 3,
+      code: "C3001",
+      description: "Jessica Caudle - Ministry Fund",
       organizationId: org.id,
       userId: user.id,
     },
-  });
-
-  const donor = await prisma.donor.create({
-    data: {
-      name: "Mr. Donor",
-      email: "mr@donor.com",
-      phone: "555-555-5555",
-    },
-  });
-
-  await prisma.transactionItemType.createMany({
-    data: transactionItemTypes,
   });
 
   for (let i = 0; i < 10; i++) {
@@ -69,7 +103,6 @@ async function seed() {
       data: {
         amount: faker.number.int({ min: 1, max: 1000 }),
         date: faker.date.past(),
-        accountId: account.id,
         description: faker.lorem.word(),
         transactionItems: {
           createMany: {
@@ -78,13 +111,15 @@ async function seed() {
                 amount: faker.number.int({ min: 1, max: 1000 }),
                 description: faker.lorem.word(),
                 typeId: 1,
-                donorId: donor.id,
+                contactId: donorContact.id,
+                accountId: account.id,
               },
               {
                 amount: faker.number.int({ min: 1, max: 1000 }),
                 description: faker.lorem.word(),
                 typeId: 2,
-                donorId: donor.id,
+                contactId: donorContact.id,
+                accountId: account.id,
               },
             ],
           },
@@ -105,4 +140,27 @@ seed()
     void prisma.$disconnect();
   });
 
-const transactionItemTypes = [{ name: "Cash" }, { name: "Check" }, { name: "Credit Card" }, { name: "Other" }];
+const transactionItemMethods = [
+  { id: 1, name: "Cash" },
+  { id: 2, name: "Check" },
+  { id: 3, name: "Credit Card" },
+  { id: 4, name: "Other" },
+];
+const transactionItemTypes = [
+  { id: 1, name: "Donation" },
+  { id: 2, name: "Expense" },
+  { id: 3, name: "Compensation" },
+  { id: 4, name: "Grant" },
+  { id: 5, name: "Other" },
+];
+const contactTypes = [
+  { id: 1, name: "Donor" },
+  { id: 2, name: "Missionary" },
+  { id: 3, name: "Staff" },
+  { id: 4, name: "Admin" },
+];
+const accountTypes = [
+  { id: 1, name: "Operating" },
+  { id: 2, name: "Benevolence" },
+  { id: 3, name: "Ministry" },
+];

@@ -16,11 +16,11 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { requireUser } from "~/lib/session.server";
 import { getToday } from "~/lib/utils";
+import { ContactType } from "~/models/contact.server";
 
 const transactionItemSchema = z.object({
   typeId: z.string().min(1, { message: "Type required" }),
-  // accountId: z.string().cuid({ message: "Please select an account" }),
-  accountId: z.string(),
+  accountId: z.string().cuid({ message: "Account required" }),
   donorId: z.string().cuid({ message: "Invalid Donor ID" }).or(z.literal("")),
   amount: z.coerce
     .number()
@@ -40,16 +40,18 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["OWNER", "SUPERADMIN", "ACCOUNTANT"]);
-  const [donors, transactionItemTypes] = await Promise.all([
-    prisma.donor.findMany({
-      where: { isActive: true },
+  await requireUser(request, ["SUPERADMIN", "ADMIN"]);
+  const [donors, accounts, transactionItemMethods] = await Promise.all([
+    prisma.contact.findMany({
+      where: { typeId: ContactType.Donor },
     }),
-    prisma.transactionItemType.findMany(),
+    prisma.account.findMany(),
+    prisma.transactionItemMethod.findMany(),
   ]);
   return typedjson({
     donors,
-    transactionItemTypes,
+    accounts,
+    transactionItemMethods,
     ...setFormDefaults("transaction-form", {
       transactionItems: [{ id: nanoid() }],
     }),
@@ -57,7 +59,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -80,12 +82,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function NewUserPage() {
-  const { donors, transactionItemTypes } = useTypedLoaderData<typeof loader>();
+  const { donors, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "transaction-form" });
 
   return (
     <>
-      <PageHeader title="New Transaction" />
+      <PageHeader title="New Donation" />
       <PageContainer>
         <ValidatedForm
           onSubmit={(data) => console.log(data)}
@@ -96,7 +98,12 @@ export default function NewUserPage() {
         >
           <SubmitButton disabled={items.length === 0}>Create Transaction</SubmitButton>
           <div className="mt-8 space-y-8">
-            <Field name="date" label="Date" type="date" defaultValue={getToday()} />
+            <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
+              <div className="w-auto">
+                <Field name="date" label="Date" type="date" defaultValue={getToday()} />
+              </div>
+              <Field name="description" label="Description" />
+            </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {
                 return (
@@ -111,13 +118,13 @@ export default function NewUserPage() {
                     <input type="hidden" name={`transactionItems[${index}].id`} />
                     <input type="hidden" name={`transactionItems[${index}].typeId`} value="1" />
                     <fieldset className="space-y-3">
-                      <div className="flex w-full items-center gap-2">
+                      <div className="flex w-full items-start gap-2">
                         <Select
                           required
                           name={`transactionItems[${index}].methodId`}
                           label="Method"
                           placeholder="Select method"
-                          options={transactionItemTypes.map((t) => ({
+                          options={transactionItemMethods.map((t) => ({
                             value: t.id,
                             label: t.name,
                           }))}
@@ -127,10 +134,10 @@ export default function NewUserPage() {
                           name={`transactionItems[${index}].accountId`}
                           label="Account"
                           placeholder="Select account"
-                          options={[
-                            { value: "1", label: "General Fund" },
-                            { value: "2", label: "Building Fund" },
-                          ]}
+                          options={accounts.map((a) => ({
+                            value: a.id,
+                            label: `${a.code} - ${a.description}`,
+                          }))}
                         />
                         <Select
                           name={`transactionItems[${index}].donorId`}
@@ -138,11 +145,11 @@ export default function NewUserPage() {
                           placeholder="Select donor"
                           options={donors.map((c) => ({
                             value: c.id,
-                            label: c.name,
+                            label: `${c.firstName} ${c.lastName}`,
                           }))}
                         />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-2">
+                      <div className="grid grid-cols-4 items-start gap-2">
                         <div className="col-span-1">
                           <Field required name={`transactionItems[${index}].amount`} label="Amount" isCurrency />
                         </div>

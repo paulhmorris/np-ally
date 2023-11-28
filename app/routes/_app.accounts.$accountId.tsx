@@ -15,9 +15,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
-import { Checkbox } from "~/components/ui/checkbox";
 import { Field } from "~/components/ui/form";
-import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { prisma } from "~/integrations/prisma.server";
@@ -29,7 +27,6 @@ import { formatCurrency, useUser } from "~/lib/utils";
 const validator = withZod(
   z.object({
     name: z.string().min(1, { message: "Name is required" }),
-    isActive: z.literal("on").optional(),
     userId: z.string().optional(),
     organizationId: z.string().optional(),
     _action: z.enum(["delete", "update"]),
@@ -48,9 +45,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         orderBy: { date: "desc" },
         include: {
           transactionItems: {
-            select: {
-              donor: true,
-            },
+            select: { contact: true },
           },
         },
       },
@@ -69,12 +64,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction = () => [{ title: "User • Alliance 436" }];
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "OWNER", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
   const { _action, ...rest } = result.data;
-  const isActive = result.data.isActive === "on";
 
   const account = await prisma.account.findUnique({
     where: { id: params.accountId },
@@ -89,10 +83,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   const updatedAccount = await prisma.account.update({
     where: { id: params.accountId },
-    data: { ...rest, isActive },
+    data: { ...rest },
   });
 
-  return toast.json(request, { updatedAccount }, { variant: "default", title: "Account updated", description: "Great job." });
+  return toast.json(
+    request,
+    { updatedAccount },
+    { variant: "default", title: "Account updated", description: "Great job." },
+  );
 };
 
 export default function UserDetailsPage() {
@@ -102,7 +100,7 @@ export default function UserDetailsPage() {
 
   return (
     <>
-      <PageHeader title={account.name} description={account.id}>
+      <PageHeader title={account.code} description={account.id}>
         <div className="flex items-center gap-2">
           {sessionUser.id !== account.id && sessionUser.role === "SUPERADMIN" ? (
             <ConfirmDestructiveModal
@@ -123,13 +121,8 @@ export default function UserDetailsPage() {
 
       <PageContainer>
         <ValidatedForm id="accountForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-          <Field label="Name" id="name" name="name" required />
-          <div className="flex items-center space-x-2">
-            <Checkbox id="isActive" name="isActive" defaultChecked={account.isActive} />
-            <Label className="cursor-pointer" htmlFor="isActive">
-              Active
-            </Label>
-          </div>
+          <Field label="Code" id="name" name="code" required />
+          <Field label="Description" id="name" name="description" required />
 
           <ButtonGroup>
             <SubmitButton className="w-full" name="_action" value="update">
@@ -162,7 +155,9 @@ export default function UserDetailsPage() {
                         <TableCell>{dayjs(t.date).format("MM/DD/YYYY")}</TableCell>
                         <TableCell>{formatCurrency(t.amount, 2)}</TableCell>
                         <TableCell className="truncate">{t.description}</TableCell>
-                        <TableCell className="truncate">{t.transactionItems.find((ti) => ti.donor?.name)?.donor?.name}</TableCell>
+                        <TableCell className="truncate">
+                          {/* {t.transactionItems.find((ti) => ti.contact)} */}
+                        </TableCell>
                         <TableCell>
                           <Button asChild variant="link">
                             <Link to={`/transactions/${t.id}`}>View</Link>

@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import { Form, Link, NavLink } from "@remix-run/react";
 import { IconSettings } from "@tabler/icons-react";
 import type { ComponentPropsWithoutRef } from "react";
@@ -12,40 +11,58 @@ import { cn, useUser } from "~/lib/utils";
 export const links: ReadonlyArray<{
   name: string;
   href: string;
-  access: ReadonlyArray<UserRole>;
 }> = [
-  { name: "Accounts", href: "/accounts", access: ["ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"] },
-  { name: "Transactions", href: "/transactions", access: ["ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"] },
-  { name: "Donors", href: "/donors", access: ["ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"] },
-  { name: "Reimbursements", href: "/reimbursements", access: ["ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"] },
-  { name: "Users", href: "/users", access: ["ADMIN", "OWNER", "SUPERADMIN"] },
+  { name: "Add Donation", href: "/transactions/new" },
+  { name: "Accounts", href: "/accounts" },
+  { name: "Donors", href: "/donors" },
+  { name: "Reimbursements", href: "/reimbursements" },
+  { name: "Users", href: "/users" },
 ] as const;
 
 export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
 
   return (
-    <nav className={cn("hidden h-full shrink-0 grow-0 basis-64 flex-col space-x-2 border-r border-border bg-background px-6 py-10 sm:flex", props.className)}>
+    <nav
+      className={cn(
+        "hidden h-full shrink-0 grow-0 basis-64 flex-col space-x-2 border-r border-border bg-background px-6 py-10 sm:flex",
+        props.className,
+      )}
+    >
       <div className="pl-3">
         <Link to="/" className="inline-flex items-center space-x-2">
           <img src="/logo.jpg" alt="Logo" className="object-contain" />
         </Link>
       </div>
       <ul className="mt-12 space-x-0 space-y-1">
-        {links
-          .filter((link) => user?.role && link.access.includes(user.role))
-          .map((link) => {
-            return (
-              <li key={link.href}>
-                <NavLink to={link.href} className={({ isActive }) => cn("flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary", isActive && "bg-secondary")}>
-                  {link.name}
-                </NavLink>
-              </li>
-            );
-          })}
+        {links.map((link) => {
+          return (
+            <li key={link.href}>
+              <NavLink
+                to={link.href}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary",
+                    isActive && "bg-secondary",
+                  )
+                }
+              >
+                {link.name}
+              </NavLink>
+            </li>
+          );
+        })}
       </ul>
-      {["OWNER", "SUPERADMIN"].includes(user?.role) ? (
-        <NavLink to="/settings" className={({ isActive }) => cn("mt-auto flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary", isActive && "bg-secondary")}>
+      {["OWNER", "SUPERADMIN"].includes(user.role) ? (
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            cn(
+              "mt-auto flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary",
+              isActive && "bg-secondary",
+            )
+          }
+        >
           <IconSettings className="mr-2 h-5 w-5" />
           <span>Settings</span>
         </NavLink>
@@ -55,16 +72,16 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         <Link to={`/users/${user.id}`} className="flex gap-2">
           <Avatar>
             <AvatarFallback>
-              {user.firstName?.charAt(0).toUpperCase()}
-              {user.lastName?.charAt(0).toUpperCase()}
+              {user.contact.firstName?.charAt(0).toUpperCase()}
+              {user.contact.lastName?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div>
             <div className="text-sm font-medium text-secondary-foreground">
-              {user.firstName}
-              {user.lastName ? ` ${user.lastName}` : null}
+              {user.contact.firstName}
+              {user.contact.lastName ? ` ${user.contact.lastName}` : null}
             </div>
-            <div className="max-w-[150px] truncate text-xs text-muted-foreground">{user.email}</div>
+            <div className="max-w-[150px] truncate text-xs text-muted-foreground">{user.contact.email}</div>
           </div>
         </Link>
         <div className="flex items-center gap-2">

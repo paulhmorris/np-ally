@@ -14,7 +14,7 @@ export const meta: MetaFunction = () => [{ title: "Users • Alliance 436" }];
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireUser(request, ["SUPERADMIN"]);
   const users = await prisma.user.findMany({
-    include: { account: true },
+    include: { contact: true },
     orderBy: { createdAt: "desc" },
   });
   return typedjson({ users });

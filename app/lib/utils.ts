@@ -1,9 +1,8 @@
+import { Prisma } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import clsx, { ClassValue } from "clsx";
 import { useMemo } from "react";
 import { twMerge } from "tailwind-merge";
-
-import type { User } from "~/models/user.server";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -41,11 +40,11 @@ export function useMatchesData(id: string): Record<string, unknown> | undefined 
   return route?.data as Record<string, unknown>;
 }
 
-function isUser(user: unknown): user is User {
-  return user != null && typeof user === "object" && "email" in user && typeof user.email === "string";
+function isUser(user: unknown): user is Prisma.UserGetPayload<{ include: { contact: true } }> {
+  return user != null && typeof user === "object" && "contactId" in user && typeof user.contactId === "string";
 }
 
-export function useOptionalUser(): User | undefined {
+export function useOptionalUser(): Prisma.UserGetPayload<{ include: { contact: true } }> | undefined {
   const data = useMatchesData("root");
   if (!data || !isUser(data.user)) {
     return undefined;
@@ -53,7 +52,7 @@ export function useOptionalUser(): User | undefined {
   return data.user;
 }
 
-export function useUser(): User {
+export function useUser(): Prisma.UserGetPayload<{ include: { contact: true } }> {
   const maybeUser = useOptionalUser();
   if (!maybeUser) {
     throw new Error(

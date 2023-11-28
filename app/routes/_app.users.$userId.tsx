@@ -42,25 +42,25 @@ const passwordResetValidator = withZod(
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   invariant(params.userId, "userId not found");
 
   const user = await prisma.user.findUnique({
     where: { id: params.userId },
-    include: { account: true },
+    include: { contact: true },
   });
   if (!user) throw notFound({ message: "User not found" });
 
   return typedjson({
     user,
-    ...setFormDefaults("userForm", { ...user }),
+    ...setFormDefaults("user-form", { ...user }),
   });
 };
 
 export const meta: MetaFunction = () => [{ title: "User • Alliance 436" }];
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "OWNER", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
@@ -82,7 +82,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     data: rest,
   });
 
-  return toast.json(request, { user: updatedUser }, { variant: "default", title: "User updated", description: "Great job." });
+  return toast.json(
+    request,
+    { user: updatedUser },
+    { variant: "default", title: "User updated", description: "Great job." },
+  );
 };
 
 export default function UserDetailsPage() {
@@ -91,14 +95,15 @@ export default function UserDetailsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const fetcher = useFetcher();
 
-  const allowedRoles: Partial<Array<UserRole>> = sessionUser.role === "SUPERADMIN" ? ["USER", "ACCOUNTANT", "ADMIN", "OWNER", "SUPERADMIN"] : ["USER", "ACCOUNTANT", "ADMIN"];
-
   return (
     <>
-      <PageHeader title={`${user.firstName}${user.lastName ? " " + user.lastName : ""}`} description={user.id}>
+      <PageHeader
+        title={`${user.contact.firstName}${user.contact.lastName ? " " + user.contact.lastName : ""}`}
+        description={user.id}
+      >
         <div className="flex items-center gap-2">
           <ValidatedForm fetcher={fetcher} validator={passwordResetValidator} method="POST" action="/reset-password">
-            <input type="hidden" name="email" value={user.email} />
+            <input type="hidden" name="email" value={user.contact.email} />
             <SubmitButton variant="outline">Send Password Reset</SubmitButton>
           </ValidatedForm>
           {sessionUser.id !== user.id && sessionUser.role === "SUPERADMIN" ? (
@@ -113,7 +118,7 @@ export default function UserDetailsPage() {
       </PageHeader>
 
       <PageContainer>
-        <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
+        <ValidatedForm id="user-form" validator={validator} method="post" className="space-y-4 sm:max-w-md">
           <Field label="First name" id="firstName" name="firstName" required />
           <Field label="Last name" id="lastName" name="lastName" />
           <Field label="Email" id="email" name="email" />
@@ -122,7 +127,7 @@ export default function UserDetailsPage() {
             label="Role"
             placeholder="Select a role"
             options={Object.entries(UserRole)
-              .filter(([key]) => allowedRoles.includes(key.toUpperCase() as UserRole))
+              .filter(([key]) => key !== "SUPERADMIN")
               .map(([key, value]) => ({
                 value: key,
                 label: value,

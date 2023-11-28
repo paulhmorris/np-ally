@@ -15,27 +15,26 @@ import { Select } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { requireUser } from "~/lib/session.server";
+import { ContactType } from "~/models/contact.server";
 
 const validator = withZod(
-  z
-    .object({
-      firstName: z.string().min(1, { message: "First name is required" }),
-      lastName: z.string().optional(),
-      email: z.string().email({ message: "Invalid email address" }),
-      role: z.nativeEnum(UserRole),
-      accountId: z.string().optional(),
-    })
-    .refine((schema) => schema.role === "USER" && schema.accountId, {
-      message: "Users must be assigned to an account",
-      path: ["accountId"],
-    }),
+  z.object({
+    firstName: z.string().min(1, { message: "First name is required" }),
+    lastName: z.string().optional(),
+    email: z.string().email({ message: "Invalid email address" }),
+    role: z.nativeEnum(UserRole),
+    typeId: z.nativeEnum(ContactType),
+  }),
 );
 
 export const meta: MetaFunction = () => [{ title: "New User • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["OWNER", "SUPERADMIN"]);
-  return typedjson({ accounts: await prisma.account.findMany() });
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  return typedjson({
+    accounts: await prisma.account.findMany(),
+    contactTypes: await prisma.contactType.findMany(),
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -43,13 +42,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
-  const user = await prisma.user.create({ data: result.data });
+  const { role, ...contact } = result.data;
+
+  const user = await prisma.user.create({
+    data: {
+      role,
+      contact: { create: contact },
+    },
+  });
   return redirect(`/users/${user.id}`);
 };
 
 export default function NewUserPage() {
-  const { accounts } = useTypedLoaderData<typeof loader>();
-
+  const { contactTypes } = useTypedLoaderData<typeof loader>();
   return (
     <>
       <PageHeader title="New User" />
@@ -59,6 +64,15 @@ export default function NewUserPage() {
           <Field label="Last name" id="lastName" name="lastName" />
           <Field label="Email" id="email" name="email" />
           <Select
+            name="typeId"
+            label="Type"
+            placeholder="Select a type"
+            options={contactTypes.map((type) => ({
+              value: type.id,
+              label: type.name,
+            }))}
+          />
+          <Select
             name="role"
             label="Role"
             placeholder="Select a role"
@@ -67,7 +81,6 @@ export default function NewUserPage() {
               label: value,
             }))}
           />
-          <Select name="accountId" label="Account" placeholder="Select an account" options={accounts.map((c) => ({ value: c.id, label: c.name }))} />
           <div className="flex items-center gap-2">
             <SubmitButton>Create</SubmitButton>
             <Button type="reset" variant="outline">

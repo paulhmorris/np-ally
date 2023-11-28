@@ -10,11 +10,10 @@ generator client {
 model User {
   id             String          @id @default(cuid())
   role           UserRole        @default(USER)
-  email          String          @unique
-  firstName      String?
-  lastName       String?
   password       Password?
   passwordResets PasswordReset[]
+  contact        Contact         @relation(fields: [contactId], references: [id])
+  contactId      String          @unique
   account        Account?
   isActive       Boolean         @default(true)
 
@@ -25,8 +24,6 @@ model User {
 enum UserRole {
   USER
   ADMIN
-  OWNER
-  ACCOUNTANT
   SUPERADMIN
 }
 
@@ -35,6 +32,9 @@ model Password {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model PasswordReset {
@@ -60,14 +60,25 @@ model Organization {
 }
 
 model Account {
-  id             String        @id @default(cuid())
-  name           String
-  userId         String        @unique
-  user           User          @relation(fields: [userId], references: [id])
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  organizationId String?
-  transactions   Transaction[]
-  isActive       Boolean       @default(true)
+  id               String            @id @default(cuid())
+  code             String            @unique
+  description      String
+  user             User?             @relation(fields: [userId], references: [id])
+  userId           String?           @unique
+  organization     Organization?     @relation(fields: [organizationId], references: [id])
+  organizationId   String?
+  transactionItems TransactionItem[]
+  type             AccountType       @relation(fields: [typeId], references: [id])
+  typeId           Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AccountType {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  accounts Account[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -77,8 +88,6 @@ model Transaction {
   id               String            @id @default(cuid())
   date             DateTime
   amount           Int
-  account          Account           @relation(fields: [accountId], references: [id])
-  accountId        String
   description      String?
   transactionItems TransactionItem[]
 
@@ -87,33 +96,46 @@ model Transaction {
 }
 
 model TransactionItem {
-  id            String              @id @default(cuid())
+  id            String                 @id @default(cuid())
   amount        Int
+  transaction   Transaction            @relation(fields: [transactionId], references: [id])
   transactionId String
-  transaction   Transaction         @relation(fields: [transactionId], references: [id])
   description   String?
-  donorId       String?
-  donor         Donor?              @relation(fields: [donorId], references: [id])
-  type          TransactionItemType @relation(fields: [typeId], references: [id])
+  contact       Contact?               @relation(fields: [contactId], references: [id])
+  contactId     String?
+  method        TransactionItemMethod? @relation(fields: [methodId], references: [id])
+  methodId      Int?
+  type          TransactionItemType    @relation(fields: [typeId], references: [id])
   typeId        Int
+  account       Account                @relation(fields: [accountId], references: [id])
+  accountId     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TransactionItemMethod {
+  id               Int               @id @default(autoincrement())
+  name             String            @unique
+  transactionItems TransactionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model TransactionItemType {
-  id   Int    @id @default(autoincrement())
-  name String @unique
-
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id               Int               @id @default(autoincrement())
+  name             String            @unique
   transactionItems TransactionItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Reimbursement {
   id     String              @id @default(cuid())
   amount Int
-  status ReimbursementStatus
+  status ReimbursementStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -123,16 +145,48 @@ enum ReimbursementStatus {
   PENDING
   APPROVED
   REJECTED
+  VOID
 }
 
-model Donor {
+model Contact {
   id               String            @id @default(cuid())
-  name             String?
-  email            String?           @unique
+  email            String            @unique
+  firstName        String?
+  lastName         String?
   phone            String?
+  address          Address?
+  isActive         Boolean           @default(true)
+  type             ContactType       @relation(fields: [typeId], references: [id])
+  typeId           Int
+  user             User?
+  userId           String?
   transactionItems TransactionItem[]
 
-  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContactType {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  contacts Contact[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id        String  @id @default(cuid())
+  street    String
+  street2   String?
+  city      String
+  state     String
+  zip       String
+  country   String
+  contact   Contact @relation(fields: [contactId], references: [id])
+  contactId String  @unique
+  isActive  Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

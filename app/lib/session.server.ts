@@ -55,7 +55,7 @@ export async function requireUserId(request: Request, redirectTo: string = new U
 }
 
 export async function requireUser(request: Request, allowedRoles?: Array<UserRole>) {
-  const defaultAllowedRoles: Array<UserRole> = ["USER", "ADMIN", "ACCOUNTANT", "OWNER", "SUPERADMIN"];
+  const defaultAllowedRoles: Array<UserRole> = ["USER", "ADMIN", "SUPERADMIN"];
   const userId = await requireUserId(request);
 
   const user = await getUserById(userId);
@@ -68,7 +68,17 @@ export async function requireUser(request: Request, allowedRoles?: Array<UserRol
   throw await logout(request);
 }
 
-export async function createUserSession({ request, userId, remember, redirectTo }: { request: Request; userId: string; remember: boolean; redirectTo: string }) {
+export async function createUserSession({
+  request,
+  userId,
+  remember,
+  redirectTo,
+}: {
+  request: Request;
+  userId: string;
+  remember: boolean;
+  redirectTo: string;
+}) {
   const session = await getSession(request);
   session.set(USER_SESSION_KEY, userId);
   return redirect(redirectTo, {

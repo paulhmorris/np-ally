@@ -1,10 +1,15 @@
-import type { PasswordReset, User } from "@prisma/client";
-import { Resend } from "resend";
+import type { Contact, PasswordReset } from "@prisma/client";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { resend } from "~/integrations/resend.server";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function sendPasswordResetEmail({ email, token }: { email: User["email"]; token: PasswordReset["token"] }) {
+export async function sendPasswordResetEmail({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  email,
+  token,
+}: {
+  email: NonNullable<Contact["email"]>;
+  token: PasswordReset["token"];
+}) {
   if (!process.env.ADMIN_URL) throw new Error("ADMIN_URL is not set");
   const url = new URL(process.env.ADMIN_URL);
   url.pathname = "/passwords/new";

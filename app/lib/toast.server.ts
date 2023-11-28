@@ -9,6 +9,7 @@ export function setGlobalToast(session: Session, toast: Toast) {
 }
 
 export function getGlobalToast(session: Session): Toast | null {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return (session.get("globalMessage") as Toast) || null;
 }
 

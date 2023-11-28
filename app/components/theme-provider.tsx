@@ -20,11 +20,17 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
-export function ThemeProvider({ children, defaultTheme = "system", storageKey = "cosmic-theme", ...props }: ThemeProviderProps) {
+export function ThemeProvider({
+  children,
+  defaultTheme = "system",
+  storageKey = "cosmic-theme",
+  ...props
+}: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>("system");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     setTheme(() => (localStorage.getItem(storageKey) as Theme) || defaultTheme);
 
     const root = window.document.documentElement;

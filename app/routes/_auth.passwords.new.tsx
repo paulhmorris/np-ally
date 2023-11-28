@@ -59,27 +59,43 @@ export async function action({ request }: ActionFunctionArgs) {
   const { oldPassword, newPassword, token } = result.data;
   const reset = await getPasswordResetByToken({ token });
   if (!reset) {
-    return toast.json(request, {}, { variant: "destructive", title: "Token not found", description: "Please try again." });
+    return toast.json(
+      request,
+      {},
+      { variant: "destructive", title: "Token not found", description: "Please try again." },
+    );
   }
 
   // Check expiration
   if (reset.expiresAt < new Date()) {
-    return toast.json(request, {}, { variant: "destructive", title: "Token expired", description: "Please try again." });
+    return toast.json(
+      request,
+      {},
+      { variant: "destructive", title: "Token expired", description: "Please try again." },
+    );
   }
 
   // Check token against param
   if (token !== tokenParam) {
-    return toast.json(request, { success: false }, { variant: "destructive", title: "Invalid token", description: "Please try again." });
+    return toast.json(
+      request,
+      { success: false },
+      { variant: "destructive", title: "Invalid token", description: "Please try again." },
+    );
   }
 
   // Check user
   const userFromToken = await getUserById(reset.userId);
   if (!userFromToken) {
-    return toast.json(request, { success: false }, { variant: "destructive", title: "User not found", description: "Please try again." });
+    return toast.json(
+      request,
+      { success: false },
+      { variant: "destructive", title: "User not found", description: "Please try again." },
+    );
   }
 
   // Check old password is correct
-  const user = await verifyLogin(userFromToken.email, oldPassword);
+  const user = await verifyLogin(userFromToken.contact.email, oldPassword);
   if (!user) {
     return validationError({
       fieldErrors: {
@@ -112,7 +128,13 @@ export default function NewPassword() {
           <input type="hidden" name="token" value={searchParams.get("token") ?? ""} />
           <Field label="Old password" name="oldPassword" type="password" autoComplete="current-password" required />
           <Field label="New Password" name="newPassword" type="password" autoComplete="new-password" required />
-          <Field label="Confirm New Password" name="confirmation" type="password" autoComplete="new-password" required />
+          <Field
+            label="Confirm New Password"
+            name="confirmation"
+            type="password"
+            autoComplete="new-password"
+            required
+          />
           <SubmitButton>Reset Password</SubmitButton>
         </ValidatedForm>
       </div>

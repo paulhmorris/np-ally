@@ -108,7 +108,10 @@ async function run() {
       // 2. tell Remix that this app server is now up-to-date and ready
       void broadcastDevReady(build);
     }
-    chokidar.watch(VERSION_PATH, { ignoreInitial: true }).on("add", handleServerUpdate).on("change", handleServerUpdate);
+    chokidar
+      .watch(VERSION_PATH, { ignoreInitial: true })
+      .on("add", handleServerUpdate)
+      .on("change", handleServerUpdate);
 
     // wrap request handler to make sure its recreated with the latest build for every request
     return async (req, res, next) => {
