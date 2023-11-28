@@ -12,8 +12,8 @@ model User {
   role           UserRole        @default(USER)
   password       Password?
   passwordResets PasswordReset[]
-  contact        Contact?
-  contactId      String?         @unique
+  contact        Contact         @relation(fields: [contactId], references: [id])
+  contactId      String          @unique
   account        Account?
   isActive       Boolean         @default(true)
 
@@ -145,27 +145,31 @@ enum ReimbursementStatus {
   PENDING
   APPROVED
   REJECTED
+  VOID
 }
 
 model Contact {
   id               String            @id @default(cuid())
+  email            String            @unique
   firstName        String?
   lastName         String?
-  email            String?           @unique
   phone            String?
   address          Address?
   isActive         Boolean           @default(true)
+  type             ContactType       @relation(fields: [typeId], references: [id])
+  typeId           Int
+  user             User?
+  userId           String?
   transactionItems TransactionItem[]
-  userId           String?           @unique
-  user             User?             @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model ContactType {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  contacts Contact[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

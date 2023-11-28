@@ -7,15 +7,31 @@ const prisma = new PrismaClient();
 async function seed() {
   // cleanup the existing database
   await Promise.all([
+    await prisma.transactionItem.deleteMany(),
+    await prisma.transaction.deleteMany(),
     await prisma.user.deleteMany(),
     await prisma.account.deleteMany(),
     await prisma.contact.deleteMany(),
-    await prisma.transaction.deleteMany(),
     await prisma.organization.deleteMany(),
     await prisma.transactionItemType.deleteMany(),
-    await prisma.transactionItemMethod.deleteMany(),
     await prisma.contactType.deleteMany(),
     await prisma.accountType.deleteMany(),
+    await prisma.transactionItemMethod.deleteMany(),
+  ]);
+
+  await Promise.all([
+    await prisma.transactionItemType.createMany({
+      data: transactionItemTypes,
+    }),
+    await prisma.transactionItemMethod.createMany({
+      data: transactionItemMethods,
+    }),
+    await prisma.contactType.createMany({
+      data: contactTypes,
+    }),
+    await prisma.accountType.createMany({
+      data: accountTypes,
+    }),
   ]);
 
   const email = "paul@remix.run";
@@ -31,6 +47,7 @@ async function seed() {
           firstName: "Paul",
           lastName: "Morris",
           email,
+          typeId: 4,
         },
       },
       password: {
@@ -50,6 +67,7 @@ async function seed() {
             firstName: "Jessica",
             lastName: "Caudle",
             email: "test@example.com",
+            typeId: 4,
           },
         },
         password: {
@@ -65,22 +83,8 @@ async function seed() {
         lastName: "Donor",
         email: "mr@donor.com",
         phone: "555-555-5555",
+        typeId: 1,
       },
-    }),
-  ]);
-
-  await Promise.all([
-    await prisma.transactionItemType.createMany({
-      data: transactionItemTypes,
-    }),
-    await prisma.transactionItemMethod.createMany({
-      data: transactionItemMethods,
-    }),
-    await prisma.contactType.createMany({
-      data: contactTypes,
-    }),
-    await prisma.accountType.createMany({
-      data: accountTypes,
     }),
   ]);
 
@@ -135,13 +139,27 @@ seed()
     void prisma.$disconnect();
   });
 
-const transactionItemMethods = [{ name: "Cash" }, { name: "Check" }, { name: "Credit Card" }, { name: "Other" }];
-const transactionItemTypes = [
-  { name: "Donation" },
-  { name: "Expense" },
-  { name: "Compensation" },
-  { name: "Grant" },
-  { name: "Other" },
+const transactionItemMethods = [
+  { id: 1, name: "Cash" },
+  { id: 2, name: "Check" },
+  { id: 3, name: "Credit Card" },
+  { id: 4, name: "Other" },
 ];
-const contactTypes = [{ name: "Donor" }, { name: "Missionary" }, { name: "Staff" }];
-const accountTypes = [{ name: "Operating" }, { name: "Benevolence" }, { name: "Ministry" }];
+const transactionItemTypes = [
+  { id: 1, name: "Donation" },
+  { id: 2, name: "Expense" },
+  { id: 3, name: "Compensation" },
+  { id: 4, name: "Grant" },
+  { id: 5, name: "Other" },
+];
+const contactTypes = [
+  { id: 1, name: "Donor" },
+  { id: 2, name: "Missionary" },
+  { id: 3, name: "Staff" },
+  { id: 4, name: "Admin" },
+];
+const accountTypes = [
+  { id: 1, name: "Operating" },
+  { id: 2, name: "Benevolence" },
+  { id: 3, name: "Ministry" },
+];
