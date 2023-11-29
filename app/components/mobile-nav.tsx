@@ -2,12 +2,12 @@ import { Form, Link, NavLink } from "@remix-run/react";
 import { IconMenuDeep } from "@tabler/icons-react";
 import { useState, type ComponentPropsWithoutRef } from "react";
 
-import { links } from "~/components/desktop-nav";
 import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Separator } from "~/components/ui/separator";
+import { navLinks } from "~/lib/constants";
 import { cn, useUser } from "~/lib/utils";
 
 export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
@@ -30,7 +30,7 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
         <DialogContent className="top-0 max-w-full translate-y-0">
           <DialogTitle className="sr-only">Navigation links</DialogTitle>
           <ul className="mt-4 space-x-0 space-y-1">
-            {links.map((link) => {
+            {navLinks.map((link) => {
               return (
                 <li key={link.href}>
                   <NavLink

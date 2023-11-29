@@ -29,6 +29,8 @@
     "/postgres-data"
   ],
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.461.0",
+    "@aws-sdk/s3-request-presigner": "^3.461.0",
     "@conform-to/react": "^0.9.1",
     "@conform-to/zod": "^0.9.1",
     "@fontsource-variable/dm-sans": "^5.0.3",

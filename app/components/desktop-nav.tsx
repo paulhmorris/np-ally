@@ -6,18 +6,8 @@ import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
+import { navLinks } from "~/lib/constants";
 import { cn, useUser } from "~/lib/utils";
-
-export const links: ReadonlyArray<{
-  name: string;
-  href: string;
-}> = [
-  { name: "Add Donation", href: "/transactions/new" },
-  { name: "Accounts", href: "/accounts" },
-  { name: "Donors", href: "/donors" },
-  { name: "Reimbursements", href: "/reimbursements" },
-  { name: "Users", href: "/users" },
-] as const;
 
 export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
@@ -35,7 +25,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         </Link>
       </div>
       <ul className="mt-12 space-x-0 space-y-1">
-        {links.map((link) => {
+        {navLinks.map((link) => {
           return (
             <li key={link.href}>
               <NavLink

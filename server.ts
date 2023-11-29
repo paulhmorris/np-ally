@@ -14,6 +14,9 @@ import express from "express";
 import morgan from "morgan";
 import sourceMapSupport from "source-map-support";
 
+import { validateEnv } from "~/lib/env.server";
+
+validateEnv();
 sourceMapSupport.install();
 installGlobals();
 void run();
