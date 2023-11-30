@@ -14,9 +14,9 @@ import { Field } from "~/components/ui/form";
 import { Select } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
+import { ContactType } from "~/lib/constants";
 import { requireUser } from "~/lib/session.server";
 import { getToday } from "~/lib/utils";
-import { ContactType } from "~/models/contact.server";
 
 const transactionItemSchema = z.object({
   typeId: z.string().min(1, { message: "Type required" }),

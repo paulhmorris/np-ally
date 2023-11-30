@@ -8,14 +8,16 @@ generator client {
 }
 
 model User {
-  id             String          @id @default(cuid())
-  role           UserRole        @default(USER)
-  password       Password?
-  passwordResets PasswordReset[]
-  contact        Contact         @relation(fields: [contactId], references: [id])
-  contactId      String          @unique
-  account        Account?
-  isActive       Boolean         @default(true)
+  id                    String                 @id @default(cuid())
+  role                  UserRole               @default(USER)
+  password              Password?
+  passwordResets        PasswordReset[]
+  contact               Contact                @relation(fields: [contactId], references: [id])
+  contactId             String                 @unique
+  account               Account?
+  isActive              Boolean                @default(true)
+  receipts              Receipt[]
+  reimbursementRequests ReimbursementRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -132,16 +134,35 @@ model TransactionItemType {
   updatedAt DateTime @updatedAt
 }
 
-model Reimbursement {
-  id     String              @id @default(cuid())
-  amount Int
-  status ReimbursementStatus @default(PENDING)
+model ReimbursementRequest {
+  id          String                     @id @default(cuid())
+  amount      Int
+  date        DateTime
+  description String?
+  user        User                       @relation(fields: [userId], references: [id])
+  userId      String
+  status      ReimbursementRequestStatus @default(PENDING)
+  receipts    Receipt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Contact   Contact? @relation(fields: [contactId], references: [id])
+  contactId String?
+}
+
+model Receipt {
+  id                    String                 @id @default(cuid())
+  s3Key                 String
+  title                 String
+  user                  User                   @relation(fields: [userId], references: [id])
+  userId                String
+  reimbursementRequests ReimbursementRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-enum ReimbursementStatus {
+enum ReimbursementRequestStatus {
   PENDING
   APPROVED
   REJECTED
@@ -162,8 +183,9 @@ model Contact {
   userId           String?
   transactionItems TransactionItem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  ReimbursementRequest ReimbursementRequest[]
 }
 
 model ContactType {

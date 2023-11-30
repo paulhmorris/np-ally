@@ -61,6 +61,12 @@ module.exports = {
       rules: {
         "@typescript-eslint/array-type": ["error", { default: "generic" }],
         "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_" }],
+        "@typescript-eslint/no-misused-promises": [
+          "error",
+          {
+            checksVoidReturn: false,
+          },
+        ],
         "@typescript-eslint/no-unnecessary-condition": "warn",
         "import/order": [
           "error",

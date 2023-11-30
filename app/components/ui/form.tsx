@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { cn } from "~/lib/utils";
 
 export type ListOfErrors = Array<null | string | undefined> | null | undefined;
 
@@ -25,29 +26,29 @@ export function ErrorList({ errors, id }: { errors?: ListOfErrors; id?: string }
 
 interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   name: string;
-  errors?: ListOfErrors;
-  isCurrency?: boolean;
   label: string;
+  isCurrency?: boolean;
+  formId?: string;
+  hideLabel?: boolean;
 }
-export function Field({ isCurrency = false, name, label, ...props }: FieldProps) {
+export function Field({ isCurrency = false, hideLabel = false, name, label, formId, className, ...props }: FieldProps) {
   const fallbackId = useId();
-  const { error, getInputProps } = useField(name);
+  const { error, getInputProps } = useField(name, { formId });
 
   const id = props.id ?? fallbackId;
 
   return (
-    <div className="w-full space-y-1">
-      <Label htmlFor={id}>
-        <Label htmlFor={id}>
-          <span>{label}</span>
-          <span className="ml-0.5 font-normal text-destructive">{props.required ? "*" : ""}</span>
-        </Label>
+    <div className={cn("w-full", !hideLabel && "space-y-1")}>
+      <Label htmlFor={id} className={cn(hideLabel && "sr-only")}>
+        <span>{label}</span>
+        <span className="ml-0.5 font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>
       <Input
         id={id}
         inputMode={isCurrency ? "decimal" : undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={`${id}-error`}
+        className={cn(error && "border-destructive", className)}
         {...getInputProps()}
         {...props}
       />

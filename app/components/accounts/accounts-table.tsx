@@ -9,7 +9,7 @@ import { formatCurrency } from "~/lib/utils";
 export function AccountsTable({
   accounts,
 }: {
-  accounts: Array<Prisma.AccountGetPayload<{ include: { transactions: true } }>>;
+  accounts: Array<Prisma.AccountGetPayload<{ include: { transactionItems: true } }>>;
 }) {
   return (
     <Table>
@@ -24,7 +24,7 @@ export function AccountsTable({
       </TableHeader>
       <TableBody>
         {accounts.map((a) => {
-          const balance = a.transactions.reduce((acc, t) => acc + t.amount, 0);
+          const balance = a.transactionItems.reduce((acc, t) => acc + t.amount, 0);
           return (
             <TableRow key={a.id}>
               <TableCell>{a.code}</TableCell>

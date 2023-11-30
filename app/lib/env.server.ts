@@ -8,9 +8,10 @@ const envValidation = z.object({
   SESSION_SECRET: z.string().min(1),
 
   // Cloudflare
-  R2_BUCKET_URL: z.string().min(1),
-  R2_ACCESS_KEY_ID: z.string().min(1),
-  R2_SECRET_ACCESS_KEY: z.string().min(1),
+  AWS_BUCKET_NAME: z.string().min(1),
+  AWS_BUCKET_URL: z.string().min(1),
+  AWS_ACCESS_KEY_ID: z.string().min(1),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1),
 
   // Database
   DATABASE_URL: z.string().min(1),
