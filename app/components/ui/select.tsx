@@ -5,7 +5,7 @@ import * as React from "react";
 import { useField } from "remix-validated-form";
 
 import { Label } from "~/components/ui/label";
-import { cn, normalizeEnum } from "~/lib/utils";
+import { cn } from "~/lib/utils";
 
 const Select = SelectPrimitive.Root;
 
@@ -107,7 +107,7 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   placeholder: string;
   required?: boolean;
   id?: string;
-  options?: Array<{ value: string | number | null; label: string | null }>;
+  options?: Array<{ value: string | number | null; label: string | JSX.Element | null }>;
   children?: React.ReactNode;
 }
 
@@ -135,7 +135,7 @@ function FormSelect(props: Props) {
 
                 return (
                   <SelectItem key={o.value} value={o.value.toString()}>
-                    {normalizeEnum(o.label)}
+                    {o.label}
                   </SelectItem>
                 );
               })

@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import dayjs from "dayjs";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
@@ -93,7 +94,14 @@ export default function NewUserPage() {
               placeholder="Select a receipt"
               options={receipts.map((c) => ({
                 value: c.id,
-                label: `${c.title} - (uploaded ${c.createdAt.toLocaleDateString()})`,
+                label: (
+                  <span>
+                    {c.title}{" "}
+                    <span className="text-xs text-muted-foreground">
+                      uploaded {dayjs(c.createdAt).format("MMM D, YYYY h:mm A")}
+                    </span>
+                  </span>
+                ),
               }))}
             />
           </div>

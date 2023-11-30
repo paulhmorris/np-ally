@@ -1,9 +1,12 @@
+import { useNavigate } from "@remix-run/react";
 import { IconCircleCheckFilled, IconCloudUpload } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
 
 export function FileUploader() {
+  const navigate = useNavigate();
+
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState({
     uploading: false,
@@ -67,6 +70,7 @@ export function FileUploader() {
         return;
       }
 
+      navigate(".", { replace: true });
       setUploadStatus((s) => ({ ...s, success: true, error: "" }));
       setFile(null);
     } catch (error) {
