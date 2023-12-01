@@ -14,57 +14,71 @@ import { Select } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
-import { requireUser, requireUserId } from "~/lib/session.server";
+import { TransactionItemMethod } from "~/lib/constants";
+import { requireUser } from "~/lib/session.server";
 import { getToday, useUser } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
-    amount: z.coerce.number().positive(),
-    description: z.string().optional(),
-    contactId: z.string().cuid(),
     date: z.coerce.date(),
-    receipts: z.array(z.string()),
+    vendor: z.string().optional(),
+    description: z.string().optional(),
+    amount: z.coerce.number().positive(),
+    accountId: z.string().cuid(),
+    receiptId: z.string().cuid().optional(),
+    methodId: z
+      .string()
+      .transform((v) => Number(v))
+      .pipe(z.nativeEnum(TransactionItemMethod)),
   }),
 );
 
 export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const userId = await requireUserId(request);
-  const receipts = await prisma.receipt.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-  });
-  return typedjson({ receipts });
+  const user = await requireUser(request);
+  const [receipts, methods, accounts] = await Promise.all([
+    prisma.receipt.findMany({
+      // Admins can see all receipts, users can only see their own
+      where: {
+        userId: user.role === "USER" ? user.id : undefined,
+        reimbursementRequests: { none: {} },
+      },
+      include: { user: { select: { contact: { select: { email: true } } } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.transactionItemMethod.findMany(),
+    prisma.account.findMany({ where: { userId: user.id }, include: { type: true } }),
+  ]);
+  return typedjson({ receipts, methods, accounts });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  const user = await requireUser(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
-  console.log(result.data);
 
-  // const { transactionItems, ...rest } = result.data;
-  // const trx = await prisma.transaction.create({
-  //   data: {
-  //     ...rest,
-  //     transactionItems: {
-  //       createMany: {
-  //         data: transactionItems,
-  //       },
-  //     },
-  //   },
-  // });
-  // return redirect(`/transactions/${trx.id}`);
+  const { receiptId, ...data } = result.data;
 
-  return typedjson({});
+  const reimbursementRequest = await prisma.reimbursementRequest.create({
+    data: {
+      ...data,
+      userId: user.id,
+      status: "PENDING",
+      receipts: {
+        connect: { id: receiptId },
+      },
+    },
+  });
+
+  return typedjson({ reimbursementRequest });
 };
 
 export default function NewUserPage() {
-  const { receipts } = useTypedLoaderData<typeof loader>();
-  const { contactId } = useUser();
+  const { receipts, methods, accounts } = useTypedLoaderData<typeof loader>();
+  const user = useUser();
 
   return (
     <>
@@ -74,31 +88,58 @@ export default function NewUserPage() {
           Upload Receipt
         </h2>
         <FileUploader />
+        <p className="mt-1 text-xs text-muted-foreground">
+          After uploading, your file will appear in the dropdown below.
+        </p>
         <Separator className="my-8" />
 
-        <ValidatedForm method="post" validator={validator} className="space-y-6 sm:max-w-xl">
-          <input type="hidden" name="contactId" value={contactId} />
+        <ValidatedForm method="post" validator={validator} className="space-y-4 sm:max-w-xl">
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
-            <div className="w-auto">
-              <Field name="date" label="Date" type="date" defaultValue={getToday()} required />
-            </div>
+            <Field name="vendor" label="Vendor" />
             <Field name="description" label="Description" />
           </div>
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <div className="w-auto">
+              <Field name="date" label="Date" type="date" defaultValue={getToday()} required />
+            </div>
+            <div className="w-auto min-w-[3rem]">
               <Field name="amount" label="Amount" required />
             </div>
             <Select
-              name="receipt"
+              required
+              name="methodId"
+              label="Method"
+              placeholder="Select method"
+              options={methods.map((t) => ({
+                value: t.id,
+                label: t.name,
+              }))}
+            />
+          </div>
+          <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
+            <Select
+              required
+              name="accountId"
+              label="Account"
+              placeholder="Select account"
+              options={accounts.map((t) => ({
+                value: t.id,
+                label: `${t.code} - ${t.type.name}`,
+              }))}
+            />
+            <Select
+              name="receiptId"
               label="Receipt"
               placeholder="Select a receipt"
-              options={receipts.map((c) => ({
-                value: c.id,
+              className="max-w-[400px]"
+              options={receipts.map((r) => ({
+                value: r.id,
                 label: (
-                  <span>
-                    {c.title}{" "}
-                    <span className="text-xs text-muted-foreground">
-                      uploaded {dayjs(c.createdAt).format("MMM D, YYYY h:mm A")}
+                  <span className="inline-block">
+                    {r.title}{" "}
+                    <span className="inline-block text-xs text-muted-foreground">
+                      {dayjs(r.createdAt).format("MM/D h:mm A")}
+                      {user.role !== "USER" ? ` by ${r.user.contact.email}` : null}
                     </span>
                   </span>
                 ),

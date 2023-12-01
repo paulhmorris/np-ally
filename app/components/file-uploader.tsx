@@ -1,11 +1,13 @@
-import { useNavigate } from "@remix-run/react";
+import { useRevalidator } from "@remix-run/react";
 import { IconCircleCheckFilled, IconCloudUpload } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 
 export function FileUploader() {
-  const navigate = useNavigate();
+  const revalidator = useRevalidator();
 
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState({
@@ -70,7 +72,7 @@ export function FileUploader() {
         return;
       }
 
-      navigate(".", { replace: true });
+      revalidator.revalidate();
       setUploadStatus((s) => ({ ...s, success: true, error: "" }));
       setFile(null);
     } catch (error) {
@@ -94,15 +96,15 @@ export function FileUploader() {
         aria-describedby="receipts-label upload-error"
       >
         <div className="flex h-10 w-auto items-center">
-          <label htmlFor="file" className="sr-only">
+          <Label htmlFor="file" className="sr-only">
             Receipt
-          </label>
-          <input
+          </Label>
+          <Input
             id="file"
             name="file"
             type="file"
+            className="cursor-pointer hover:bg-muted"
             disabled={uploadStatus.uploading || uploadStatus.success}
-            className="flex h-10 w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             onChange={(e) => {
               const files = e.target.files;
               if (files) {
