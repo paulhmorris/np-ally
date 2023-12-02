@@ -4,17 +4,20 @@ import { TypeOf, z } from "zod";
 
 const envValidation = z.object({
   // Remix
-  NODE_ENV: z.string().min(1),
-  SESSION_SECRET: z.string().min(1),
+  NODE_ENV: z.enum(["development", "production", "test"]),
+  SESSION_SECRET: z.string().min(16),
 
   // Cloudflare
   AWS_BUCKET_NAME: z.string().min(1),
-  AWS_BUCKET_URL: z.string().min(1),
+  AWS_BUCKET_URL: z.string().url(),
   AWS_ACCESS_KEY_ID: z.string().min(1),
   AWS_SECRET_ACCESS_KEY: z.string().min(1),
 
   // Database
   DATABASE_URL: z.string().min(1),
+
+  // Sentry
+  SENTRY_DSN: z.string().url(),
 });
 
 declare global {
