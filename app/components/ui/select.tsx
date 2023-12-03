@@ -1,5 +1,5 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { IconCheck, IconChevronCompactDown, IconChevronCompactUp, IconChevronDown } from "@tabler/icons-react";
+import { IconCheck, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import * as React from "react";
 
 import { cn } from "~/lib/utils";
@@ -17,14 +17,14 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      "flex h-10 w-full items-center justify-between truncate rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className,
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <IconChevronCompactDown className="h-4 w-4 opacity-50" />
+      <IconChevronDown className="h-4 w-4 opacity-50" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -39,7 +39,7 @@ const SelectScrollUpButton = React.forwardRef<
     className={cn("flex cursor-default items-center justify-center py-1", className)}
     {...props}
   >
-    <IconChevronCompactUp className="h-4 w-4" />
+    <IconChevronUp className="h-4 w-4" />
   </SelectPrimitive.ScrollUpButton>
 ));
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;

@@ -1,4 +1,4 @@
-import { useRevalidator } from "@remix-run/react";
+import { useNavigate } from "@remix-run/react";
 import { IconCircleCheckFilled, IconCloudUpload } from "@tabler/icons-react";
 import { useState } from "react";
 
@@ -7,7 +7,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
 export function FileUploader() {
-  const revalidator = useRevalidator();
+  const navigate = useNavigate();
 
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState({
@@ -72,7 +72,7 @@ export function FileUploader() {
         return;
       }
 
-      revalidator.revalidate();
+      navigate(".", { replace: true });
       setUploadStatus((s) => ({ ...s, success: true, error: "" }));
       setFile(null);
     } catch (error) {
@@ -92,7 +92,7 @@ export function FileUploader() {
         method="post"
         onSubmit={handleFileUpload}
         encType="multipart/form-data"
-        className="flex items-start gap-2"
+        className="flex items-start gap-4"
         aria-describedby="receipts-label upload-error"
       >
         <div className="flex h-10 w-auto items-center">

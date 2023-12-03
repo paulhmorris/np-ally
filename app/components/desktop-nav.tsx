@@ -1,6 +1,7 @@
-import { Form, Link, NavLink } from "@remix-run/react";
-import { IconWorld } from "@tabler/icons-react";
+import { Form, Link, NavLink, useNavigation } from "@remix-run/react";
+import { IconLoader, IconWorld } from "@tabler/icons-react";
 import type { ComponentPropsWithoutRef } from "react";
+import { useSpinDelay } from "spin-delay";
 
 import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
@@ -10,6 +11,8 @@ import { cn, useUser } from "~/lib/utils";
 
 export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
+  const navigation = useNavigation();
+  const showSpinner = useSpinDelay(navigation.state !== "idle");
 
   return (
     <nav
@@ -22,6 +25,12 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         <Link to="/" className="inline-flex items-center space-x-2 text-sm font-bold text-primary">
           <IconWorld className="h-6 w-6" />
           <span>Alliance 436</span>
+          <IconLoader
+            className={cn(
+              showSpinner ? "animate-spin opacity-100" : "opacity-0",
+              "ml-2 text-muted-foreground transition-opacity",
+            )}
+          />
         </Link>
       </div>
       <ul className="mt-12 space-x-0 space-y-1">
