@@ -9,8 +9,7 @@ import { z } from "zod";
 import { FileUploader } from "~/components/file-uploader";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
-import { Field } from "~/components/ui/form";
-import { Select } from "~/components/ui/select";
+import { Field, FormSelect } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
@@ -105,7 +104,7 @@ export default function NewUserPage() {
             <div className="w-auto min-w-[3rem]">
               <Field name="amount" label="Amount" required />
             </div>
-            <Select
+            <FormSelect
               required
               name="methodId"
               label="Method"
@@ -117,7 +116,7 @@ export default function NewUserPage() {
             />
           </div>
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
-            <Select
+            <FormSelect
               required
               name="accountId"
               label="Account"
@@ -127,7 +126,7 @@ export default function NewUserPage() {
                 label: `${t.code} - ${t.type.name}`,
               }))}
             />
-            <Select
+            <FormSelect
               name="receiptId"
               label="Receipt"
               placeholder="Select a receipt"

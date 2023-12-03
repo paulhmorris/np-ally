@@ -15,8 +15,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
-import { Field } from "~/components/ui/form";
-import { Select } from "~/components/ui/select";
+import { Field, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
@@ -122,7 +121,7 @@ export default function UserDetailsPage() {
           <Field label="First name" id="firstName" name="firstName" required />
           <Field label="Last name" id="lastName" name="lastName" />
           <Field label="Email" id="email" name="email" />
-          <Select
+          <FormSelect
             name="role"
             label="Role"
             placeholder="Select a role"

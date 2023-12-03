@@ -1,11 +1,9 @@
-import { FormConfig, useForm as useConform } from "@conform-to/react";
-import { getFieldsetConstraint, parse } from "@conform-to/zod";
 import { useId } from "react";
 import { useField } from "remix-validated-form";
-import { z } from "zod";
 
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { cn } from "~/lib/utils";
 
 export type ListOfErrors = Array<null | string | undefined> | null | undefined;
@@ -61,13 +59,52 @@ export function Field({ isCurrency = false, hideLabel = false, name, label, form
   );
 }
 
-export function useForm<S extends z.ZodTypeAny>({ schema, ...config }: { schema: S } & FormConfig<z.infer<S>>) {
-  return useConform<z.infer<S>>({
-    constraint: getFieldsetConstraint(schema),
-    onValidate({ formData }) {
-      return parse(formData, { schema });
-    },
-    shouldRevalidate: "onSubmit",
-    ...config,
-  });
+export interface FormSelectProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  name: string;
+  label: string;
+  placeholder: string;
+  required?: boolean;
+  id?: string;
+  options?: Array<{ value: string | number | null; label: string | JSX.Element | null }>;
+  children?: React.ReactNode;
+}
+
+export function FormSelect(props: FormSelectProps) {
+  const { name, label, placeholder, options, ...rest } = props;
+  const { error, getInputProps } = useField(name);
+  const field = getInputProps({});
+  const fallbackId = useId();
+  const id = props.id ?? fallbackId;
+
+  return (
+    <div className="w-full space-y-1">
+      <Label htmlFor={id}>
+        <span>{label}</span>
+        <span className="ml-0.5 font-normal text-destructive">{props.required ? "*" : ""}</span>
+      </Label>
+      <Select name={field.name} defaultValue={field.defaultValue as string | undefined} onValueChange={field.onChange}>
+        <SelectTrigger id={id} {...rest}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options
+            ? options.map((o) => {
+                if (o.value === null || o.label === null) return null;
+
+                return (
+                  <SelectItem key={o.value} value={o.value.toString()}>
+                    {o.label}
+                  </SelectItem>
+                );
+              })
+            : props.children}
+        </SelectContent>
+        {error ? (
+          <p className="ml-0.5 mt-0.5 text-xs font-medium text-destructive" id={`${props.name}-error`}>
+            {error}
+          </p>
+        ) : null}
+      </Select>
+    </div>
+  );
 }

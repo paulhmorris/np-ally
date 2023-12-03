@@ -5,11 +5,10 @@ import { StrictMode, startTransition, useEffect } from "react";
 import { hydrateRoot } from "react-dom/client";
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: undefined,
   tracesSampleRate: 0.25,
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1,
-  enabled: process.env.NODE_ENV === "production",
 
   integrations: [
     new Sentry.BrowserTracing({

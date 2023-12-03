@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
+import { rankItem } from "@tanstack/match-sorter-utils";
+import { FilterFn } from "@tanstack/react-table";
 import clsx, { ClassValue } from "clsx";
 import { useMemo } from "react";
 import { twMerge } from "tailwind-merge";
@@ -114,3 +116,10 @@ export function getToday() {
   const yyyy = today.getFullYear();
   return `${yyyy}-${mm}-${dd}`;
 }
+
+export const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  const itemRank = rankItem(row.getValue(columnId), value);
+  addMeta({ itemRank });
+  return itemRank.passed;
+};

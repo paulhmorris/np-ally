@@ -1,4 +1,8 @@
 {
-  "typescript.preferences.autoImportFileExcludePatterns": ["node_modules/@radix-ui", "node_modules/postcss"],
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "node_modules/@radix-ui",
+    "node_modules/postcss",
+    "react-day-picker"
+  ],
   "typescript.tsdk": "node_modules/typescript/lib"
 }

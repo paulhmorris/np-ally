@@ -40,17 +40,22 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const account = await prisma.account.findUnique({
     where: { id: params.accountId },
     include: {
-      transactions: {
+      organization: true,
+      transactionItems: {
         take: 5,
-        orderBy: { date: "desc" },
+        orderBy: { transaction: { date: "desc" } },
         include: {
-          transactionItems: {
-            select: { contact: true },
-          },
+          transaction: true,
+          contact: true,
+          method: true,
+          type: true,
         },
       },
-      organization: true,
-      user: true,
+      user: {
+        include: {
+          contact: true,
+        },
+      },
     },
   });
   if (!account) throw notFound({ message: "Account not found" });
@@ -137,7 +142,7 @@ export default function UserDetailsPage() {
         <div className="mt-12 space-y-2">
           <h2 className="text-xl font-bold">Recent Transactions</h2>
           <div>
-            {account.transactions.length > 0 ? (
+            {account.transactionItems.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -149,10 +154,10 @@ export default function UserDetailsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {account.transactions.map((t) => {
+                  {account.transactionItems.map((t) => {
                     return (
                       <TableRow key={t.id}>
-                        <TableCell>{dayjs(t.date).format("MM/DD/YYYY")}</TableCell>
+                        <TableCell>{dayjs(t.transaction.date).format("MM/DD/YYYY")}</TableCell>
                         <TableCell>{formatCurrency(t.amount, 2)}</TableCell>
                         <TableCell className="truncate">{t.description}</TableCell>
                         <TableCell className="truncate">

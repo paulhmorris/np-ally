@@ -31,9 +31,6 @@ export const navLinks: ReadonlyArray<{
   href: string;
 }> = [
   { name: "Add Donation", href: "/transactions/new" },
-  { name: "Request Reimbursement", href: "/reimbursements/new" },
-  { name: "Accounts", href: "/accounts" },
-  { name: "Donors", href: "/donors" },
-  { name: "Reimbursements", href: "/reimbursements" },
-  { name: "Users", href: "/users" },
+  { name: "Add Expense", href: "/reimbursements/new" },
+  { name: "Contacts", href: "/contacts" },
 ] as const;

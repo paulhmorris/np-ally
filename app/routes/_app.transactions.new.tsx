@@ -10,8 +10,7 @@ import { z } from "zod";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { Field } from "~/components/ui/form";
-import { Select } from "~/components/ui/select";
+import { Field, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
@@ -119,7 +118,7 @@ export default function NewUserPage() {
                     <input type="hidden" name={`transactionItems[${index}].typeId`} value="1" />
                     <fieldset className="space-y-3">
                       <div className="flex w-full items-start gap-2">
-                        <Select
+                        <FormSelect
                           required
                           name={`transactionItems[${index}].methodId`}
                           label="Method"
@@ -129,7 +128,7 @@ export default function NewUserPage() {
                             label: t.name,
                           }))}
                         />
-                        <Select
+                        <FormSelect
                           required
                           name={`transactionItems[${index}].accountId`}
                           label="Account"
@@ -139,7 +138,7 @@ export default function NewUserPage() {
                             label: `${a.code} - ${a.description}`,
                           }))}
                         />
-                        <Select
+                        <FormSelect
                           name={`transactionItems[${index}].donorId`}
                           label="Donor"
                           placeholder="Select donor"
