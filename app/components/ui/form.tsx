@@ -45,8 +45,8 @@ export function FormField({
       </Label>
       <Input
         id={id}
-        inputMode={isCurrency ? "decimal" : undefined}
-        aria-invalid={error ? true : undefined}
+        inputMode={isCurrency ? "decimal" : props.inputMode}
+        aria-invalid={error ? true : props["aria-invalid"]}
         aria-describedby={`${id}-error`}
         className={cn(error && "border-destructive", className)}
         {...getInputProps()}
@@ -76,7 +76,7 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
       </Label>
       <Textarea
         id={id}
-        aria-invalid={error ? true : undefined}
+        aria-invalid={error ? true : props["aria-invalid"]}
         aria-describedby={`${id}-error`}
         className={cn(error && "border-destructive", className)}
         {...getInputProps()}

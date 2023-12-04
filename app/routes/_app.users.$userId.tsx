@@ -46,13 +46,21 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const user = await prisma.user.findUnique({
     where: { id: params.userId },
-    include: { contact: true },
+    include: {
+      contact: {
+        select: {
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
   });
   if (!user) throw notFound({ message: "User not found" });
 
   return typedjson({
     user,
-    ...setFormDefaults("user-form", { ...user }),
+    ...setFormDefaults("user-form", { ...user, ...user.contact }),
   });
 };
 
@@ -101,7 +109,13 @@ export default function UserDetailsPage() {
         description={user.id}
       >
         <div className="flex items-center gap-2">
-          <ValidatedForm fetcher={fetcher} validator={passwordResetValidator} method="POST" action="/reset-password">
+          <ValidatedForm
+            id="user-form"
+            fetcher={fetcher}
+            validator={passwordResetValidator}
+            method="POST"
+            action="/reset-password"
+          >
             <input type="hidden" name="email" value={user.contact.email} />
             <SubmitButton variant="outline">Send Password Reset</SubmitButton>
           </ValidatedForm>
@@ -134,7 +148,7 @@ export default function UserDetailsPage() {
           />
           <ButtonGroup>
             <SubmitButton className="w-full" name="_action" value="update">
-              Save User
+              Save
             </SubmitButton>
             <Button type="reset" variant="outline">
               Reset
