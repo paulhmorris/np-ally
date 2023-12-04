@@ -1,5 +1,5 @@
 import { useNavigate } from "@remix-run/react";
-import { IconCircleCheckFilled, IconCloudUpload } from "@tabler/icons-react";
+import { IconCircleCheckFilled, IconCloudUpload, IconLoader } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -125,8 +125,14 @@ export function FileUploader() {
             type="submit"
             className="flex w-auto items-center gap-2 shadow-none"
           >
-            <span>Upload</span>
-            <IconCloudUpload className="h-4 w-4" />
+            {uploadStatus.uploading ? (
+              <IconLoader className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <span>Upload</span>
+                <IconCloudUpload className="h-4 w-4" />
+              </>
+            )}
           </Button>
         )}
       </form>

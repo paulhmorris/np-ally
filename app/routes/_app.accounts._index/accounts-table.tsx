@@ -1,10 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
-import { IconDots } from "@tabler/icons-react";
 import {
   ColumnDef,
   ColumnFiltersState,
-  Row,
   SortingState,
   VisibilityState,
   getCoreRowModel,
@@ -17,24 +15,17 @@ import {
 } from "@tanstack/react-table";
 import * as React from "react";
 
-import { Button } from "~/components/ui/button";
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
 import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
 import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { fuzzyFilter } from "~/lib/utils";
 
 interface DataTableProps<TData> {
   data: Array<TData>;
 }
 
-export function ContactsTable<TData>({ data }: DataTableProps<TData>) {
+export function AccountsTable<TData>({ data }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -76,27 +67,17 @@ export function ContactsTable<TData>({ data }: DataTableProps<TData>) {
   );
 }
 
-type Contact = Prisma.ContactGetPayload<{ include: { type: true } }>;
-const columns: Array<ColumnDef<Contact>> = [
+type Account = Prisma.AccountGetPayload<{
+  include: { transactionItems: true; type: true };
+}>;
+const columns: Array<ColumnDef<Account>> = [
   {
-    accessorKey: "firstName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="First" />,
+    accessorKey: "code",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Code" />,
     cell: ({ row }) => {
       return (
         <div>
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("firstName")}</span>
-        </div>
-      );
-    },
-    enableColumnFilter: false,
-  },
-  {
-    accessorKey: "lastName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Last" />,
-    cell: ({ row }) => {
-      return (
-        <div className="max-w-[100px]">
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("lastName")}</span>
+          <span className="max-w-[500px] truncate font-medium">{row.getValue("code")}</span>
         </div>
       );
     },
@@ -119,32 +100,33 @@ const columns: Array<ColumnDef<Contact>> = [
     },
   },
   {
-    accessorKey: "email",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
+    accessorKey: "description",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
     cell: ({ row }) => {
       return (
         <div>
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("email")}</span>
+          <span className="max-w-[500px] truncate font-medium">{row.getValue("description")}</span>
         </div>
       );
     },
     enableColumnFilter: false,
   },
   {
-    accessorKey: "phone",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
-    cell: ({ row }) => {
-      return (
-        <div>
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("phone")}</span>
-        </div>
-      );
-    },
+    id: "view",
+    cell: ({ row }) => (
+      <Link to={`/accounts/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
     enableColumnFilter: false,
   },
   {
-    id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    id: "edit",
+    cell: ({ row }) => (
+      <Link to={`/accounts/${row.original.id}/edit`} className="font-medium text-primary">
+        Edit
+      </Link>
+    ),
     enableColumnFilter: false,
   },
 ];
@@ -154,30 +136,9 @@ const facets: Array<Facet> = [
     columnId: "type",
     title: "Type",
     options: [
-      { label: "Donor", value: "Donor" },
-      { label: "Staff", value: "Staff" },
-      { label: "Admin", value: "Admin" },
+      { label: "Operating", value: "Operating" },
+      { label: "Benevolence", value: "Benevolence" },
+      { label: "Ministry", value: "Ministry" },
     ],
   },
 ];
-
-function DataTableRowActions({ row }: { row: Row<Contact> }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted">
-          <IconDots className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem asChild>
-          <Link to={`/contacts/${row.original.id}`}>View</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to={`/contacts/${row.original.id}/edit`}>Edit</Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}

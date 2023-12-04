@@ -55,7 +55,8 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
       </ul>
       {["ADMIN", "SUPERADMIN"].includes(user.role) ? (
         <>
-          <Separator className="my-8" />
+          <Separator className="mb-4 mt-8" />
+          <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">ADMIN</p>
           <NavLink
             to="/accounts"
             className={({ isActive }) =>
@@ -72,7 +73,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
       <div className="mt-auto space-y-4">
         <Link to={`/users/${user.id}`} className="flex gap-2">
           <Avatar>
-            <AvatarFallback>
+            <AvatarFallback className="bg-primary text-white">
               {user.contact.firstName?.charAt(0).toUpperCase()}
               {user.contact.lastName?.charAt(0).toUpperCase()}
             </AvatarFallback>

@@ -62,7 +62,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return typedjson({
     account,
-    ...setFormDefaults("accountForm", { ...account }),
+    ...setFormDefaults("account-form", { ...account }),
   });
 };
 
@@ -125,7 +125,7 @@ export default function UserDetailsPage() {
       ) : null}
 
       <PageContainer>
-        <ValidatedForm id="accountForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
+        <ValidatedForm id="account-form" validator={validator} method="post" className="space-y-4 sm:max-w-md">
           <FormField label="Code" id="name" name="code" required />
           <FormField label="Description" id="name" name="description" required />
 
