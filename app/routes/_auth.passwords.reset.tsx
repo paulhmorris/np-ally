@@ -3,7 +3,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm } from "remix-validated-form";
 import { z } from "zod";
 
-import { Field } from "~/components/ui/form";
+import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 
 const validator = withZod(z.object({ email: z.string().email() }));
@@ -21,7 +21,7 @@ export default function ResetPassword() {
           action="/reset-password"
           className="mt-4 space-y-3"
         >
-          <Field label="Email" name="email" type="email" autoComplete="username" required />
+          <FormField label="Email" name="email" type="email" autoComplete="username" required />
           <SubmitButton>Get Reset Link</SubmitButton>
         </ValidatedForm>
       </div>

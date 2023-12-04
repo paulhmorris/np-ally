@@ -1,8 +1,9 @@
 import * as ToastPrimitives from "@radix-ui/react-toast";
-import { IconX } from "@tabler/icons-react";
+import { IconAlertCircleFilled, IconAlertTriangleFilled, IconCircleCheckFilled, IconX } from "@tabler/icons-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
+import { useToast } from "~/components/ui/use-toast";
 import { cn } from "~/lib/utils";
 
 const ToastProvider = ToastPrimitives.Provider;
@@ -28,6 +29,7 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: "border bg-background text-foreground",
+        warning: "bg-warning text-warning-foreground",
         destructive: "destructive group border-destructive bg-destructive text-destructive-foreground",
       },
     },
@@ -109,3 +111,35 @@ export {
   type ToastActionElement,
   type ToastProps,
 };
+
+export function Toaster() {
+  const { toasts } = useToast();
+
+  return (
+    <ToastProvider>
+      {toasts.map(function ({ id, title, description, action, icon, ...props }) {
+        const iconMap: Record<NonNullable<typeof props.variant>, JSX.Element> = {
+          default: <IconCircleCheckFilled className="text-success h-6 w-6" />,
+          warning: <IconAlertTriangleFilled className="h-6 w-6" />,
+          destructive: <IconAlertCircleFilled className="h-6 w-6" />,
+        };
+        const iconToRender = icon ? icon : iconMap[props.variant ?? "default"];
+
+        return (
+          <Toast key={id} {...props}>
+            <div className={cn("flex gap-x-4", title && description ? "items-start" : "items-center")}>
+              <div className="shrink-0">{iconToRender}</div>
+              <div className="grid gap-1">
+                {title ? <ToastTitle>{title}</ToastTitle> : null}
+                {description ? <ToastDescription>{description}</ToastDescription> : null}
+              </div>
+            </div>
+            {action}
+            <ToastClose />
+          </Toast>
+        );
+      })}
+      <ToastViewport />
+    </ToastProvider>
+  );
+}

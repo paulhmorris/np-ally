@@ -33,6 +33,7 @@
     "@aws-sdk/s3-request-presigner": "^3.461.0",
     "@fontsource-variable/dm-sans": "^5.0.3",
     "@isaacs/express-prometheus-middleware": "^1.2.1",
+    "@linear/sdk": "^12.0.0",
     "@prisma/client": "^5.6.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",

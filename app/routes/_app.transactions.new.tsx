@@ -10,7 +10,7 @@ import { z } from "zod";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { Field, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
@@ -99,9 +99,9 @@ export default function NewUserPage() {
           <div className="mt-8 space-y-8">
             <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
               <div className="w-auto">
-                <Field name="date" label="Date" type="date" defaultValue={getToday()} />
+                <FormField name="date" label="Date" type="date" defaultValue={getToday()} />
               </div>
-              <Field name="description" label="Description" />
+              <FormField name="description" label="Description" />
             </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {
@@ -150,10 +150,10 @@ export default function NewUserPage() {
                       </div>
                       <div className="grid grid-cols-4 items-start gap-2">
                         <div className="col-span-1">
-                          <Field required name={`transactionItems[${index}].amount`} label="Amount" isCurrency />
+                          <FormField required name={`transactionItems[${index}].amount`} label="Amount" isCurrency />
                         </div>
                         <div className="col-span-3">
-                          <Field name={`transactionItems[${index}].description`} label="Description" />
+                          <FormField name={`transactionItems[${index}].description`} label="Description" />
                         </div>
                       </div>
                     </fieldset>

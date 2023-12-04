@@ -185,7 +185,7 @@ model Contact {
   type             ContactType       @relation(fields: [typeId], references: [id])
   typeId           Int
   user             User?
-  userId           String?
+  userId           String?           @unique
   transactionItems TransactionItem[]
 
   createdAt DateTime @default(now())

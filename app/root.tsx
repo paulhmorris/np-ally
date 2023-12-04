@@ -1,12 +1,14 @@
+import "@fontsource-variable/dm-sans/wght.css";
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from "@remix-run/react";
 import { captureRemixErrorBoundaryError } from "@sentry/remix";
+import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
-import "@fontsource-variable/dm-sans/wght.css";
+import { Notifications } from "~/components/notifications";
 import { ThemeProvider } from "~/components/theme-provider";
-import { getUser } from "~/lib/session.server";
+import { commitSession, getSession, getUser } from "~/lib/session.server";
+import { getGlobalToast } from "~/lib/toast.server";
 import stylesheet from "~/tailwind.css";
 
 // prettier-ignore
@@ -16,7 +18,19 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return json({ user: await getUser(request) });
+  const session = await getSession(request);
+
+  return typedjson(
+    {
+      user: await getUser(request),
+      serverToast: getGlobalToast(session),
+    },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    },
+  );
 };
 
 export const ErrorBoundary = () => {
@@ -26,6 +40,7 @@ export const ErrorBoundary = () => {
 };
 
 export default function App() {
+  const { serverToast } = useTypedLoaderData<typeof loader>();
   return (
     <ThemeProvider>
       <html lang="en" className="h-full">
@@ -37,6 +52,7 @@ export default function App() {
         </head>
         <body className="h-full font-sans">
           <Outlet />
+          <Notifications serverToast={serverToast} />
           <ScrollRestoration />
           <Scripts />
           <LiveReload />

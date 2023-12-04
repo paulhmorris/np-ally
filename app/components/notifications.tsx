@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { Toaster } from "~/components/ui/toaster";
+import { Toaster } from "~/components/ui/toast";
 import type { Toast } from "~/components/ui/use-toast";
 import { useToast } from "~/components/ui/use-toast";
 

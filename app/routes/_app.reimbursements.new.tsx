@@ -9,7 +9,7 @@ import { z } from "zod";
 import { FileUploader } from "~/components/file-uploader";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
-import { Field, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
@@ -94,15 +94,15 @@ export default function NewUserPage() {
 
         <ValidatedForm method="post" validator={validator} className="space-y-4 sm:max-w-xl">
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
-            <Field name="vendor" label="Vendor" />
-            <Field name="description" label="Description" />
+            <FormField name="vendor" label="Vendor" />
+            <FormField name="description" label="Description" />
           </div>
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <div className="w-auto">
-              <Field name="date" label="Date" type="date" defaultValue={getToday()} required />
+              <FormField name="date" label="Date" type="date" defaultValue={getToday()} required />
             </div>
             <div className="w-auto min-w-[3rem]">
-              <Field name="amount" label="Amount" required />
+              <FormField name="amount" label="Amount" required />
             </div>
             <FormSelect
               required

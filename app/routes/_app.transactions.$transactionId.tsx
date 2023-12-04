@@ -13,7 +13,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
-import { Field } from "~/components/ui/form";
+import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
@@ -140,7 +140,7 @@ export default function UserDetailsPage() {
 
         <ValidatedForm id="transactionForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
           <input type="hidden" name="id" value={transaction.id} />
-          <Field label="Description" name="description" />
+          <FormField label="Description" name="description" />
           <ButtonGroup>
             <SubmitButton className="w-full" name="_action" value="update">
               Save Transaction

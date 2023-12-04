@@ -1,3 +1,3 @@
-import { Resend } from "resend";
+import { Resend as ResendConstructor } from "resend";
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+export const Resend = new ResendConstructor(process.env.RESEND_API_KEY);

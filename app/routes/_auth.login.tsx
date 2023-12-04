@@ -6,9 +6,10 @@ import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
 import { Checkbox } from "~/components/ui/checkbox";
-import { Field } from "~/components/ui/form";
+import { FormField } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { Sentry } from "~/integrations/sentry";
 import { createUserSession, getUserId } from "~/lib/session.server";
 import { safeRedirect } from "~/lib/utils";
 import { verifyLogin } from "~/models/user.server";
@@ -44,6 +45,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
+  Sentry.setUser({ id: user.id, email: user.contact.email });
+
   return createUserSession({
     request,
     userId: user.id,
@@ -63,7 +66,7 @@ export default function LoginPage() {
       <div className="max-w-lg px-8">
         <h1 className="text-4xl font-extrabold">Alliance 436 Admin</h1>
         <ValidatedForm validator={validator} method="post" className="mt-4 space-y-3">
-          <Field
+          <FormField
             label="Email"
             id="email"
             name="email"
@@ -72,7 +75,7 @@ export default function LoginPage() {
             required
             defaultValue="paul@remix.run"
           />
-          <Field
+          <FormField
             label="Password"
             id="password"
             name="password"

@@ -18,6 +18,9 @@ const envValidation = z.object({
 
   // Sentry
   SENTRY_DSN: z.string().url(),
+
+  // Linear
+  LINEAR_API_KEY: z.string().min(1).startsWith("lin_api_"),
 });
 
 declare global {

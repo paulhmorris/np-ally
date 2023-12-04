@@ -1,8 +1,12 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 
+import { Sentry } from "~/integrations/sentry";
 import { logout } from "~/lib/session.server";
 
-export const action = async ({ request }: ActionFunctionArgs) => logout(request);
+export const action = async ({ request }: ActionFunctionArgs) => {
+  Sentry.setUser(null);
+  await logout(request);
+};
 
 export const loader = () => redirect("/");

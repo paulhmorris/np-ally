@@ -11,6 +11,7 @@ type ToasterToast = Omit<ToastProps, keyof JSX.IntrinsicElements["div"]> & {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  icon?: React.ReactNode;
 };
 
 const actionTypes = {

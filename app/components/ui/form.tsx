@@ -4,21 +4,15 @@ import { useField } from "remix-validated-form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Textarea } from "~/components/ui/textarea";
 import { cn } from "~/lib/utils";
 
-export type ListOfErrors = Array<null | string | undefined> | null | undefined;
-
-export function ErrorList({ errors, id }: { errors?: ListOfErrors; id?: string }) {
-  const errorsToRender = errors?.filter(Boolean);
-  if (!errorsToRender?.length) return null;
+function FieldError({ id, error }: { id: string; error?: string }) {
+  if (!error) return null;
   return (
-    <ul className="flex flex-col gap-1" id={id}>
-      {errorsToRender.map((e) => (
-        <li className="text-xs font-semibold text-destructive" key={e}>
-          {e}
-        </li>
-      ))}
-    </ul>
+    <p id={`${id}-error`} className="mt-0.5 text-xs font-medium text-destructive">
+      {error}
+    </p>
   );
 }
 
@@ -29,7 +23,15 @@ interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   formId?: string;
   hideLabel?: boolean;
 }
-export function Field({ isCurrency = false, hideLabel = false, name, label, formId, className, ...props }: FieldProps) {
+export function FormField({
+  isCurrency = false,
+  hideLabel = false,
+  name,
+  label,
+  formId,
+  className,
+  ...props
+}: FieldProps) {
   const fallbackId = useId();
   const { error, getInputProps } = useField(name, { formId });
 
@@ -50,11 +52,37 @@ export function Field({ isCurrency = false, hideLabel = false, name, label, form
         {...getInputProps()}
         {...props}
       />
-      {error ? (
-        <p className="mt-0.5 text-xs font-medium text-destructive" id={`${id}-error`}>
-          {error}
-        </p>
-      ) : null}
+      <FieldError id={id} error={error} />
+    </div>
+  );
+}
+interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  name: string;
+  label: string;
+  formId?: string;
+  hideLabel?: boolean;
+}
+export function FormTextarea({ hideLabel = false, name, label, formId, className, ...props }: FormTextareaProps) {
+  const fallbackId = useId();
+  const { error, getInputProps } = useField(name, { formId });
+
+  const id = props.id ?? fallbackId;
+
+  return (
+    <div className={cn("w-full", !hideLabel && "space-y-1")}>
+      <Label htmlFor={id} className={cn(hideLabel && "sr-only")}>
+        <span>{label}</span>
+        <span className="ml-0.5 font-normal text-destructive">{props.required ? "*" : ""}</span>
+      </Label>
+      <Textarea
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={`${id}-error`}
+        className={cn(error && "border-destructive", className)}
+        {...getInputProps()}
+        {...props}
+      />
+      <FieldError id={id} error={error} />
     </div>
   );
 }
@@ -99,11 +127,7 @@ export function FormSelect(props: FormSelectProps) {
               })
             : props.children}
         </SelectContent>
-        {error ? (
-          <p className="ml-0.5 mt-0.5 text-xs font-medium text-destructive" id={`${props.name}-error`}>
-            {error}
-          </p>
-        ) : null}
+        <FieldError id={id} error={error} />
       </Select>
     </div>
   );

@@ -15,7 +15,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
-import { Field, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
@@ -118,9 +118,9 @@ export default function UserDetailsPage() {
 
       <PageContainer>
         <ValidatedForm id="user-form" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-          <Field label="First name" id="firstName" name="firstName" required />
-          <Field label="Last name" id="lastName" name="lastName" />
-          <Field label="Email" id="email" name="email" />
+          <FormField label="First name" id="firstName" name="firstName" required />
+          <FormField label="Last name" id="lastName" name="lastName" />
+          <FormField label="Email" id="email" name="email" />
           <FormSelect
             name="role"
             label="Role"

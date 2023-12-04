@@ -66,7 +66,7 @@ export async function verifyLogin(email: NonNullable<Contact["email"]>, password
   const contact = await prisma.contact.findUniqueOrThrow({ where: { email } });
   const userWithPassword = await prisma.user.findUnique({
     where: { contactId: contact.id },
-    include: { password: true },
+    include: { password: true, contact: { select: { email: true } } },
   });
 
   if (!userWithPassword || !userWithPassword.password) {

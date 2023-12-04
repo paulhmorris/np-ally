@@ -10,7 +10,7 @@ import { z } from "zod";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { Field, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
@@ -59,9 +59,9 @@ export default function NewUserPage() {
       <PageHeader title="New User" />
       <PageContainer>
         <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-          <Field label="First name" id="firstName" name="firstName" required />
-          <Field label="Last name" id="lastName" name="lastName" />
-          <Field label="Email" id="email" name="email" />
+          <FormField label="First name" id="firstName" name="firstName" required />
+          <FormField label="Last name" id="lastName" name="lastName" />
+          <FormField label="Email" id="email" name="email" />
           <FormSelect
             name="typeId"
             label="Type"

@@ -3,9 +3,11 @@ import { PassThrough } from "node:stream";
 import type { EntryContext } from "@remix-run/node";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import * as Sentry from "@sentry/remix";
 import isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
+
+import { prisma } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 
 export function handleError(error: unknown, { request }: { request: Request }) {
   void Sentry.captureRemixServerException(error, "remix.server", request);
@@ -15,6 +17,7 @@ Sentry.init({
   dsn: process.env.SENTRY_DSN,
   tracesSampleRate: 0.25,
   enabled: process.env.NODE_ENV === "production",
+  integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
 });
 
 const ABORT_DELAY = 5_000;
