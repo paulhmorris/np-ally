@@ -1,6 +1,7 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 generator client {
@@ -49,6 +50,8 @@ model PasswordReset {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Organization {
@@ -76,6 +79,9 @@ model Account {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([typeId])
 }
 
 model AccountType {
@@ -115,6 +121,12 @@ model TransactionItem {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([transactionId])
+  @@index([contactId])
+  @@index([methodId])
+  @@index([typeId])
+  @@index([accountId])
 }
 
 model TransactionItemMethod {
@@ -153,6 +165,10 @@ model ReimbursementRequest {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([methodId])
 }
 
 model Receipt {
@@ -165,6 +181,8 @@ model Receipt {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 enum ReimbursementRequestStatus {
@@ -190,6 +208,8 @@ model Contact {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([typeId])
 }
 
 model ContactType {
