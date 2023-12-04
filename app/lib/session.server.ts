@@ -1,11 +1,9 @@
 import type { User, UserRole } from "@prisma/client";
 import type { Session } from "@remix-run/node";
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
-import invariant from "tiny-invariant";
+import { createThemeSessionResolver } from "remix-themes";
 
 import { getUserById } from "~/models/user.server";
-
-invariant(process.env.SESSION_SECRET, "SESSION_SECRET must be set");
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
@@ -17,6 +15,7 @@ export const sessionStorage = createCookieSessionStorage({
     secure: process.env.NODE_ENV === "production",
   },
 });
+export const themeSessionResolver = createThemeSessionResolver(sessionStorage);
 
 const USER_SESSION_KEY = "userId";
 
@@ -93,6 +92,7 @@ export async function createUserSession({
 }
 
 export async function logout(request: Request) {
+  console.log("logout");
   const session = await getSession(request);
   return redirect("/login", {
     headers: {

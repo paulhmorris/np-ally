@@ -79,6 +79,7 @@
     "react": "^18.2.0",
     "react-day-picker": "^8.9.1",
     "react-dom": "^18.2.0",
+    "remix-themes": "^1.2.2",
     "remix-typedjson": "^0.4.1",
     "remix-utils": "^7.3.0",
     "remix-validated-form": "^5.1.5",

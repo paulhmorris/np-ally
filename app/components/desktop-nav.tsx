@@ -83,7 +83,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           </div>
         </Link>
         <div className="flex items-center gap-2">
-          <Form method="post" action="/logout">
+          <Form method="post" action="/logout" navigate={false}>
             <Button type="submit" variant="outline">
               Log out
             </Button>
