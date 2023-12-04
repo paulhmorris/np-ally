@@ -6,11 +6,18 @@ import { DataTableFacetedFilter } from "~/components/ui/data-table/data-table-fa
 import { DataTableViewOptions } from "~/components/ui/data-table/data-table-view-options";
 import { Input } from "~/components/ui/input";
 
-interface DataTableToolbarProps<TData> {
-  table: Table<TData>;
+export interface Facet {
+  columnId: string;
+  title: string;
+  options: Array<{ label: string; value: string }>;
 }
 
-export function DataTableToolbar<TData>({ table }: DataTableToolbarProps<TData>) {
+interface DataTableToolbarProps<TData> {
+  table: Table<TData>;
+  facets: Array<Facet>;
+}
+
+export function DataTableToolbar<TData>({ table, facets }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
@@ -23,20 +30,11 @@ export function DataTableToolbar<TData>({ table }: DataTableToolbarProps<TData>)
           onChange={(e) => table.setGlobalFilter(e.target.value)}
           className="h-8 w-[150px] lg:w-[250px]"
         />
-        {table.getColumn("type") ? (
-          <DataTableFacetedFilter
-            column={table.getColumn("type")}
-            title="Type"
-            options={[
-              { label: "Donor", value: "Donor" },
-              { label: "Staff", value: "Staff" },
-              { label: "Admin", value: "Admin" },
-            ]}
-          />
-        ) : null}
-        {/* {table.getColumn("priority") ? (
-          <DataTableFacetedFilter column={table.getColumn("priority")} title="Priority" options={priorities} />
-        ) : null} */}
+        {facets.map((f) => {
+          const column = table.getColumn(f.columnId);
+          if (!column) return null;
+          return <DataTableFacetedFilter key={f.columnId} column={column} title={f.title} options={f.options} />;
+        })}
         {isFiltered ? (
           <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">
             Reset

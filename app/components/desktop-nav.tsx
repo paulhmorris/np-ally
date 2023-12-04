@@ -6,6 +6,7 @@ import { useSpinDelay } from "spin-delay";
 import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
+import { Separator } from "~/components/ui/separator";
 import { navLinks } from "~/lib/constants";
 import { cn, useUser } from "~/lib/utils";
 
@@ -52,20 +53,22 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           );
         })}
       </ul>
-      {/* {["OWNER", "SUPERADMIN"].includes(user.role) ? (
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            cn(
-              "mt-auto flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary",
-              isActive && "bg-secondary",
-            )
-          }
-        >
-          <IconSettings className="mr-2 h-5 w-5" />
-          <span>Settings</span>
-        </NavLink>
-      ) : null} */}
+      {["ADMIN", "SUPERADMIN"].includes(user.role) ? (
+        <>
+          <Separator className="my-8" />
+          <NavLink
+            to="/accounts"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary",
+                isActive && "bg-secondary",
+              )
+            }
+          >
+            <span>Accounts</span>
+          </NavLink>
+        </>
+      ) : null}
       <div className="mt-auto space-y-4">
         <Link to={`/users/${user.id}`} className="flex gap-2">
           <Avatar>

@@ -18,9 +18,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     include: { transactionItems: true },
     orderBy: { code: "desc" },
   });
-  if (Math.random() < 0.5) {
-    throw new Error("Random error");
-  }
   return typedjson({ accounts });
 }
 

@@ -5,10 +5,9 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { columns } from "~/components/ui/data-table/columns";
-import { DataTable } from "~/components/ui/data-table/data-table";
 import { prisma } from "~/integrations/prisma.server";
 import { requireUser } from "~/lib/session.server";
+import { ContactsTable } from "~/routes/_app.contacts._index/contacts-table";
 
 export const meta: MetaFunction = () => [{ title: "Contacts • Alliance 436" }];
 
@@ -32,7 +31,7 @@ export default function UserIndexPage() {
       </PageHeader>
 
       <PageContainer>
-        <DataTable data={contacts} columns={columns} />
+        <ContactsTable data={contacts} />
       </PageContainer>
     </>
   );
