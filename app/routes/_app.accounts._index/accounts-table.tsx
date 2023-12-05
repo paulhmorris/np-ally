@@ -120,15 +120,6 @@ const columns: Array<ColumnDef<Account>> = [
     ),
     enableColumnFilter: false,
   },
-  {
-    id: "edit",
-    cell: ({ row }) => (
-      <Link to={`/accounts/${row.original.id}/edit`} className="font-medium text-primary">
-        Edit
-      </Link>
-    ),
-    enableColumnFilter: false,
-  },
 ];
 
 const facets: Array<Facet> = [

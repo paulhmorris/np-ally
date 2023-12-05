@@ -5,6 +5,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { ErrorComponent } from "~/components/error-component";
 import { Checkbox } from "~/components/ui/checkbox";
 import { FormField } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
@@ -97,4 +98,8 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export function ErrorBoundary() {
+  return <ErrorComponent />;
 }

@@ -6,6 +6,7 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { ErrorComponent } from "~/components/error-component";
 import { FileUploader } from "~/components/file-uploader";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
@@ -151,4 +152,8 @@ export default function NewUserPage() {
       </PageContainer>
     </>
   );
+}
+
+export function ErrorBoundary() {
+  return <ErrorComponent />;
 }

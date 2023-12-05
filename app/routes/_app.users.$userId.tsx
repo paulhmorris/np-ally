@@ -2,7 +2,7 @@ import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
-import { isRouteErrorResponse, useFetcher, useRouteError } from "@remix-run/react";
+import { useFetcher } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
@@ -10,6 +10,7 @@ import { ValidatedForm, setFormDefaults, validationError } from "remix-validated
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
+import { ErrorComponent } from "~/components/error-component";
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
@@ -161,19 +162,5 @@ export default function UserDetailsPage() {
 }
 
 export function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (error instanceof Error) {
-    return <p className="font-medium text-destructive">An unexpected error occurred: {error.message}</p>;
-  }
-
-  if (!isRouteErrorResponse(error)) {
-    return <h1>Unknown Error</h1>;
-  }
-
-  if (error.status === 404) {
-    return <div>User not found</div>;
-  }
-
-  return <div>An unexpected error occurred: {error.statusText}</div>;
+  return <ErrorComponent />;
 }

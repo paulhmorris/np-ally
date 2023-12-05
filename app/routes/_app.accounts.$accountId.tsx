@@ -10,6 +10,7 @@ import { ValidatedForm, setFormDefaults, validationError } from "remix-validated
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
+import { ErrorComponent } from "~/components/error-component";
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
@@ -179,4 +180,8 @@ export default function UserDetailsPage() {
       </PageContainer>
     </>
   );
+}
+
+export function ErrorBoundary() {
+  return <ErrorComponent />;
 }

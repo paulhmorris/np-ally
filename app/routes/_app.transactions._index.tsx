@@ -3,6 +3,7 @@ import { Link } from "@remix-run/react";
 import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
+import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { TransactionsTable } from "~/components/transactions/transactions-table";
@@ -38,4 +39,8 @@ export default function TransactionsIndexPage() {
       </PageContainer>
     </>
   );
+}
+
+export function ErrorBoundary() {
+  return <ErrorComponent />;
 }

@@ -8,6 +8,7 @@ import { ValidatedForm, setFormDefaults, validationError } from "remix-validated
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
+import { ErrorComponent } from "~/components/error-component";
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
@@ -164,4 +165,8 @@ function DetailItem({ label, value }: { label: string; value: Prisma.JsonValue }
       </dd>
     </div>
   );
+}
+
+export function ErrorBoundary() {
+  return <ErrorComponent />;
 }

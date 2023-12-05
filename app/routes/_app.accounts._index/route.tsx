@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
+import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { prisma } from "~/integrations/prisma.server";
@@ -18,7 +19,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return typedjson({ accounts });
 }
 
-export default function AccountssIndexPage() {
+export default function AccountsIndexPage() {
   const { accounts } = useTypedLoaderData<typeof loader>();
   return (
     <>
@@ -36,4 +37,8 @@ export default function AccountssIndexPage() {
       </PageContainer>
     </>
   );
+}
+
+export function ErrorBoundary() {
+  return <ErrorComponent />;
 }
