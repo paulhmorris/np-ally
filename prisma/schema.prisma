@@ -72,7 +72,7 @@ model Account {
   userId                String?                @unique
   organization          Organization?          @relation(fields: [organizationId], references: [id])
   organizationId        String?
-  transactionItems      TransactionItem[]
+  transactions          Transaction[]
   type                  AccountType            @relation(fields: [typeId], references: [id])
   typeId                Int
   reimbursementRequests ReimbursementRequest[]
@@ -97,17 +97,21 @@ model AccountType {
 model Transaction {
   id               String            @id @default(cuid())
   date             DateTime
-  amount           Int
+  amountInCents    Int
   description      String?
+  account          Account           @relation(fields: [accountId], references: [id])
+  accountId        String
   transactionItems TransactionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([accountId])
 }
 
 model TransactionItem {
   id            String                 @id @default(cuid())
-  amount        Int
+  amountInCents Int
   transaction   Transaction            @relation(fields: [transactionId], references: [id])
   transactionId String
   description   String?
@@ -117,8 +121,6 @@ model TransactionItem {
   methodId      Int?
   type          TransactionItemType    @relation(fields: [typeId], references: [id])
   typeId        Int
-  account       Account                @relation(fields: [accountId], references: [id])
-  accountId     String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -127,7 +129,6 @@ model TransactionItem {
   @@index([contactId])
   @@index([methodId])
   @@index([typeId])
-  @@index([accountId])
 }
 
 model TransactionItemMethod {
@@ -150,19 +151,19 @@ model TransactionItemType {
 }
 
 model ReimbursementRequest {
-  id          String                     @id @default(cuid())
-  amount      Int
-  date        DateTime
-  vendor      String?
-  description String?
-  user        User                       @relation(fields: [userId], references: [id])
-  userId      String
-  account     Account                    @relation(fields: [accountId], references: [id])
-  accountId   String
-  method      TransactionItemMethod      @relation(fields: [methodId], references: [id])
-  methodId    Int
-  status      ReimbursementRequestStatus @default(PENDING)
-  receipts    Receipt[]
+  id            String                     @id @default(cuid())
+  amountInCents Int
+  date          DateTime
+  vendor        String?
+  description   String?
+  user          User                       @relation(fields: [userId], references: [id])
+  userId        String
+  account       Account                    @relation(fields: [accountId], references: [id])
+  accountId     String
+  method        TransactionItemMethod      @relation(fields: [methodId], references: [id])
+  methodId      Int
+  status        ReimbursementRequestStatus @default(PENDING)
+  receipts      Receipt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

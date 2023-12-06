@@ -1,3 +1,4 @@
+import { IconCurrencyDollar } from "@tabler/icons-react";
 import { useId } from "react";
 import { useField } from "remix-validated-form";
 
@@ -16,9 +17,19 @@ function FieldError({ id, error }: { id: string; error?: string }) {
   );
 }
 
+function FieldDescription({ id, description }: { id: string; description?: string }) {
+  if (!description) return null;
+  return (
+    <p id={`${id}-description`} className="mt-0.5 text-xs text-muted-foreground">
+      {description}
+    </p>
+  );
+}
+
 interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   name: string;
   label: string;
+  description?: string;
   isCurrency?: boolean;
   formId?: string;
   hideLabel?: boolean;
@@ -38,20 +49,33 @@ export function FormField({
   const id = props.id ?? fallbackId;
 
   return (
-    <div className={cn("w-full", !hideLabel && "space-y-1")}>
-      <Label htmlFor={id} className={cn(hideLabel && "sr-only")}>
+    <div className={cn("relative w-full")}>
+      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1", error && "text-destructive")}>
         <span>{label}</span>
-        <span className="ml-0.5 font-normal text-destructive">{props.required ? "*" : ""}</span>
+        <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>
       <Input
         id={id}
         inputMode={isCurrency ? "decimal" : props.inputMode}
+        onChange={(e) => {
+          if (isCurrency) {
+            const value = e.target.value.replace(/[^0-9.]/g, "");
+            e.target.value = value;
+          }
+          props.onChange?.(e);
+        }}
         aria-invalid={error ? true : props["aria-invalid"]}
         aria-describedby={`${id}-error`}
-        className={cn(error && "border-destructive", className)}
+        className={cn(error && "border-destructive focus-visible:ring-destructive/50", isCurrency && "pl-7", className)}
         {...getInputProps()}
         {...props}
       />
+      {isCurrency ? (
+        <span className="pointer-events-none absolute left-2 top-9 text-muted-foreground">
+          <IconCurrencyDollar className="h-4 w-4 text-muted-foreground" strokeWidth={2.5} />
+        </span>
+      ) : null}
+      <FieldDescription id={id} description={props.description} />
       <FieldError id={id} error={error} />
     </div>
   );
@@ -59,6 +83,7 @@ export function FormField({
 interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   name: string;
   label: string;
+  description?: string;
   formId?: string;
   hideLabel?: boolean;
 }
@@ -69,10 +94,10 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
   const id = props.id ?? fallbackId;
 
   return (
-    <div className={cn("w-full", !hideLabel && "space-y-1")}>
-      <Label htmlFor={id} className={cn(hideLabel && "sr-only")}>
+    <div className={cn("relative w-full")}>
+      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1", error && "text-destructive")}>
         <span>{label}</span>
-        <span className="ml-0.5 font-normal text-destructive">{props.required ? "*" : ""}</span>
+        <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>
       <Textarea
         id={id}
@@ -82,6 +107,7 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
         {...getInputProps()}
         {...props}
       />
+      <FieldDescription id={id} description={props.description} />
       <FieldError id={id} error={error} />
     </div>
   );
@@ -91,27 +117,30 @@ export interface FormSelectProps extends React.ButtonHTMLAttributes<HTMLButtonEl
   name: string;
   label: string;
   placeholder: string;
+  description?: string;
   required?: boolean;
   id?: string;
   options?: Array<{ value: string | number | null; label: string | JSX.Element | null }>;
+  hideLabel?: boolean;
+  divProps?: React.HTMLAttributes<HTMLDivElement>;
   children?: React.ReactNode;
 }
 
 export function FormSelect(props: FormSelectProps) {
-  const { name, label, placeholder, options, ...rest } = props;
+  const { name, label, placeholder, options, hideLabel, divProps, ...rest } = props;
   const { error, getInputProps } = useField(name);
   const field = getInputProps({});
   const fallbackId = useId();
   const id = props.id ?? fallbackId;
 
   return (
-    <div className="w-full space-y-1">
-      <Label htmlFor={id}>
+    <div {...divProps} className={cn("relative w-full", divProps?.className)}>
+      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1", error && "text-destructive")}>
         <span>{label}</span>
-        <span className="ml-0.5 font-normal text-destructive">{props.required ? "*" : ""}</span>
+        <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>
       <Select name={field.name} defaultValue={field.defaultValue as string | undefined} onValueChange={field.onChange}>
-        <SelectTrigger id={id} {...rest}>
+        <SelectTrigger id={id} {...rest} className={cn(error && "focus:ring-destructive/50", rest.className)}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
@@ -127,6 +156,7 @@ export function FormSelect(props: FormSelectProps) {
               })
             : props.children}
         </SelectContent>
+        <FieldDescription id={id} description={props.description} />
         <FieldError id={id} error={error} />
       </Select>
     </div>

@@ -14,7 +14,7 @@ import { Button } from "~/components/ui/button";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
-import { ContactType } from "~/lib/constants";
+import { ContactType, TransactionItemType } from "~/lib/constants";
 import { requireUser } from "~/lib/session.server";
 import { getToday } from "~/lib/utils";
 
@@ -23,9 +23,9 @@ const transactionItemSchema = z.object({
   accountId: z.string().cuid({ message: "Account required" }),
   donorId: z.string().cuid({ message: "Invalid Donor ID" }).or(z.literal("")),
   amount: z.coerce
-    .number()
-    .min(0, { message: "Amount must be greater than $0" })
-    .max(99_999, { message: "Amount must be less than $100,000" }),
+    .number({ invalid_type_error: "Must be a number" })
+    .nonnegative({ message: "Must be greater than $0" })
+    .max(99_999, { message: "Must be less than $100,000" }),
   description: z.string().optional(),
   methodId: z.string().min(1, { message: "Method required" }),
 });
@@ -52,7 +52,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     donors,
     accounts,
     transactionItemMethods,
-    ...setFormDefaults("transaction-form", {
+    ...setFormDefaults("donation-form", {
       transactionItems: [{ id: nanoid() }],
     }),
   });
@@ -83,20 +83,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function NewUserPage() {
   const { donors, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
-  const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "transaction-form" });
+  const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "donation-form" });
 
   return (
     <>
-      <PageHeader title="New Donation" />
+      <PageHeader title="Add Donation" />
       <PageContainer>
         <ValidatedForm
           onSubmit={(data) => console.log(data)}
-          id="transaction-form"
+          id="donation-form"
           method="post"
           validator={validator}
           className="sm:max-w-xl"
         >
-          <SubmitButton disabled={items.length === 0}>Create Transaction</SubmitButton>
+          <SubmitButton disabled={items.length === 0}>Submit Donation</SubmitButton>
           <div className="mt-8 space-y-8">
             <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
               <div className="w-auto">
@@ -106,6 +106,7 @@ export default function NewUserPage() {
             </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {
+                const fieldPrefix = `transactionItems[${index}]`;
                 return (
                   <li key={key} className="rounded-xl border border-border p-4">
                     <div className="mb-2 flex items-center justify-between">
@@ -115,13 +116,14 @@ export default function NewUserPage() {
                         <IconTrash className="h-4 w-4 text-foreground opacity-50 group-hover:text-destructive group-hover:opacity-100" />
                       </Button>
                     </div>
-                    <input type="hidden" name={`transactionItems[${index}].id`} />
-                    <input type="hidden" name={`transactionItems[${index}].typeId`} value="1" />
+                    <input type="hidden" name={`${fieldPrefix}.id`} />
+                    <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Donation} />
                     <fieldset className="space-y-3">
-                      <div className="flex w-full items-start gap-2">
+                      <div className="grid grid-cols-12 gap-2">
                         <FormSelect
+                          divProps={{ className: "col-span-4" }}
                           required
-                          name={`transactionItems[${index}].methodId`}
+                          name={`${fieldPrefix}.methodId`}
                           label="Method"
                           placeholder="Select method"
                           options={transactionItemMethods.map((t) => ({
@@ -130,8 +132,9 @@ export default function NewUserPage() {
                           }))}
                         />
                         <FormSelect
+                          divProps={{ className: "col-span-5" }}
                           required
-                          name={`transactionItems[${index}].accountId`}
+                          name={`${fieldPrefix}.accountId`}
                           label="Account"
                           placeholder="Select account"
                           options={accounts.map((a) => ({
@@ -140,7 +143,8 @@ export default function NewUserPage() {
                           }))}
                         />
                         <FormSelect
-                          name={`transactionItems[${index}].donorId`}
+                          divProps={{ className: "col-span-3" }}
+                          name={`${fieldPrefix}.donorId`}
                           label="Donor"
                           placeholder="Select donor"
                           options={donors.map((c) => ({
@@ -151,10 +155,10 @@ export default function NewUserPage() {
                       </div>
                       <div className="grid grid-cols-4 items-start gap-2">
                         <div className="col-span-1">
-                          <FormField required name={`transactionItems[${index}].amount`} label="Amount" isCurrency />
+                          <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
                         </div>
                         <div className="col-span-3">
-                          <FormField name={`transactionItems[${index}].description`} label="Description" />
+                          <FormField name={`${fieldPrefix}.description`} label="Description" />
                         </div>
                       </div>
                     </fieldset>

@@ -3,7 +3,7 @@ import { useMatches } from "@remix-run/react";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { FilterFn } from "@tanstack/react-table";
 import clsx, { ClassValue } from "clsx";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { twMerge } from "tailwind-merge";
 
 const DEFAULT_REDIRECT = "/";
@@ -123,3 +123,10 @@ export const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   addMeta({ itemRank });
   return itemRank.passed;
 };
+
+export function useConsoleLog(message?: any, ...optionalParams: Array<any>) {
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    console.log(message, ...optionalParams);
+  }, [message, optionalParams]);
+}

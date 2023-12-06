@@ -101,25 +101,24 @@ async function seed() {
   for (let i = 0; i < 10; i++) {
     await prisma.transaction.create({
       data: {
-        amount: faker.number.int({ min: 1, max: 1000 }),
+        amountInCents: faker.number.int({ min: 100, max: 100_000 }),
         date: faker.date.past(),
         description: faker.lorem.word(),
+        accountId: account.id,
         transactionItems: {
           createMany: {
             data: [
               {
-                amount: faker.number.int({ min: 1, max: 1000 }),
+                amountInCents: faker.number.int({ min: 100, max: 50_000 }),
                 description: faker.lorem.word(),
                 typeId: 1,
                 contactId: donorContact.id,
-                accountId: account.id,
               },
               {
-                amount: faker.number.int({ min: 1, max: 1000 }),
+                amountInCents: faker.number.int({ min: 100, max: 50_000 }),
                 description: faker.lorem.word(),
                 typeId: 2,
                 contactId: donorContact.id,
-                accountId: account.id,
               },
             ],
           },

@@ -23,7 +23,7 @@ const validator = withZod(
     date: z.coerce.date(),
     vendor: z.string().optional(),
     description: z.string().optional(),
-    amount: z.coerce.number().positive(),
+    amountInCents: z.coerce.number().positive(),
     accountId: z.string().cuid(),
     receiptId: z.string().cuid().optional(),
     methodId: z
@@ -33,7 +33,7 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Reimbursement Request • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
@@ -82,7 +82,7 @@ export default function NewUserPage() {
 
   return (
     <>
-      <PageHeader title="New Reimbursement Request" />
+      <PageHeader title="Reimbursement Request" />
       <PageContainer>
         <h2 id="receipts-label" className="mb-1 font-bold">
           Upload Receipt

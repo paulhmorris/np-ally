@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Separator } from "~/components/ui/separator";
-import { navLinks } from "~/lib/constants";
+import { adminNavLinks, userNavLinks } from "~/lib/constants";
 import { cn, useUser } from "~/lib/utils";
 
 export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
@@ -50,7 +50,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         </Link>
       </div>
       <ul className="mt-12 space-x-0 space-y-1">
-        {navLinks.map((link) => {
+        {userNavLinks.map((link) => {
           return (
             <li key={link.href}>
               <NavLink
@@ -72,17 +72,25 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         <>
           <Separator className="mb-4 mt-8" />
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">ADMIN</p>
-          <NavLink
-            to="/accounts"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary",
-                isActive && "bg-secondary",
-              )
-            }
-          >
-            <span>Accounts</span>
-          </NavLink>
+          <ul className="space-x-0 space-y-1">
+            {adminNavLinks.map((link) => {
+              return (
+                <li key={link.href}>
+                  <NavLink
+                    to={link.href}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary",
+                        isActive && "bg-secondary",
+                      )
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
         </>
       ) : null}
       <DropdownMenu>

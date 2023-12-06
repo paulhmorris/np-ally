@@ -36,11 +36,16 @@ export enum LinearLabelID {
   Improvement = "d7b2166a-61dd-4f25-995d-7288f9c162fc",
 }
 
-export const navLinks: ReadonlyArray<{
+export const userNavLinks: ReadonlyArray<{
+  name: string;
+  href: string;
+}> = [{ name: "Add Expense", href: "/reimbursements/new" }] as const;
+
+export const adminNavLinks: ReadonlyArray<{
   name: string;
   href: string;
 }> = [
-  { name: "Add Donation", href: "/transactions/new" },
-  { name: "Add Expense", href: "/reimbursements/new" },
+  { name: "Add Donation", href: "/donations/new" },
+  { name: "Add Payment", href: "/payments/new" },
   { name: "Contacts", href: "/contacts" },
 ] as const;

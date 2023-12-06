@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Separator } from "~/components/ui/separator";
-import { navLinks } from "~/lib/constants";
+import { userNavLinks } from "~/lib/constants";
 import { cn, useUser } from "~/lib/utils";
 
 export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
@@ -30,7 +30,7 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
         <DialogContent className="top-0 max-w-full translate-y-0">
           <DialogTitle className="sr-only">Navigation links</DialogTitle>
           <ul className="mt-4 space-x-0 space-y-1">
-            {navLinks.map((link) => {
+            {userNavLinks.map((link) => {
               return (
                 <li key={link.href}>
                   <NavLink

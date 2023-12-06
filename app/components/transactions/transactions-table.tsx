@@ -22,7 +22,7 @@ export function TransactionsTable({ transactions }: { transactions: Array<Transa
           return (
             <TableRow key={t.id}>
               <TableCell>{dayjs(t.date).format("MM/DD/YYYY")}</TableCell>
-              <TableCell>{formatCurrency(t.amount, 2)}</TableCell>
+              <TableCell>{formatCurrency(t.amountInCents * 100, 2)}</TableCell>
               <TableCell className="truncate">{t.description}</TableCell>
               <TableCell>
                 <Button asChild variant="link">
