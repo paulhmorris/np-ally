@@ -97,7 +97,7 @@ export function getAllSearchParams(param: string, request: Request) {
   return url.searchParams.getAll(param);
 }
 
-export const formatCurrency = (value: number, decimals?: 0 | 2) => {
+export function formatCurrency(value: number, decimals?: 0 | 2) {
   const decimalPlaces = decimals ? decimals : value % 1 !== 0 ? 2 : 0;
   const formattedValue = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -107,7 +107,11 @@ export const formatCurrency = (value: number, decimals?: 0 | 2) => {
   }).format(value);
 
   return formattedValue;
-};
+}
+
+export function formatCentsAsDollars(value: number, decimals?: 0 | 2) {
+  return formatCurrency(value / 100, decimals);
+}
 
 export function getToday() {
   const today = new Date();
@@ -124,7 +128,7 @@ export const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed;
 };
 
-export function useConsoleLog(message?: any, ...optionalParams: Array<any>) {
+export function useConsoleLog(dependencyList: Array<any>, message?: any, ...optionalParams: Array<any>) {
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     console.log(message, ...optionalParams);

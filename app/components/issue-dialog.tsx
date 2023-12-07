@@ -47,6 +47,7 @@ export function IssueDialog() {
           <DialogDescription>Report a bug, or request an improvement or feature.</DialogDescription>
         </DialogHeader>
         <ValidatedForm
+          id="issue-form"
           fetcher={fetcher}
           navigate={false}
           method="post"
@@ -55,17 +56,17 @@ export function IssueDialog() {
           className="grid gap-4 py-4"
         >
           <FormField name="title" label="Title" placeholder="I need help with..." required />
+          <FormSelect name="labelId" label="Type" placeholder="Select issue type" required>
+            <SelectItem value={LinearLabelID.Bug}>Bug</SelectItem>
+            <SelectItem value={LinearLabelID.Feature}>Feature</SelectItem>
+            <SelectItem value={LinearLabelID.Improvement}>Improvement</SelectItem>
+          </FormSelect>
           <FormTextarea
             name="description"
             label="Description"
             placeholder="Please enter everything relevant to your issue."
             required
           />
-          <FormSelect name="labelId" label="Type" placeholder="Select issue type" required>
-            <SelectItem value={LinearLabelID.Bug}>Bug</SelectItem>
-            <SelectItem value={LinearLabelID.Feature}>Feature</SelectItem>
-            <SelectItem value={LinearLabelID.Improvement}>Improvement</SelectItem>
-          </FormSelect>
           <DialogFooter>
             <Button type="button" onClick={() => setIsOpen(false)} variant="ghost" className="mr-auto">
               Cancel

@@ -45,10 +45,14 @@ export function ErrorComponent() {
           </Link>
         </Button>
       </div>
-      <p className="mt-24 text-left text-sm font-bold">Stack Trace</p>
-      <pre className="whitespace-pre-wrap rounded bg-destructive/10 p-4 text-left text-xs text-destructive">
-        <code>{error instanceof Error ? error.stack : JSON.stringify(error)}</code>
-      </pre>
+      {error instanceof Error && error.stack ? (
+        <>
+          <p className="mt-24 text-left text-sm font-bold">Stack Trace</p>
+          <pre className="whitespace-pre-wrap rounded bg-destructive/10 p-4 text-left text-xs text-destructive">
+            <code>{error.stack}</code>
+          </pre>
+        </>
+      ) : null}
     </div>
   );
 }

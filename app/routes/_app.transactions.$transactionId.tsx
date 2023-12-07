@@ -20,7 +20,7 @@ import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
-import { cn, formatCurrency, useUser } from "~/lib/utils";
+import { cn, formatCentsAsDollars, useUser } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
@@ -112,7 +112,7 @@ export default function UserDetailsPage() {
           <div>
             <h2 className="sr-only">Details</h2>
             <dl className="divide-y divide-muted">
-              <DetailItem label="Total" value={formatCurrency(transaction.amountInCents, 2)} />
+              <DetailItem label="Total" value={formatCentsAsDollars(transaction.amountInCents, 2)} />
               <DetailItem label="Created" value={dayjs(transaction.createdAt).format("MM/DD/YYYY")} />
             </dl>
           </div>
@@ -124,7 +124,7 @@ export default function UserDetailsPage() {
                 return (
                   <Fragment key={item.id}>
                     <span>{index + 1}</span>
-                    <DetailItem label="Amount" value={formatCurrency(item.amountInCents, 2)} />
+                    <DetailItem label="Amount" value={formatCentsAsDollars(item.amountInCents, 2)} />
                     <DetailItem label="Type" value={item.type.name} />
                     {item.contact ? (
                       <DetailItem

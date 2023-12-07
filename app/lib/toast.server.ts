@@ -31,26 +31,33 @@ class ToastHandler {
       description: "Your action was not successful.",
     },
   };
+
   async redirect(request: Request, url: string, toast: Toast, init: ResponseInit = {}) {
     const session = await getSession(request);
     const variant = toast.variant || "default";
 
-    const headers = new Headers(init.headers);
-    headers.append("Set-Cookie", await commitSession(session));
-
     setGlobalToast(session, { ...this.defaultToasts[variant], ...toast });
-    return redirect(url, { ...init, headers });
+    return redirect(url, {
+      ...init,
+      headers: {
+        ...init.headers,
+        "Set-Cookie": await commitSession(session),
+      },
+    });
   }
 
   async json<Data>(request: Request, data: Data, toast: Toast, init: ResponseInit = {}): Promise<TypedResponse<Data>> {
     const session = await getSession(request);
     const variant = toast.variant || "default";
 
-    const headers = new Headers(init.headers);
-    headers.append("Set-Cookie", await commitSession(session));
-
     setGlobalToast(session, { ...this.defaultToasts[variant], ...toast });
-    return typedjson(data, { ...init, headers });
+    return typedjson(data, {
+      ...init,
+      headers: {
+        ...init.headers,
+        "Set-Cookie": await commitSession(session),
+      },
+    });
   }
 }
 

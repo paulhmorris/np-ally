@@ -132,6 +132,7 @@ export default function NewUserPage() {
               label="Receipt"
               placeholder="Select a receipt"
               className="max-w-[400px]"
+              disabled={receipts.length === 0}
               options={receipts.map((r) => ({
                 value: r.id,
                 label: (
