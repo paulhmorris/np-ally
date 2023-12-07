@@ -4,7 +4,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, useFieldArray, useFormContext, validationError } from "remix-validated-form";
+import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
 import { z } from "zod";
 
 import { ErrorComponent } from "~/components/error-component";
@@ -14,46 +14,18 @@ import { Button } from "~/components/ui/button";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
-import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
+import { TransactionItemType } from "~/lib/constants";
+import { TransactionItemSchema } from "~/lib/schemas";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
-import { getToday, useConsoleLog } from "~/lib/utils";
-
-const transactionItemSchema = z.object({
-  typeId: z.coerce.number().transform((val, ctx) => {
-    if (!Object.values(TransactionItemType).includes(val)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Invalid type`,
-        path: [],
-      });
-      return z.NEVER;
-    }
-    return val;
-  }),
-  methodId: z.coerce.number().transform((val, ctx) => {
-    if (!Object.values(TransactionItemMethod).includes(val)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Invalid method`,
-      });
-      return z.NEVER;
-    }
-    return val;
-  }),
-  amountInCents: z.coerce
-    .number({ invalid_type_error: "Must be a number", required_error: "Amount required" })
-    .nonnegative({ message: "Must be greater than $0" })
-    .max(99_999, { message: "Must be less than $100,000" })
-    .transform((dollars) => Math.round(dollars * 100)),
-  description: z.string().optional().or(z.literal("")),
-});
+import { formatCentsAsDollars, getToday } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
     date: z.coerce.date(),
+    description: z.string().optional(),
     accountId: z.string().cuid({ message: "Account required" }),
-    transactionItems: z.array(transactionItemSchema),
+    transactionItems: z.array(TransactionItemSchema),
   }),
 );
 
@@ -81,8 +53,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  console.log(JSON.parse(JSON.stringify(result.data)));
-
   const { transactionItems, ...rest } = result.data;
   const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
   const transaction = await prisma.transaction.create({
@@ -95,20 +65,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       },
     },
+    include: { account: true },
   });
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
     title: "Success",
-    description: "Payment added successfully",
+    description: `Payment of ${formatCentsAsDollars(total)} added to account ${transaction.account.code}`,
   });
 };
 
 export default function NewUserPage() {
   const { accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "payment-form" });
-  const ctx = useFormContext("payment-form");
-
-  useConsoleLog("form context: ", ctx);
 
   return (
     <>
@@ -156,7 +124,6 @@ export default function NewUserPage() {
                     <input type="hidden" name={`${fieldPrefix}.id`} />
                     <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Compensation} />
                     <fieldset className="space-y-3">
-                      <FormField name={`${fieldPrefix}.description`} label="Description" />
                       <div className="grid grid-cols-4 items-start gap-2">
                         <div className="col-span-1">
                           <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
@@ -173,6 +140,7 @@ export default function NewUserPage() {
                           }))}
                         />
                       </div>
+                      <FormField name={`${fieldPrefix}.description`} label="Description" />
                     </fieldset>
                   </li>
                 );

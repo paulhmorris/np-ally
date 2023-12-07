@@ -27,9 +27,8 @@ import { formatCurrency, useUser } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
-    name: z.string().min(1, { message: "Name is required" }),
-    userId: z.string().optional(),
-    organizationId: z.string().optional(),
+    code: z.string().min(1, { message: "Code is required" }),
+    description: z.string().min(1, { message: "Description is required" }),
     _action: z.enum(["delete", "update"]),
   }),
 );

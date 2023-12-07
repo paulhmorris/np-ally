@@ -15,25 +15,17 @@ import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType, TransactionItemType } from "~/lib/constants";
+import { TransactionItemSchema } from "~/lib/schemas";
 import { requireUser } from "~/lib/session.server";
-import { getToday } from "~/lib/utils";
-
-const transactionItemSchema = z.object({
-  typeId: z.string().min(1, { message: "Type required" }),
-  accountId: z.string().cuid({ message: "Account required" }),
-  donorId: z.string().cuid({ message: "Invalid Donor ID" }).or(z.literal("")),
-  amount: z.coerce
-    .number({ invalid_type_error: "Must be a number" })
-    .nonnegative({ message: "Must be greater than $0" })
-    .max(99_999, { message: "Must be less than $100,000" }),
-  description: z.string().optional(),
-  methodId: z.string().min(1, { message: "Method required" }),
-});
+import { toast } from "~/lib/toast.server";
+import { formatCentsAsDollars, getToday } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
     date: z.coerce.date(),
-    transactionItems: z.array(transactionItemSchema),
+    description: z.string().optional(),
+    accountId: z.string().cuid({ message: "Account required" }),
+    transactionItems: z.array(TransactionItemSchema),
   }),
 );
 
@@ -65,20 +57,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  // const { transactionItems, ...rest } = result.data;
-  // const trx = await prisma.transaction.create({
-  //   data: {
-  //     ...rest,
-  //     transactionItems: {
-  //       createMany: {
-  //         data: transactionItems,
-  //       },
-  //     },
-  //   },
-  // });
-  // return redirect(`/transactions/${trx.id}`);
+  const { transactionItems, ...rest } = result.data;
+  const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
+  const transaction = await prisma.transaction.create({
+    data: {
+      ...rest,
+      amountInCents: total,
+      transactionItems: {
+        createMany: {
+          data: transactionItems.map((i) => i),
+        },
+      },
+    },
+    include: { account: true },
+  });
 
-  return typedjson({});
+  return toast.redirect(request, `/accounts/${transaction.accountId}`, {
+    title: "Success",
+    description: `Donation of ${formatCentsAsDollars(total)} added to account ${transaction.account.code}`,
+  });
 };
 
 export default function NewUserPage() {
@@ -98,11 +95,23 @@ export default function NewUserPage() {
         >
           <SubmitButton disabled={items.length === 0}>Submit Donation</SubmitButton>
           <div className="mt-8 space-y-8">
-            <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
-              <div className="w-auto">
-                <FormField name="date" label="Date" type="date" defaultValue={getToday()} />
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
+                <div className="w-auto">
+                  <FormField name="date" label="Date" type="date" defaultValue={getToday()} />
+                </div>
+                <FormField name="description" label="Description" />
               </div>
-              <FormField name="description" label="Description" />
+              <FormSelect
+                required
+                name="accountId"
+                label="Account"
+                placeholder="Select account"
+                options={accounts.map((a) => ({
+                  value: a.id,
+                  label: `${a.code} - ${a.description}`,
+                }))}
+              />
             </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {
@@ -132,18 +141,7 @@ export default function NewUserPage() {
                           }))}
                         />
                         <FormSelect
-                          divProps={{ className: "col-span-5" }}
-                          required
-                          name={`${fieldPrefix}.accountId`}
-                          label="Account"
-                          placeholder="Select account"
-                          options={accounts.map((a) => ({
-                            value: a.id,
-                            label: `${a.code} - ${a.description}`,
-                          }))}
-                        />
-                        <FormSelect
-                          divProps={{ className: "col-span-3" }}
+                          divProps={{ className: "col-span-4" }}
                           name={`${fieldPrefix}.donorId`}
                           label="Donor"
                           placeholder="Select donor"
@@ -152,15 +150,11 @@ export default function NewUserPage() {
                             label: `${c.firstName} ${c.lastName}`,
                           }))}
                         />
-                      </div>
-                      <div className="grid grid-cols-4 items-start gap-2">
-                        <div className="col-span-1">
+                        <div className="col-span-3">
                           <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
                         </div>
-                        <div className="col-span-3">
-                          <FormField name={`${fieldPrefix}.description`} label="Description" />
-                        </div>
                       </div>
+                      <FormField name={`${fieldPrefix}.description`} label="Description" />
                     </fieldset>
                   </li>
                 );
