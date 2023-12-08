@@ -8,5 +8,5 @@ node_modules
 /cypress/videos
 /postgres-data
 
-# Sentry Config File
 .sentryclirc
+.vercel
