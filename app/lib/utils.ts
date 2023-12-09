@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Contact, Prisma } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { FilterFn } from "@tanstack/react-table";
@@ -133,4 +133,8 @@ export function useConsoleLog(dependencyList: Array<any>, message?: any, ...opti
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     console.log(message, ...optionalParams);
   }, [message, optionalParams]);
+}
+
+export function getInitials(contact: Contact) {
+  return `${contact.firstName?.charAt(0)}${contact.lastName?.charAt(0)}`;
 }

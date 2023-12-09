@@ -34,7 +34,7 @@ const validator = withZod(
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   invariant(params.accountId, "accountId not found");
 
   const account = await prisma.account.findUnique({

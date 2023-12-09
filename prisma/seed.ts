@@ -84,6 +84,15 @@ async function seed() {
         email: "mr@donor.com",
         phone: "555-555-5555",
         typeId: 1,
+        address: {
+          create: {
+            street: "1234 Main St",
+            city: "Anytown",
+            state: "CA",
+            zip: "12345",
+            country: "USA",
+          },
+        },
       },
     }),
   ]);
@@ -105,6 +114,7 @@ async function seed() {
         date: faker.date.past(),
         description: faker.lorem.word(),
         accountId: account.id,
+        donorId: donorContact.id,
         transactionItems: {
           createMany: {
             data: [
@@ -112,13 +122,11 @@ async function seed() {
                 amountInCents: faker.number.int({ min: 100, max: 50_000 }),
                 description: faker.lorem.word(),
                 typeId: 1,
-                contactId: donorContact.id,
               },
               {
                 amountInCents: faker.number.int({ min: 100, max: 50_000 }),
                 description: faker.lorem.word(),
                 typeId: 2,
-                contactId: donorContact.id,
               },
             ],
           },
