@@ -23,13 +23,13 @@ export function ContactCard({ contact }: { contact: Contact }) {
         </Avatar>
       </CardHeader>
       <CardContent>
-        <dl className="space-y-6 text-sm">
+        <dl className="space-y-3 text-sm">
           {contact.address ? (
             <div className="flex items-center gap-4">
               <>
                 <dt className="self-start">
                   <span className="sr-only">Address</span>
-                  <IconAddressBook className="h-5 w-5" />
+                  <IconAddressBook className="h-5 w-5 text-muted-foreground" />
                 </dt>
                 <dd>
                   <span className="block">
@@ -47,7 +47,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
             <div className="flex items-center gap-4">
               <dt>
                 <span className="sr-only">Phone</span>
-                <IconPhone className="h-5 w-5" />
+                <IconPhone className="h-5 w-5 text-muted-foreground" />
               </dt>
               <dd>
                 <a href={`tel:${contact.phone}`}>{contact.phone}</a>
@@ -57,7 +57,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
           <div className="flex items-center gap-4">
             <dt>
               <span className="sr-only">Email</span>
-              <IconMail className="h-5 w-5" />
+              <IconMail className="h-5 w-5 text-muted-foreground" />
             </dt>
             <dd>
               <a href={`mailto:${contact.email}`}>{contact.email}</a>

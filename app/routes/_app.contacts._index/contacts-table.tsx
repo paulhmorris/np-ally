@@ -1,10 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
-import { IconDots } from "@tabler/icons-react";
 import {
   ColumnDef,
   ColumnFiltersState,
-  Row,
   SortingState,
   VisibilityState,
   getCoreRowModel,
@@ -17,17 +15,10 @@ import {
 } from "@tanstack/react-table";
 import * as React from "react";
 
-import { Button } from "~/components/ui/button";
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
 import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
 import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { fuzzyFilter } from "~/lib/utils";
 
 interface DataTableProps<TData> {
@@ -143,8 +134,12 @@ const columns: Array<ColumnDef<Contact>> = [
     enableColumnFilter: false,
   },
   {
-    id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    id: "action",
+    cell: ({ row }) => (
+      <Link to={`/contacts/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
     enableColumnFilter: false,
   },
 ];
@@ -161,23 +156,23 @@ const facets: Array<Facet> = [
   },
 ];
 
-function DataTableRowActions({ row }: { row: Row<Contact> }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted">
-          <IconDots className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem asChild>
-          <Link to={`/contacts/${row.original.id}`}>View</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to={`/contacts/${row.original.id}/edit`}>Edit</Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+// function DataTableRowActions({ row }: { row: Row<Contact> }) {
+//   return (
+//     <DropdownMenu>
+//       <DropdownMenuTrigger asChild>
+//         <Button variant="ghost" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted">
+//           <IconDots className="h-4 w-4" />
+//           <span className="sr-only">Open menu</span>
+//         </Button>
+//       </DropdownMenuTrigger>
+//       <DropdownMenuContent align="end" className="w-[160px]">
+//         <DropdownMenuItem asChild>
+//           <Link to={`/contacts/${row.original.id}`}>View</Link>
+//         </DropdownMenuItem>
+//         <DropdownMenuItem asChild>
+//           <Link to={`/contacts/${row.original.id}/edit`}>Edit</Link>
+//         </DropdownMenuItem>
+//       </DropdownMenuContent>
+//     </DropdownMenu>
+//   );
+// }

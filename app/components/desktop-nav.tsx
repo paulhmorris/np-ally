@@ -57,8 +57,8 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
                 to={link.href}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary",
-                    isActive && "bg-secondary",
+                    "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-primary/10",
+                    isActive && "bg-primary/10",
                   )
                 }
               >
@@ -80,8 +80,8 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
                     to={link.href}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary",
-                        isActive && "bg-secondary",
+                        "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-primary/10",
+                        isActive && "bg-primary/10",
                       )
                     }
                   >
