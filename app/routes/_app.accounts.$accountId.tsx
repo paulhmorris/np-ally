@@ -47,7 +47,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         include: {
           transactionItems: {
             include: {
-              contact: true,
               method: true,
               type: true,
             },
@@ -69,7 +68,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "User • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Account • Alliance 436" }];
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   await requireUser(request, ["ADMIN", "SUPERADMIN"]);

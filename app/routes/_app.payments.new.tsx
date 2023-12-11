@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
@@ -11,6 +11,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
@@ -113,35 +114,40 @@ export default function NewUserPage() {
               {items.map(({ key }, index) => {
                 const fieldPrefix = `transactionItems[${index}]`;
                 return (
-                  <li key={key} className="rounded-xl border border-border p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <p className="font-bold tracking-wider">Item {index + 1}</p>
-                      <Button className="group" onClick={() => remove(index)} variant="link" type="button">
-                        <span className="sr-only">Remove transaction item</span>
-                        <IconTrash className="h-4 w-4 text-foreground opacity-50 group-hover:text-destructive group-hover:opacity-100" />
-                      </Button>
-                    </div>
-                    <input type="hidden" name={`${fieldPrefix}.id`} />
-                    <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Compensation} />
-                    <fieldset className="space-y-3">
-                      <div className="grid grid-cols-4 items-start gap-2">
-                        <div className="col-span-1">
-                          <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
-                        </div>
-                        <FormSelect
-                          divProps={{ className: "col-span-3" }}
-                          required
-                          name={`${fieldPrefix}.methodId`}
-                          label="Method"
-                          placeholder="Select method"
-                          options={transactionItemMethods.map((t) => ({
-                            value: t.id,
-                            label: t.name,
-                          }))}
-                        />
-                      </div>
-                      <FormField name={`${fieldPrefix}.description`} label="Description" />
-                    </fieldset>
+                  <li key={key}>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Item {index + 1}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <input type="hidden" name={`${fieldPrefix}.id`} />
+                        <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Compensation} />
+                        <fieldset className="space-y-3">
+                          <div className="grid grid-cols-4 items-start gap-2">
+                            <div className="col-span-1">
+                              <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
+                            </div>
+                            <FormSelect
+                              divProps={{ className: "col-span-3" }}
+                              required
+                              name={`${fieldPrefix}.methodId`}
+                              label="Method"
+                              placeholder="Select method"
+                              options={transactionItemMethods.map((t) => ({
+                                value: t.id,
+                                label: t.name,
+                              }))}
+                            />
+                          </div>
+                          <FormField name={`${fieldPrefix}.description`} label="Description" />
+                        </fieldset>
+                      </CardContent>
+                      <CardFooter>
+                        <Button onClick={() => remove(index)} variant="destructive" type="button" className="ml-auto">
+                          Remove
+                        </Button>
+                      </CardFooter>
+                    </Card>
                   </li>
                 );
               })}

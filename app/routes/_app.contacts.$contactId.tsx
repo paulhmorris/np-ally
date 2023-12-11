@@ -46,12 +46,14 @@ export default function UserDetailsPage() {
       <PageHeader title="View Contact" description={contact.id} />
 
       <PageContainer>
-        <div className="max-w-[384px]">
-          <ContactCard contact={contact} />
-        </div>
-        <div>
-          {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
-          {contact.typeId === ContactType.Donor ? <RecentDonationsTable transactions={contact.transactions} /> : null}
+        <div className="space-y-5">
+          <div className="max-w-[384px]">
+            <ContactCard contact={contact} />
+          </div>
+          <div>
+            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
+            {contact.typeId === ContactType.Donor ? <RecentDonationsTable transactions={contact.transactions} /> : null}
+          </div>
         </div>
       </PageContainer>
     </>

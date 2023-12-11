@@ -31,18 +31,13 @@ export function ErrorComponent() {
     }
   }
   return (
-    <div className="mt-10 text-center">
-      {isRouteError ? <p className="text-base font-semibold text-destructive">{error.status}</p> : null}
-      <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-5xl">{title}</h1>
-      <p className="mt-3 text-base leading-7 text-muted-foreground">{description}</p>
-      <div className="mt-5 flex items-center justify-center gap-x-6">
-        <Button asChild>
+    <div className="mt-20">
+      {isRouteError ? <p className="mb-2 text-base font-semibold text-destructive">{error.status}</p> : null}
+      <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">{title}</h1>
+      <p className="mt-2 text-base leading-7 text-muted-foreground">{description}</p>
+      <div className="mt-2 flex items-center gap-x-6">
+        <Button asChild variant="secondary">
           <Link to="/">Go back home</Link>
-        </Button>
-        <Button asChild variant="ghost">
-          <Link to="/">
-            Contact support <span aria-hidden="true">&rarr;</span>
-          </Link>
         </Button>
       </div>
       {error instanceof Error && error.stack ? (

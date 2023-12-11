@@ -9,7 +9,7 @@ export default function AppLayout() {
     <div className="mx-auto flex h-full w-full flex-col bg-background sm:flex-row">
       <MobileNav />
       <DesktopNav />
-      <main className="w-full grow overflow-y-scroll p-6 sm:p-10">
+      <main className="w-full max-w-screen-2xl grow overflow-y-scroll p-6 sm:p-10">
         <Outlet />
         <IssueDialog />
       </main>

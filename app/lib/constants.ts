@@ -49,5 +49,6 @@ export const userNavLinks: ReadonlyArray<NavLink> = [
 export const adminNavLinks: ReadonlyArray<NavLink> = [
   { name: "Add Donation", href: "/donations/new" },
   { name: "Add Payment", href: "/payments/new" },
+  { name: "Accounts", href: "/accounts" },
   { name: "Contacts", href: "/contacts" },
 ] as const;
