@@ -13,19 +13,20 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import dayjs from "dayjs";
 import * as React from "react";
 
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
 import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
 import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { fuzzyFilter } from "~/lib/utils";
+import { formatCentsAsDollars, fuzzyFilter } from "~/lib/utils";
 
 interface DataTableProps<TData> {
   data: Array<TData>;
 }
 
-export function ContactsTable<TData>({ data }: DataTableProps<TData>) {
+export function AccountTransactionsTable<TData>({ data }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -67,40 +68,58 @@ export function ContactsTable<TData>({ data }: DataTableProps<TData>) {
   );
 }
 
-type Contact = Prisma.ContactGetPayload<{ include: { type: true } }>;
-const columns: Array<ColumnDef<Contact>> = [
+type Account = Prisma.TransactionGetPayload<{
+  include: { donor: true };
+}>;
+const columns: Array<ColumnDef<Account>> = [
   {
-    accessorKey: "firstName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="First" />,
+    accessorKey: "date",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
     cell: ({ row }) => {
       return (
         <div>
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("firstName")}</span>
+          <span className="max-w-[120px] truncate font-medium">{dayjs(row.getValue("date")).format("MM/DD/YYYY")}</span>
         </div>
       );
     },
     enableColumnFilter: false,
   },
   {
-    accessorKey: "lastName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Last" />,
+    accessorKey: "amountInCents",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
     cell: ({ row }) => {
       return (
         <div className="max-w-[100px]">
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("lastName")}</span>
+          <span className="max-w-[500px] truncate font-medium">
+            {formatCentsAsDollars(row.getValue("amountInCents"))}
+          </span>
         </div>
       );
     },
     enableColumnFilter: false,
   },
   {
-    accessorKey: "type",
-    accessorFn: (row) => `${row.type.name}`,
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Type" />,
+    accessorKey: "description",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
     cell: ({ row }) => {
       return (
-        <div className="max-w-[100px]">
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("type")}</span>
+        <div>
+          <span className="max-w-[500px] truncate font-medium">{row.getValue("description")}</span>
+        </div>
+      );
+    },
+    enableColumnFilter: false,
+  },
+  {
+    accessorKey: "donor",
+    accessorFn: (row) => `${row.donor?.firstName} ${row.donor?.lastName}`,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Donor" />,
+    cell: ({ row }) => {
+      return (
+        <div>
+          <Link to={`/contacts/${row.original.donorId}`} className="max-w-[500px] truncate font-medium text-primary">
+            {row.getValue("donor")}
+          </Link>
         </div>
       );
     },
@@ -110,33 +129,9 @@ const columns: Array<ColumnDef<Contact>> = [
     },
   },
   {
-    accessorKey: "email",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
-    cell: ({ row }) => {
-      return (
-        <div>
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("email")}</span>
-        </div>
-      );
-    },
-    enableColumnFilter: false,
-  },
-  {
-    accessorKey: "phone",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
-    cell: ({ row }) => {
-      return (
-        <div>
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("phone")}</span>
-        </div>
-      );
-    },
-    enableColumnFilter: false,
-  },
-  {
-    id: "action",
+    id: "view",
     cell: ({ row }) => (
-      <Link to={`/contacts/${row.original.id}`} className="font-medium text-primary">
+      <Link to={`/accounts/${row.original.id}`} className="font-medium text-primary">
         View
       </Link>
     ),
@@ -146,12 +141,7 @@ const columns: Array<ColumnDef<Contact>> = [
 
 const facets: Array<Facet> = [
   {
-    columnId: "type",
-    title: "Type",
-    options: [
-      { label: "Donor", value: "Donor" },
-      { label: "Staff", value: "Staff" },
-      { label: "Admin", value: "Admin" },
-    ],
+    columnId: "donor",
+    title: "Donor",
   },
 ];

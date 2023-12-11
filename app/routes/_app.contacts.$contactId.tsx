@@ -47,7 +47,7 @@ export default function UserDetailsPage() {
 
       <PageContainer>
         <div className="space-y-5">
-          <div className="max-w-[384px]">
+          <div className="max-w-xs">
             <ContactCard contact={contact} />
           </div>
           <div>

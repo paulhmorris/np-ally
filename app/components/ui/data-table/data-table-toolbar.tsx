@@ -9,7 +9,7 @@ import { Input } from "~/components/ui/input";
 export interface Facet {
   columnId: string;
   title: string;
-  options: Array<{ label: string; value: string }>;
+  options?: Array<{ label: string; value: string }>;
 }
 
 interface DataTableToolbarProps<TData> {
@@ -33,7 +33,15 @@ export function DataTableToolbar<TData>({ table, facets }: DataTableToolbarProps
         {facets.map((f) => {
           const column = table.getColumn(f.columnId);
           if (!column) return null;
-          return <DataTableFacetedFilter key={f.columnId} column={column} title={f.title} options={f.options} />;
+
+          const options = f.options ?? [];
+          if (!f.options) {
+            const valuesMap = column.getFacetedUniqueValues();
+            valuesMap.forEach((_value, key) => {
+              options.push({ label: String(key), value: String(key) });
+            });
+          }
+          return <DataTableFacetedFilter key={f.columnId} column={column} title={f.title} options={options} />;
         })}
         {isFiltered ? (
           <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">
