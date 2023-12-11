@@ -66,7 +66,7 @@ async function seed() {
           create: {
             firstName: "Jessica",
             lastName: "Caudle",
-            email: "test@example.com",
+            email: "j@caudle.com",
             typeId: 4,
           },
         },

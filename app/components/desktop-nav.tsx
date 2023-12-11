@@ -1,8 +1,8 @@
-import { Form, Link, NavLink, useNavigation } from "@remix-run/react";
-import { IconLoader, IconMoon, IconSun, IconWorld } from "@tabler/icons-react";
+import { UserRole } from "@prisma/client";
+import { Form, Link, NavLink } from "@remix-run/react";
+import { IconMoon, IconSun, IconWorld } from "@tabler/icons-react";
 import type { ComponentPropsWithoutRef } from "react";
 import { Theme, useTheme } from "remix-themes";
-import { useSpinDelay } from "spin-delay";
 
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -15,14 +15,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { GlobalLoader } from "~/components/ui/global-loader";
 import { Separator } from "~/components/ui/separator";
-import { adminNavLinks, userNavLinks } from "~/lib/constants";
+import { adminNavLinks, globalNavLinks, userNavLinks } from "~/lib/constants";
 import { cn, useUser } from "~/lib/utils";
 
 export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
-  const navigation = useNavigation();
-  const showSpinner = useSpinDelay(navigation.state !== "idle");
   const [_, setTheme] = useTheme();
 
   function handleToggleTheme(e: Event) {
@@ -41,55 +40,25 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         <Link to="/" className="inline-flex items-center space-x-2 text-sm font-bold text-primary">
           <IconWorld className="h-6 w-6" />
           <span>Alliance 436</span>
-          <IconLoader
-            className={cn(
-              showSpinner ? "animate-spin opacity-100" : "opacity-0",
-              "ml-2 text-muted-foreground transition-opacity",
-            )}
-          />
+          <GlobalLoader />
         </Link>
       </div>
-      <ul className="mt-12 space-x-0 space-y-1">
-        {userNavLinks.map((link) => {
-          return (
-            <li key={link.href}>
-              <NavLink
-                to={link.href}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-primary/10",
-                    isActive && "bg-primary/10",
-                  )
-                }
-              >
-                {link.name}
-              </NavLink>
-            </li>
-          );
-        })}
+      <ul className="mt-14 space-x-0 space-y-1">
+        {globalNavLinks.map((link) => (
+          <DesktopNavLink key={link.href} to={link.href} name={link.name} />
+        ))}
+        {user.role === UserRole.USER
+          ? userNavLinks.map((link) => <DesktopNavLink key={link.href} to={link.href} name={link.name} />)
+          : null}
       </ul>
-      {["ADMIN", "SUPERADMIN"].includes(user.role) ? (
+      {user.role === UserRole.ADMIN || user.role === UserRole.SUPERADMIN ? (
         <>
-          <Separator className="mb-4 mt-8" />
+          <Separator className="my-4" />
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">ADMIN</p>
           <ul className="space-x-0 space-y-1">
-            {adminNavLinks.map((link) => {
-              return (
-                <li key={link.href}>
-                  <NavLink
-                    to={link.href}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-primary/10",
-                        isActive && "bg-primary/10",
-                      )
-                    }
-                  >
-                    {link.name}
-                  </NavLink>
-                </li>
-              );
-            })}
+            {adminNavLinks.map((link) => (
+              <DesktopNavLink key={link.href} to={link.href} name={link.name} />
+            ))}
           </ul>
         </>
       ) : null}
@@ -134,5 +103,23 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         </DropdownMenuContent>
       </DropdownMenu>
     </nav>
+  );
+}
+
+function DesktopNavLink({ to, name }: { to: string; name: string }) {
+  return (
+    <li>
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
+          cn(
+            "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-primary/10",
+            isActive && "bg-primary/10",
+          )
+        }
+      >
+        {name}
+      </NavLink>
+    </li>
   );
 }
