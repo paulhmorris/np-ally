@@ -38,7 +38,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   return typedjson({ contact });
 };
 
-export default function UserDetailsPage() {
+export default function ContactDetailsPage() {
   const { contact } = useTypedLoaderData<typeof loader>();
 
   return (

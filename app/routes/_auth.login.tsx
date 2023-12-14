@@ -64,8 +64,8 @@ export default function LoginPage() {
 
   return (
     <div className="grid h-full place-items-center">
-      <div className="max-w-lg px-8">
-        <h1 className="text-4xl font-extrabold">Alliance 436 Admin</h1>
+      <div className="min-w-[400px] px-8">
+        <h1 className="text-4xl font-extrabold">Alliance 436</h1>
         <ValidatedForm validator={validator} method="post" className="mt-4 space-y-3">
           <FormField
             label="Email"

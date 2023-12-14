@@ -131,11 +131,12 @@ export const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed;
 };
 
-export function useConsoleLog(dependencyList: Array<any>, message?: any, ...optionalParams: Array<any>) {
+export function useConsoleLog(message?: any, ...optionalParams: Array<any>) {
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     console.log(message, ...optionalParams);
-  }, [message, optionalParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [optionalParams]);
 }
 
 export function getInitials(contact: Contact) {

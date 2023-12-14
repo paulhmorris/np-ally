@@ -40,7 +40,10 @@ interface NavLink {
   name: string;
   href: string;
 }
-export const globalNavLinks: ReadonlyArray<NavLink> = [{ name: "Home", href: "/" }] as const;
+export const globalNavLinks: ReadonlyArray<NavLink> = [
+  { name: "Home", href: "/" },
+  { name: "Contacts", href: "/contacts" },
+] as const;
 
 export const userNavLinks: ReadonlyArray<NavLink> = [
   { name: "Request Reimbursement", href: "/reimbursements/new" },
@@ -50,5 +53,4 @@ export const adminNavLinks: ReadonlyArray<NavLink> = [
   { name: "Add Donation", href: "/donations/new" },
   { name: "Add Payment", href: "/payments/new" },
   { name: "Accounts", href: "/accounts" },
-  { name: "Contacts", href: "/contacts" },
 ] as const;

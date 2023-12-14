@@ -12,9 +12,6 @@ export const singleton = <Value>(name: string, valueFactory: () => Value): Value
   return g.__singletons[name] as Value;
 };
 
-// Hard-code a unique key, so we can look up the client when this module gets re-imported
-const prisma = singleton("prisma", getPrismaClient);
-
 function getPrismaClient() {
   const { DATABASE_URL } = process.env;
   invariant(typeof DATABASE_URL === "string", "DATABASE_URL env var not set");
@@ -38,5 +35,8 @@ function getPrismaClient() {
 
   return client;
 }
+
+// Hard-code a unique key, so we can look up the client when this module gets re-imported
+const prisma = singleton("prisma", getPrismaClient);
 
 export { prisma };

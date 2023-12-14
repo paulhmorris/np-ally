@@ -1,12 +1,12 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
+import { AccountsTable } from "~/components/accounts/accounts-table";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { prisma } from "~/integrations/prisma.server";
 import { requireUser } from "~/lib/session.server";
-import { AccountsTable } from "~/routes/_app.accounts._index/accounts-table";
 
 export const meta: MetaFunction = () => [{ title: "Accounts • Alliance 436" }];
 

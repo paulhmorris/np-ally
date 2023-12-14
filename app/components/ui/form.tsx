@@ -11,7 +11,7 @@ import { cn } from "~/lib/utils";
 function FieldError({ id, error }: { id: string; error?: string }) {
   if (!error) return null;
   return (
-    <p id={`${id}-error`} className="mt-0.5 text-xs font-medium text-destructive">
+    <p id={`${id}-error`} className="mt-1 text-xs font-medium text-destructive">
       {error}
     </p>
   );

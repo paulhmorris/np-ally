@@ -26,10 +26,7 @@ const validator = withZod(
     amountInCents: z.coerce.number().positive(),
     accountId: z.string().cuid(),
     receiptId: z.string().cuid().optional(),
-    methodId: z
-      .string()
-      .transform((v) => Number(v))
-      .pipe(z.nativeEnum(TransactionItemMethod)),
+    methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
   }),
 );
 

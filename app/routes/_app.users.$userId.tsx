@@ -29,7 +29,7 @@ const validator = withZod(
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().optional(),
     email: z.string().email({ message: "Invalid email address" }),
-    role: z.nativeEnum(UserRole),
+    role: z.coerce.number().pipe(z.nativeEnum(UserRole)),
     clientId: z.string().optional(),
     _action: z.enum(["delete", "update"]),
   }),

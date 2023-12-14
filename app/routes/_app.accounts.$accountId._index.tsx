@@ -5,6 +5,7 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { setFormDefaults } from "remix-validated-form";
 import invariant from "tiny-invariant";
 
+import { AccountTransactionsTable } from "~/components/accounts/account-transactions-table";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
@@ -13,7 +14,6 @@ import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
 import { requireUser } from "~/lib/session.server";
 import { formatCentsAsDollars } from "~/lib/utils";
-import { AccountTransactionsTable } from "~/routes/_app.accounts.$accountId._index/account-transactions-table";
 
 export const meta: MetaFunction = () => [{ title: "Account • Alliance 436" }];
 
@@ -47,7 +47,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   });
 };
 
-export default function UserDetailsPage() {
+export default function AccountDetailsPage() {
   const { total, account } = useTypedLoaderData<typeof loader>();
 
   return (

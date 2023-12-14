@@ -21,8 +21,8 @@ const validator = withZod(
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().optional(),
     email: z.string().email({ message: "Invalid email address" }),
-    role: z.nativeEnum(UserRole),
-    typeId: z.nativeEnum(ContactType),
+    role: z.coerce.number().pipe(z.nativeEnum(UserRole)),
+    typeId: z.coerce.number().pipe(z.nativeEnum(ContactType)),
   }),
 );
 

@@ -3,6 +3,7 @@ import type { Session } from "@remix-run/node";
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
 import { createThemeSessionResolver } from "remix-themes";
 
+import { forbidden, unauthorized } from "~/lib/responses.server";
 import { getUserById } from "~/models/user.server";
 
 export const sessionStorage = createCookieSessionStorage({
@@ -59,12 +60,16 @@ export async function requireUser(request: Request, allowedRoles?: Array<UserRol
 
   const user = await getUserById(userId);
   if (user && allowedRoles) {
-    if (allowedRoles.includes(user.role)) return user;
-    throw await logout(request);
+    if (allowedRoles.includes(user.role)) {
+      return user;
+    }
+    throw unauthorized({ user });
   }
 
-  if (user && defaultAllowedRoles.includes(user.role)) return user;
-  throw await logout(request);
+  if (user && defaultAllowedRoles.includes(user.role)) {
+    return user;
+  }
+  throw forbidden({ user });
 }
 
 export async function createUserSession({
@@ -92,7 +97,6 @@ export async function createUserSession({
 }
 
 export async function logout(request: Request) {
-  console.log("logout");
   const session = await getSession(request);
   return redirect("/login", {
     headers: {
