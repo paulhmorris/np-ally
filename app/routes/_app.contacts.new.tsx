@@ -91,7 +91,14 @@ export default function NewContactPage() {
               <div className="flex items-center gap-2">
                 <FormField label="State" id="state" placeholder="TX" name="address.state" required />
                 <FormField label="Zip" id="zip" placeholder="75080" name="address.zip" required />
-                <FormField label="Country" id="zip" placeholder="US" name="address.country" required />
+                <FormField
+                  label="Country"
+                  id="zip"
+                  placeholder="US"
+                  name="address.country"
+                  required
+                  defaultValue="US"
+                />
               </div>
             </fieldset>
           )}
