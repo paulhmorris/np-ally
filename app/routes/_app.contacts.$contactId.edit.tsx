@@ -50,7 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const result = await UpdateContactValidator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
-  const { address, ...data } = result.data;
+  const { address, ...formData } = result.data;
 
   // Users can only edit their donors
   if (user.role === UserRole.USER) {
@@ -65,7 +65,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       },
     });
-    if (!relatedContacts.some((c) => c.id === data.id)) {
+    if (!relatedContacts.some((c) => c.id === formData.id)) {
       return toast.json(
         request,
         { message: "You do not have permission to edit this contact." },
@@ -80,23 +80,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const contact = await prisma.contact.update({
-    where: { id: data.id },
+    where: { id: formData.id },
     data: {
-      ...data,
-      address: {
-        update: address,
-      },
+      ...formData,
+      address: address
+        ? {
+            upsert: {
+              create: address,
+              update: address,
+            },
+          }
+        : undefined,
+    },
+    include: {
+      address: true,
     },
   });
 
-  return toast.json(
-    request,
-    { contact },
-    {
-      title: "Contact updated",
-      description: `${contact.firstName} ${contact.lastName} was updated successfully.`,
-    },
-  );
+  return toast.redirect(request, `/contacts/${contact.id}`, {
+    title: "Contact updated",
+    description: `${contact.firstName} ${contact.lastName} was updated successfully.`,
+  });
 };
 
 export default function EditContactPage() {
@@ -136,7 +140,7 @@ export default function EditContactPage() {
                 <FormField label="City" id="city" placeholder="Richardson" name="address.city" required />
               </div>
               <div className="flex items-start gap-2">
-                <FormSelect label="State" id="state" placeholder="TX" name="address.state" required>
+                <FormSelect label="State" id="state" placeholder="Select state" name="address.state" required>
                   {states.map((state) => (
                     <SelectItem key={state} value={state}>
                       {state}

@@ -112,7 +112,7 @@ const columns: Array<ColumnDef<Account>> = [
   },
   {
     accessorKey: "donor",
-    accessorFn: (row) => `${row.donor?.firstName} ${row.donor?.lastName}`,
+    accessorFn: (row) => (row.donor ? `${row.donor.firstName} ${row.donor.lastName}` : ""),
     header: ({ column }) => <DataTableColumnHeader column={column} title="Donor" />,
     cell: ({ row }) => {
       return (
@@ -128,15 +128,15 @@ const columns: Array<ColumnDef<Account>> = [
       return value.includes(row.getValue(id));
     },
   },
-  {
-    id: "view",
-    cell: ({ row }) => (
-      <Link to={`/accounts/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
-    enableColumnFilter: false,
-  },
+  // {
+  //   id: "view",
+  //   cell: ({ row }) => (
+  //     <Link to={`/transactions/${row.original.id}`} className="font-medium text-primary">
+  //       View
+  //     </Link>
+  //   ),
+  //   enableColumnFilter: false,
+  // },
 ];
 
 const facets: Array<Facet> = [

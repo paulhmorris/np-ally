@@ -26,6 +26,7 @@ const validator = withZod(
     date: z.coerce.date(),
     description: z.string().optional(),
     accountId: z.string().cuid({ message: "Account required" }),
+    donorId: z.string().cuid().optional(),
     transactionItems: z.array(TransactionItemSchema),
   }),
 );
@@ -58,11 +59,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { transactionItems, ...rest } = result.data;
+  console.log(result.data);
+  const { transactionItems, donorId, accountId, ...rest } = result.data;
   const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
   const transaction = await prisma.transaction.create({
     data: {
       ...rest,
+      account: { connect: { id: accountId } },
+      donor: donorId ? { connect: { id: donorId } } : undefined,
       amountInCents: total,
       transactionItems: {
         createMany: {
@@ -72,6 +76,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     },
     include: { account: true },
   });
+  console.log({ transaction });
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
     title: "Success",
@@ -113,6 +118,15 @@ export default function NewUserPage() {
                   label: `${a.code} - ${a.description}`,
                 }))}
               />
+              <FormSelect
+                name="donorId"
+                label="Donor"
+                placeholder="Select donor"
+                options={donors.map((c) => ({
+                  value: c.id,
+                  label: `${c.firstName} ${c.lastName}`,
+                }))}
+              />
             </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {
@@ -127,9 +141,10 @@ export default function NewUserPage() {
                         <input type="hidden" name={`${fieldPrefix}.id`} />
                         <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Donation} />
                         <fieldset className="space-y-3">
-                          <div className="grid grid-cols-12 gap-2">
+                          <div className="grid grid-cols-4 gap-2">
+                            <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
                             <FormSelect
-                              divProps={{ className: "col-span-4" }}
+                              divProps={{ className: "col-span-3" }}
                               required
                               name={`${fieldPrefix}.methodId`}
                               label="Method"
@@ -139,19 +154,6 @@ export default function NewUserPage() {
                                 label: t.name,
                               }))}
                             />
-                            <FormSelect
-                              divProps={{ className: "col-span-4" }}
-                              name={`${fieldPrefix}.donorId`}
-                              label="Donor"
-                              placeholder="Select donor"
-                              options={donors.map((c) => ({
-                                value: c.id,
-                                label: `${c.firstName} ${c.lastName}`,
-                              }))}
-                            />
-                            <div className="col-span-3">
-                              <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
-                            </div>
                           </div>
                           <FormField name={`${fieldPrefix}.description`} label="Description" />
                         </fieldset>

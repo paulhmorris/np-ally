@@ -32,10 +32,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const result = await NewContactValidator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
-  const { address, ...data } = result.data;
+  const { address, ...formData } = result.data;
 
   const existingContact = await prisma.contact.findFirst({
-    where: { email: data.email },
+    where: { email: formData.email },
   });
 
   if (existingContact) {
@@ -48,7 +48,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const contact = await prisma.contact.create({
     data: {
-      ...data,
+      ...formData,
       address: {
         create: address,
       },

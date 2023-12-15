@@ -50,9 +50,11 @@ export default function Index() {
           <div className="max-w-[320px]">
             <AccountBalanceCard total={formatCentsAsDollars(total._sum.amountInCents)} />
           </div>
-          <div className="max-w-2xl">
-            <ReimbursementRequestsList requests={reimbursementRequests} />
-          </div>
+          {reimbursementRequests.length > 0 ? (
+            <div className="max-w-2xl">
+              <ReimbursementRequestsList requests={reimbursementRequests} />
+            </div>
+          ) : null}
         </div>
       </PageContainer>
     </>

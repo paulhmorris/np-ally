@@ -29,7 +29,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         include: {
           donor: true,
         },
-        orderBy: { date: "desc" },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
