@@ -1,10 +1,11 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
+import { setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
@@ -12,12 +13,9 @@ import { ErrorComponent } from "~/components/error-component";
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
-import { Button } from "~/components/ui/button";
-import { ButtonGroup } from "~/components/ui/button-group";
-import { FormField } from "~/components/ui/form";
-import { SubmitButton } from "~/components/ui/submit-button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { prisma } from "~/integrations/prisma.server";
-import { notFound } from "~/lib/responses.server";
+import { forbidden, notFound } from "~/lib/responses.server";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars, useUser } from "~/lib/utils";
@@ -31,17 +29,25 @@ const validator = withZod(
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   invariant(params.transactionId, "transactionId not found");
+  const user = await requireUser(request);
 
   const transaction = await prisma.transaction.findUnique({
     where: { id: params.transactionId },
     include: {
+      account: true,
+      donor: true,
       transactionItems: {
-        include: { contact: true, type: true },
+        include: {
+          type: true,
+          method: true,
+        },
       },
     },
   });
+  if (user.role === UserRole.USER && transaction?.account.userId !== user.id) {
+    throw forbidden({ message: "You do not have permission to view this transaction" });
+  }
   if (!transaction) throw notFound({ message: "Transaction not found" });
 
   return typedjson({
@@ -96,7 +102,7 @@ export default function UserDetailsPage() {
     <>
       <PageHeader title="Transaction Details" description={transaction.id}>
         <div className="flex items-center gap-2">
-          {["SUPERADMIN", "ADMIN", "ACCOUNTANT", "OWNER"].includes(sessionUser.role) ? (
+          {["SUPERADMIN", "ADMIN"].includes(sessionUser.role) ? (
             <ConfirmDestructiveModal
               open={modalOpen}
               onOpenChange={setModalOpen}
@@ -113,55 +119,65 @@ export default function UserDetailsPage() {
             <h2 className="sr-only">Details</h2>
             <dl className="divide-y divide-muted">
               <DetailItem label="Total" value={formatCentsAsDollars(transaction.amountInCents, 2)} />
-              <DetailItem label="Created" value={dayjs(transaction.createdAt).format("MM/DD/YYYY")} />
+              <DetailItem label="Account">
+                <Link to={`/accounts/${transaction.accountId}`} className="font-medium text-primary">
+                  {`${transaction.account.code}`} - {transaction.account.description}
+                </Link>
+              </DetailItem>
+              <DetailItem label="Created" value={dayjs(transaction.createdAt).format("MM/DD/YYYY h:mm a")} />
+              {transaction.donor ? (
+                <DetailItem label="Donor">
+                  <Link
+                    to={`/contacts/${transaction.donorId}`}
+                    className="font-medium text-primary"
+                  >{`${transaction.donor.firstName} ${transaction.donor.lastName}`}</Link>
+                </DetailItem>
+              ) : null}
+              {transaction.description ? <DetailItem label="Description" value={transaction.description} /> : null}
             </dl>
           </div>
 
           <div>
-            <h2>Line Items</h2>
-            <dl className="divide-y divide-muted">
+            <h2 className="sr-only">Items</h2>
+            <dl className="max-w-sm">
               {transaction.transactionItems.map((item, index) => {
                 return (
-                  <Fragment key={item.id}>
-                    <span>{index + 1}</span>
-                    <DetailItem label="Amount" value={formatCentsAsDollars(item.amountInCents, 2)} />
-                    <DetailItem label="Type" value={item.type.name} />
-                    {item.contact ? (
-                      <DetailItem
-                        label="Donor"
-                        value={`${item.contact.firstName}${item.contact.lastName ? " " + item.contact.lastName : null}`}
-                      />
-                    ) : null}
-                  </Fragment>
+                  <Card key={item.id}>
+                    <CardHeader>
+                      <CardTitle>Item {index + 1}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <DetailItem label="Amount" value={formatCentsAsDollars(item.amountInCents, 2)} />
+                      <DetailItem label="Type" value={item.type.name} />
+                      <DetailItem label="Method" value={item.method?.name} />
+                      <DetailItem label="Description" value={item.description} />
+                    </CardContent>
+                  </Card>
                 );
               })}
             </dl>
           </div>
         </div>
-
-        <ValidatedForm id="transactionForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-          <input type="hidden" name="id" value={transaction.id} />
-          <FormField label="Description" name="description" />
-          <ButtonGroup>
-            <SubmitButton className="w-full" name="_action" value="update">
-              Save Transaction
-            </SubmitButton>
-            <Button type="reset" variant="outline">
-              Reset
-            </Button>
-          </ButtonGroup>
-        </ValidatedForm>
       </PageContainer>
     </>
   );
 }
 
-function DetailItem({ label, value }: { label: string; value: Prisma.JsonValue }) {
+function DetailItem({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value?: Prisma.JsonValue;
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+    <div className="items-center py-1.5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
       <dt className="text-sm font-semibold capitalize">{label}</dt>
-      <dd className={cn("mt-1 text-sm sm:col-span-2 sm:mt-0", value ? "" : "text-muted-foreground")}>
-        {String(value)}
+      <dd className={cn("mt-1 text-sm text-muted-foreground sm:col-span-2 sm:mt-0")}>
+        {value ? String(value) : undefined}
+        {children}
       </dd>
     </div>
   );

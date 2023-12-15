@@ -1,21 +1,31 @@
+import { UserRole } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
-import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { TransactionsTable } from "~/components/transactions/transactions-table";
-import { Button } from "~/components/ui/button";
 import { prisma } from "~/integrations/prisma.server";
 import { requireUser } from "~/lib/session.server";
 
 export const meta: MetaFunction = () => [{ title: "Users • Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  const user = await requireUser(request);
   const transactions = await prisma.transaction.findMany({
+    where:
+      user.role === UserRole.USER
+        ? {
+            account: {
+              userId: user.id,
+            },
+          }
+        : {},
+    include: {
+      donor: true,
+      account: true,
+    },
     orderBy: { createdAt: "desc" },
   });
   return typedjson({ transactions });
@@ -25,17 +35,9 @@ export default function TransactionsIndexPage() {
   const { transactions } = useTypedLoaderData<typeof loader>();
   return (
     <>
-      <PageHeader title="Transactions">
-        <Button asChild>
-          <Link to="/transactions/new">
-            <IconPlus className="mr-2 h-5 w-5" />
-            <span>New Transaction</span>
-          </Link>
-        </Button>
-      </PageHeader>
-
+      <PageHeader title="Transactions" />
       <PageContainer>
-        <TransactionsTable transactions={transactions} />
+        <TransactionsTable data={transactions} />
       </PageContainer>
     </>
   );

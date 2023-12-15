@@ -128,15 +128,15 @@ const columns: Array<ColumnDef<Account>> = [
       return value.includes(row.getValue(id));
     },
   },
-  // {
-  //   id: "view",
-  //   cell: ({ row }) => (
-  //     <Link to={`/transactions/${row.original.id}`} className="font-medium text-primary">
-  //       View
-  //     </Link>
-  //   ),
-  //   enableColumnFilter: false,
-  // },
+  {
+    id: "view",
+    cell: ({ row }) => (
+      <Link to={`/transactions/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
 ];
 
 const facets: Array<Facet> = [

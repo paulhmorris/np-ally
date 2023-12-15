@@ -115,7 +115,7 @@ model Transaction {
 model TransactionItem {
   id            String                 @id @default(cuid())
   amountInCents Int
-  transaction   Transaction            @relation(fields: [transactionId], references: [id])
+  transaction   Transaction            @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   transactionId String
   description   String?
   method        TransactionItemMethod? @relation(fields: [methodId], references: [id])
