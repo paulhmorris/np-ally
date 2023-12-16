@@ -95,7 +95,7 @@ export default function NewUserPage() {
             <div className="space-y-2">
               <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
                 <div className="w-auto">
-                  <FormField name="date" label="Date" type="date" defaultValue={getToday()} />
+                  <FormField required name="date" label="Date" type="date" defaultValue={getToday()} />
                 </div>
                 <FormField name="description" label="Description" />
               </div>

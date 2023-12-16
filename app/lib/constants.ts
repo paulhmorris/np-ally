@@ -26,6 +26,12 @@ export enum TransactionItemMethod {
   Other = 4,
 }
 
+export const defaultAccounts = [
+  { code: "1001", description: "General Fund", typeId: AccountType.Operating },
+  { code: "1002", description: "Local", typeId: AccountType.Operating },
+  { code: "1003", description: "International", typeId: AccountType.Operating },
+];
+
 export enum LinearTeamID {
   Alliance = "8349d9bf-176e-4f6a-a841-181c31a4ff9d",
 }
@@ -40,6 +46,7 @@ interface NavLink {
   name: string;
   href: string;
 }
+
 export const globalNavLinks: ReadonlyArray<NavLink> = [
   { name: "Home", href: "/" },
   { name: "Contacts", href: "/contacts" },

@@ -139,7 +139,11 @@ export function FormSelect(props: FormSelectProps) {
         <span>{label}</span>
         <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>
-      <Select name={field.name} defaultValue={field.defaultValue as string | undefined} onValueChange={field.onChange}>
+      <Select
+        name={field.name}
+        defaultValue={String(field.defaultValue) as string | undefined}
+        onValueChange={field.onChange}
+      >
         <SelectTrigger id={id} {...rest} className={cn(error && "focus:ring-destructive/50", rest.className)}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

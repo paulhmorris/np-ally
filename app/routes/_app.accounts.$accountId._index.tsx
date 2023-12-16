@@ -1,6 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { type MetaFunction } from "@remix-run/react";
-import { IconWorld } from "@tabler/icons-react";
+import { Link, type MetaFunction } from "@remix-run/react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { setFormDefaults } from "remix-validated-form";
 import invariant from "tiny-invariant";
@@ -9,6 +8,7 @@ import { AccountTransactionsTable } from "~/components/accounts/account-transact
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
+import { Button } from "~/components/ui/button";
 import { AccountBalanceCard } from "~/components/users/balance-card";
 import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
@@ -52,14 +52,11 @@ export default function AccountDetailsPage() {
 
   return (
     <>
-      <PageHeader title={account.code} description={account.id} />
-      {account.organization ? (
-        <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
-          <IconWorld className="h-4 w-4" />
-          {account.organization.name}
-        </p>
-      ) : null}
-
+      <PageHeader title={account.code} description={account.id}>
+        <Button variant="outline" asChild>
+          <Link to={`/accounts/${account.id}/edit`}>Edit</Link>
+        </Button>
+      </PageHeader>
       <PageContainer>
         <div className="max-w-xs">
           <AccountBalanceCard total={formatCentsAsDollars(total)} />

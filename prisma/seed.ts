@@ -2,6 +2,8 @@ import { faker } from "@faker-js/faker";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+import { defaultAccounts } from "~/lib/constants";
+
 const prisma = new PrismaClient();
 
 async function seed() {
@@ -105,6 +107,14 @@ async function seed() {
       organizationId: org.id,
       userId: user.id,
     },
+  });
+
+  await prisma.account.createMany({
+    data: defaultAccounts.map((a) => ({
+      ...a,
+      organizationId: org.id,
+      userId: user.id,
+    })),
   });
 
   for (let i = 0; i < 10; i++) {
