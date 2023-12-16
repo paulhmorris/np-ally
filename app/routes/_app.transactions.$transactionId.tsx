@@ -13,7 +13,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { prisma } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { requireUser } from "~/lib/session.server";
@@ -93,7 +93,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   );
 };
 
-export default function UserDetailsPage() {
+export default function TransactionDetailsPage() {
   const sessionUser = useUser();
   const { transaction } = useTypedLoaderData<typeof loader>();
   const [modalOpen, setModalOpen] = useState(false);
@@ -106,19 +106,18 @@ export default function UserDetailsPage() {
             <ConfirmDestructiveModal
               open={modalOpen}
               onOpenChange={setModalOpen}
-              description="This action cannot be undone. This will permanently delete the
-                  transaction and its items, and remove the data from the server."
+              description={`This action cannot be undone. This will permanently delete the
+                  transaction and its items, and change the balance of account ${transaction.account.code}.`}
             />
           ) : null}
         </div>
       </PageHeader>
 
-      <PageContainer>
+      <PageContainer className="max-w-xl">
         <div className="space-y-8">
           <div>
             <h2 className="sr-only">Details</h2>
             <dl className="divide-y divide-muted">
-              <DetailItem label="Total" value={formatCentsAsDollars(transaction.amountInCents, 2)} />
               <DetailItem label="Account">
                 <Link to={`/accounts/${transaction.accountId}`} className="font-medium text-primary">
                   {`${transaction.account.code}`} - {transaction.account.description}
@@ -139,23 +138,30 @@ export default function UserDetailsPage() {
 
           <div>
             <h2 className="sr-only">Items</h2>
-            <dl className="max-w-sm">
-              {transaction.transactionItems.map((item, index) => {
-                return (
-                  <Card key={item.id}>
-                    <CardHeader>
-                      <CardTitle>Item {index + 1}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <DetailItem label="Amount" value={formatCentsAsDollars(item.amountInCents, 2)} />
-                      <DetailItem label="Type" value={item.type.name} />
-                      <DetailItem label="Method" value={item.method?.name} />
-                      <DetailItem label="Description" value={item.description} />
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </dl>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transaction.transactionItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.type.name}</TableCell>
+                    <TableCell>{item.method?.name}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                    <TableCell className="text-right">{formatCentsAsDollars(item.amountInCents, 2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex items-center justify-end gap-2 border-t pr-4 pt-4 text-sm font-bold">
+              <p>Total</p>
+              <p>{formatCentsAsDollars(transaction.amountInCents, 2)}</p>
+            </div>
           </div>
         </div>
       </PageContainer>

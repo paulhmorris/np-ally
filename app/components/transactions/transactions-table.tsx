@@ -81,7 +81,7 @@ const columns: Array<ColumnDef<Account>> = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Account" />,
     cell: ({ row }) => {
       return (
-        <div className="">
+        <div className="max-w-[320px] truncate">
           <span className="font-medium">{row.getValue("account")}</span>
         </div>
       );
