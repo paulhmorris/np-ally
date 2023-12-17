@@ -95,9 +95,9 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Form method="post" action="/logout" navigate={false}>
-              <button>Log out</button>
+          <DropdownMenuItem className="px-0 py-0">
+            <Form className="w-full" method="post" action="/logout" navigate={false}>
+              <button className="w-full px-2 py-1.5 text-left">Log out</button>
             </Form>
           </DropdownMenuItem>
         </DropdownMenuContent>

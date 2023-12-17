@@ -14,6 +14,7 @@ export const validator = withZod(
     title: z.string(),
     description: z.string(),
     labelId: z.string(),
+    attachmentUrl: z.string().url().or(z.literal("")),
   }),
 );
 
@@ -34,7 +35,9 @@ export async function action({ request }: ActionFunctionArgs) {
     title,
     teamId: LinearTeamID.Alliance,
     labelIds: [labelId],
-    description: `${description}\n\n---\n\n- created by ${user.contact.email}\n\n`,
+    description: `${description}\n\n---\n\n- created by ${user.contact.email}\n\n${
+      result.data.attachmentUrl ? `![Attachment](${result.data.attachmentUrl})` : ""
+    }`,
   });
 
   if (!issueRequest.success) {

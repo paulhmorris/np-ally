@@ -22,6 +22,8 @@ import { validator } from "~/routes/resources.issues";
 export function IssueDialog() {
   const fetcher = useFetcher<{ success: boolean }>();
   const [isOpen, setIsOpen] = useState(false);
+  const [fileUrl, setFileUrl] = useState<string>("");
+  const [fileError, setFileError] = useState<string>();
 
   useEffect(() => {
     if (fetcher.data?.success) {
@@ -67,6 +69,40 @@ export function IssueDialog() {
             placeholder="Please enter everything relevant to your issue."
             required
           />
+          <div className="space-y-1">
+            <input type="hidden" name="attachmentUrl" value={fileUrl} />
+            <FormField
+              label="Attachment"
+              name="attachment-uploader"
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                setFileError(undefined);
+
+                const files = Array.from(e.currentTarget.files || []);
+                const file = files[0];
+
+                const formData = new FormData();
+                formData.append("file", file);
+
+                const result = await fetch("/resources/issues/upload-file", {
+                  method: "POST",
+                  body: formData,
+                });
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const json = await result.json();
+
+                if (result.ok) {
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+                  setFileUrl(json.url);
+                } else {
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                  setFileError(JSON.stringify(json.error, null, 2));
+                }
+              }}
+            />
+            {fileError ? <p className="text-xs font-medium text-destructive">{fileError}</p> : null}
+          </div>
           <DialogFooter>
             <Button type="button" onClick={() => setIsOpen(false)} variant="ghost" className="mr-auto">
               Cancel

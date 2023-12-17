@@ -11,7 +11,7 @@ import { cn } from "~/lib/utils";
 function FieldError({ id, error }: { id: string; error?: string }) {
   if (!error) return null;
   return (
-    <p id={`${id}-error`} className="mt-1 text-xs font-medium text-destructive">
+    <p id={`${id}-error`} className="ml-1 mt-1 text-xs font-medium text-destructive">
       {error}
     </p>
   );
@@ -57,13 +57,6 @@ export function FormField({
       <Input
         id={id}
         inputMode={isCurrency ? "decimal" : props.inputMode}
-        onChange={(e) => {
-          if (isCurrency) {
-            const value = e.target.value.replace(/[^0-9.]/g, "");
-            e.target.value = value;
-          }
-          props.onChange?.(e);
-        }}
         aria-invalid={error ? true : props["aria-invalid"]}
         aria-describedby={`${id}-error`}
         className={cn(error && "border-destructive focus-visible:ring-destructive/50", isCurrency && "pl-7", className)}
