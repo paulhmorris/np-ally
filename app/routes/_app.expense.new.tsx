@@ -26,7 +26,7 @@ const validator = withZod(
     date: z.coerce.date(),
     description: z.string().optional(),
     accountId: z.string().cuid({ message: "Account required" }),
-    transactionItems: z.array(TransactionItemSchema),
+    transactionItems: z.array(TransactionItemSchema.pick({ amountInCents: true, typeId: true, description: true })),
   }),
 );
 
@@ -34,14 +34,11 @@ export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUser(request, ["SUPERADMIN", "ADMIN"]);
-  const [accounts, transactionItemMethods] = await Promise.all([
-    prisma.account.findMany(),
-    prisma.transactionItemMethod.findMany(),
-  ]);
+  const accounts = await prisma.account.findMany();
+
   return typedjson({
     accounts,
-    transactionItemMethods,
-    ...setFormDefaults("payment-form", {
+    ...setFormDefaults("expense-form", {
       transactionItems: [{ id: nanoid() }],
     }),
   });
@@ -59,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const transaction = await prisma.transaction.create({
     data: {
       ...rest,
-      amountInCents: total,
+      amountInCents: total * -1,
       transactionItems: {
         createMany: {
           data: transactionItems.map((i) => i),
@@ -71,26 +68,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
     title: "Success",
-    description: `Payment of ${formatCentsAsDollars(total)} added to account ${transaction.account.code}`,
+    description: `Expense of ${formatCentsAsDollars(total)} charged to account ${transaction.account.code}`,
   });
 };
 
-export default function NewUserPage() {
-  const { accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
-  const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "payment-form" });
+export default function AddExpensePage() {
+  const { accounts } = useTypedLoaderData<typeof loader>();
+  const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "expense-form" });
 
   return (
     <>
-      <PageHeader title="Add Payment" />
+      <PageHeader title="Add Expense" />
       <PageContainer>
-        <ValidatedForm
-          onSubmit={(data) => console.log(data)}
-          id="payment-form"
-          method="post"
-          validator={validator}
-          className="sm:max-w-xl"
-        >
-          <SubmitButton disabled={items.length === 0}>Submit Payment</SubmitButton>
+        <ValidatedForm id="expense-form" method="post" validator={validator} className="sm:max-w-xl">
+          <SubmitButton disabled={items.length === 0}>Submit Expense</SubmitButton>
           <div className="mt-8 space-y-8">
             <div className="space-y-2">
               <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
@@ -121,7 +112,6 @@ export default function NewUserPage() {
                       </CardHeader>
                       <CardContent>
                         <input type="hidden" name={`${fieldPrefix}.id`} />
-                        <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Compensation} />
                         <fieldset className="space-y-3">
                           <div className="grid grid-cols-4 items-start gap-2">
                             <div className="col-span-1">
@@ -130,13 +120,13 @@ export default function NewUserPage() {
                             <FormSelect
                               divProps={{ className: "col-span-3" }}
                               required
-                              name={`${fieldPrefix}.methodId`}
-                              label="Method"
-                              placeholder="Select method"
-                              options={transactionItemMethods.map((t) => ({
-                                value: t.id,
-                                label: t.name,
-                              }))}
+                              name={`${fieldPrefix}.typeId`}
+                              label="Type"
+                              placeholder="Select type"
+                              options={[
+                                { label: "Compensation", value: TransactionItemType.Compensation },
+                                { label: "Expense", value: TransactionItemType.Expense },
+                              ]}
                             />
                           </div>
                           <FormField name={`${fieldPrefix}.description`} label="Description" />

@@ -46,7 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     donors,
     accounts,
     transactionItemMethods,
-    ...setFormDefaults("donation-form", {
+    ...setFormDefaults("income-form", {
       transactionItems: [{ id: nanoid() }],
     }),
   });
@@ -59,7 +59,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  console.log(result.data);
   const { transactionItems, donorId, accountId, ...rest } = result.data;
   const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
   const transaction = await prisma.transaction.create({
@@ -76,30 +75,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     },
     include: { account: true },
   });
-  console.log({ transaction });
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
     title: "Success",
-    description: `Donation of ${formatCentsAsDollars(total)} added to account ${transaction.account.code}`,
+    description: `Income of ${formatCentsAsDollars(total)} added to account ${transaction.account.code}`,
   });
 };
 
-export default function NewUserPage() {
+export default function AddIncomePage() {
   const { donors, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
-  const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "donation-form" });
+  const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "income-form" });
 
   return (
     <>
-      <PageHeader title="Add Donation" />
+      <PageHeader title="Add Income" />
       <PageContainer>
-        <ValidatedForm
-          onSubmit={(data) => console.log(data)}
-          id="donation-form"
-          method="post"
-          validator={validator}
-          className="sm:max-w-xl"
-        >
-          <SubmitButton disabled={items.length === 0}>Submit Donation</SubmitButton>
+        <ValidatedForm id="income-form" method="post" validator={validator} className="sm:max-w-xl">
+          <SubmitButton disabled={items.length === 0}>Submit Income</SubmitButton>
           <div className="mt-8 space-y-8">
             <div className="space-y-2">
               <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
@@ -139,12 +131,14 @@ export default function NewUserPage() {
                       </CardHeader>
                       <CardContent>
                         <input type="hidden" name={`${fieldPrefix}.id`} />
-                        <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Donation} />
+                        <input type="hidden" name="typeId" value={TransactionItemType.Donation} />
                         <fieldset className="space-y-3">
-                          <div className="grid grid-cols-4 gap-2">
-                            <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
+                          <div className="grid grid-cols-10 gap-2">
+                            <div className="col-span-2">
+                              <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
+                            </div>
                             <FormSelect
-                              divProps={{ className: "col-span-3" }}
+                              divProps={{ className: "col-span-4" }}
                               required
                               name={`${fieldPrefix}.methodId`}
                               label="Method"

@@ -5,27 +5,8 @@ import { ContactType, TransactionItemMethod, TransactionItemType } from "~/lib/c
 export const CheckboxSchema = z.string().transform((val) => val === "on");
 
 export const TransactionItemSchema = z.object({
-  typeId: z.coerce.number().transform((val, ctx) => {
-    if (!Object.values(TransactionItemType).includes(val)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Invalid type`,
-        path: [],
-      });
-      return z.NEVER;
-    }
-    return val;
-  }),
-  methodId: z.coerce.number().transform((val, ctx) => {
-    if (!Object.values(TransactionItemMethod).includes(val)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Invalid method`,
-      });
-      return z.NEVER;
-    }
-    return val;
-  }),
+  typeId: z.coerce.number().pipe(z.nativeEnum(TransactionItemType)),
+  methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
   amountInCents: z.coerce
     .number({ invalid_type_error: "Must be a number", required_error: "Amount required" })
     .nonnegative({ message: "Must be greater than $0" })

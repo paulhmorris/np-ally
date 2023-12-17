@@ -91,7 +91,7 @@ const columns: Array<ColumnDef<Account>> = [
       return (
         <div className="max-w-[100px]">
           <span className="max-w-[500px] truncate font-medium">
-            {formatCentsAsDollars(row.getValue("amountInCents"))}
+            {formatCentsAsDollars(row.getValue("amountInCents"), 2)}
           </span>
         </div>
       );

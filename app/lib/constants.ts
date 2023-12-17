@@ -6,9 +6,10 @@ export enum AccountType {
 
 export enum ContactType {
   Donor = 1,
-  Missionary = 2,
-  Staff = 3,
-  Admin = 4,
+  External = 2,
+  Missionary = 3,
+  Staff = 4,
+  Admin = 5,
 }
 
 export enum TransactionItemType {
@@ -16,13 +17,12 @@ export enum TransactionItemType {
   Expense = 2,
   Compensation = 3,
   Grant = 4,
-  Other = 5,
 }
 
 export enum TransactionItemMethod {
-  Cash = 1,
+  Digital = 1,
   Check = 2,
-  CreditCard = 3,
+  ACH = 3,
   Other = 4,
 }
 
@@ -58,7 +58,7 @@ export const userNavLinks: ReadonlyArray<NavLink> = [
 ] as const;
 
 export const adminNavLinks: ReadonlyArray<NavLink> = [
-  { name: "Add Donation", href: "/donations/new" },
-  { name: "Add Payment", href: "/payments/new" },
+  { name: "Add Income", href: "/income/new" },
+  { name: "Add Expense", href: "/expense/new" },
   { name: "Accounts", href: "/accounts" },
 ] as const;

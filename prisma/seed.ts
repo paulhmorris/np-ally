@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { faker } from "@faker-js/faker";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -102,7 +103,7 @@ async function seed() {
   const account = await prisma.account.create({
     data: {
       typeId: 3,
-      code: "C3001",
+      code: "3001-CA",
       description: "Jessica Caudle - Ministry Fund",
       organizationId: org.id,
       userId: user.id,
@@ -113,7 +114,6 @@ async function seed() {
     data: defaultAccounts.map((a) => ({
       ...a,
       organizationId: org.id,
-      userId: user.id,
     })),
   });
 
@@ -158,9 +158,9 @@ seed()
   });
 
 const transactionItemMethods = [
-  { id: 1, name: "Cash" },
+  { id: 1, name: "Digital" },
   { id: 2, name: "Check" },
-  { id: 3, name: "Credit Card" },
+  { id: 3, name: "ACH" },
   { id: 4, name: "Other" },
 ];
 const transactionItemTypes = [
@@ -168,13 +168,13 @@ const transactionItemTypes = [
   { id: 2, name: "Expense" },
   { id: 3, name: "Compensation" },
   { id: 4, name: "Grant" },
-  { id: 5, name: "Other" },
 ];
 const contactTypes = [
   { id: 1, name: "Donor" },
-  { id: 2, name: "Missionary" },
-  { id: 3, name: "Staff" },
-  { id: 4, name: "Admin" },
+  { id: 2, name: "External" },
+  { id: 3, name: "Missionary" },
+  { id: 4, name: "Staff" },
+  { id: 5, name: "Admin" },
 ];
 const accountTypes = [
   { id: 1, name: "Operating" },

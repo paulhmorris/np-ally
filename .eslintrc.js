@@ -59,6 +59,7 @@ module.exports = {
       },
       plugins: ["@typescript-eslint", "import"],
       rules: {
+        "no-console": "warn",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/array-type": ["error", { default: "generic" }],
         "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_" }],

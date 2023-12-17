@@ -16,7 +16,7 @@ import { requireUser } from "~/lib/session.server";
 export const meta: MetaFunction = () => [{ title: "Contact • Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request);
   invariant(params.contactId, "contactId not found");
 
   const contact = await prisma.contact.findUnique({
