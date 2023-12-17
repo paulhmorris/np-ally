@@ -14,9 +14,9 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
-import { NewContactSchema } from "~/lib/schemas";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
+import { NewContactSchema } from "~/models/schemas";
 
 const NewContactValidator = withZod(NewContactSchema);
 

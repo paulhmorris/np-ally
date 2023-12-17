@@ -18,9 +18,9 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { states } from "~/lib/data";
-import { UpdateContactSchema } from "~/lib/schemas";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
+import { UpdateContactSchema } from "~/models/schemas";
 
 const UpdateContactValidator = withZod(UpdateContactSchema);
 

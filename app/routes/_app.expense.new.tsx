@@ -16,10 +16,10 @@ import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { TransactionItemType } from "~/lib/constants";
-import { TransactionItemSchema } from "~/lib/schemas";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
+import { TransactionItemSchema } from "~/models/schemas";
 
 const validator = withZod(
   z.object({

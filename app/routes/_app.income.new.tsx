@@ -4,7 +4,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { IconPlus } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
+import { ValidatedForm, setFormDefaults, useFieldArray, useFormContext, validationError } from "remix-validated-form";
 import { z } from "zod";
 
 import { ErrorComponent } from "~/components/error-component";
@@ -12,19 +12,24 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
 import { FormField, FormSelect } from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { useConsoleLog } from "~/hooks/useConsoleLog";
 import { prisma } from "~/integrations/prisma.server";
+import { trigger } from "~/integrations/trigger.server";
 import { ContactType, TransactionItemType } from "~/lib/constants";
-import { TransactionItemSchema } from "~/lib/schemas";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
+import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
 
 const validator = withZod(
   z.object({
     date: z.coerce.date(),
     description: z.string().optional(),
+    shouldNotifyUser: CheckboxSchema,
     accountId: z.string().cuid({ message: "Account required" }),
     donorId: z.string().cuid().optional(),
     transactionItems: z.array(TransactionItemSchema),
@@ -58,8 +63,41 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (result.error) {
     return validationError(result.error);
   }
+  const { transactionItems, donorId, accountId, shouldNotifyUser, ...rest } = result.data;
 
-  const { transactionItems, donorId, accountId, ...rest } = result.data;
+  if (shouldNotifyUser) {
+    const account = await prisma.account.findUnique({
+      where: { id: accountId },
+      include: {
+        user: {
+          select: {
+            contact: {
+              select: { email: true },
+            },
+          },
+        },
+      },
+    });
+    if (!account?.user?.contact.email) {
+      return toast.json(
+        request,
+        { message: "Error notifying user" },
+        {
+          variant: "destructive",
+          title: "Error notifying user",
+          description: "There was no user found on this account, or the user has no email address.",
+        },
+        { status: 400 },
+      );
+    }
+    await trigger.sendEvent({
+      name: "income.created",
+      payload: {
+        to: account.user.contact.email,
+      },
+    });
+  }
+
   const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
   const transaction = await prisma.transaction.create({
     data: {
@@ -85,6 +123,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function AddIncomePage() {
   const { donors, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "income-form" });
+  const ctx = useFormContext("income-form");
+  useConsoleLog(ctx.fieldErrors);
 
   return (
     <>
@@ -92,6 +132,12 @@ export default function AddIncomePage() {
       <PageContainer>
         <ValidatedForm id="income-form" method="post" validator={validator} className="sm:max-w-xl">
           <SubmitButton disabled={items.length === 0}>Submit Income</SubmitButton>
+          <div>
+            <Label className="mt-2 inline-flex cursor-pointer items-center gap-2">
+              <Checkbox name="shouldNotifyUser" />
+              <span>Notify User</span>
+            </Label>
+          </div>
           <div className="mt-8 space-y-8">
             <div className="space-y-2">
               <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
@@ -131,7 +177,7 @@ export default function AddIncomePage() {
                       </CardHeader>
                       <CardContent>
                         <input type="hidden" name={`${fieldPrefix}.id`} />
-                        <input type="hidden" name="typeId" value={TransactionItemType.Donation} />
+                        <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Donation} />
                         <fieldset className="space-y-3">
                           <div className="grid grid-cols-10 gap-2">
                             <div className="col-span-2">

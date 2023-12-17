@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import { ContactType, TransactionItemMethod, TransactionItemType } from "~/lib/constants";
 
-export const CheckboxSchema = z.string().transform((val) => val === "on");
+export const CheckboxSchema = z
+  .string()
+  .transform((val) => val === "on")
+  .or(z.undefined());
 
 export const TransactionItemSchema = z.object({
   typeId: z.coerce.number().pipe(z.nativeEnum(TransactionItemType)),

@@ -21,6 +21,11 @@ const envValidation = z.object({
 
   // Linear
   LINEAR_API_KEY: z.string().min(1).startsWith("lin_api_"),
+
+  // Trigger.dev
+  TRIGGER_API_KEY: z.string().startsWith("tr_"),
+  TRIGGER_API_URL: z.string().url(),
+  TRIGGER_PUBLIC_API_KEY: z.string().startsWith("pk_"),
 });
 
 declare global {
@@ -31,7 +36,7 @@ declare global {
 
 export function validateEnv(): void {
   try {
-    console.log("Validating environment variables...");
+    console.info("🌎 validating environment variables..");
     envValidation.parse(process.env);
   } catch (err) {
     if (err instanceof z.ZodError) {
