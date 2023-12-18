@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { TypeOf, z } from "zod";
 
-const envValidation = z.object({
+const serverEnvValidation = z.object({
   // Remix
   NODE_ENV: z.enum(["development", "production", "test"]),
   SESSION_SECRET: z.string().min(16),
@@ -25,19 +25,30 @@ const envValidation = z.object({
   // Trigger.dev
   TRIGGER_API_KEY: z.string().startsWith("tr_"),
   TRIGGER_API_URL: z.string().url(),
+});
+
+const clientEnvValidation = z.object({
+  // Trigger.dev
   TRIGGER_PUBLIC_API_KEY: z.string().startsWith("pk_"),
 });
 
 declare global {
+  // Server side
   namespace NodeJS {
-    interface ProcessEnv extends TypeOf<typeof envValidation> {}
+    interface ProcessEnv extends TypeOf<typeof serverEnvValidation & typeof clientEnvValidation> {}
+  }
+
+  // Client side
+  interface Window {
+    ENV: TypeOf<typeof clientEnvValidation>;
   }
 }
 
 export function validateEnv(): void {
   try {
     console.info("🌎 validating environment variables..");
-    envValidation.parse(process.env);
+    serverEnvValidation.parse(process.env);
+    clientEnvValidation.parse(process.env);
   } catch (err) {
     if (err instanceof z.ZodError) {
       const { fieldErrors } = err.flatten();
