@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 export enum AccountType {
   Operating = 1,
   Benevolence = 2,
@@ -26,10 +28,10 @@ export enum TransactionItemMethod {
   Other = 4,
 }
 
-export const defaultAccounts = [
-  { code: "1001", description: "General Fund", typeId: AccountType.Operating },
-  { code: "1002", description: "Local", typeId: AccountType.Operating },
-  { code: "1003", description: "International", typeId: AccountType.Operating },
+export const defaultAccounts: Array<Prisma.AccountUncheckedCreateInput> = [
+  { code: "1001", description: "General Fund", typeId: AccountType.Operating, activityRecipients: ["paul@remix.run"] },
+  { code: "1002", description: "Local", typeId: AccountType.Operating, activityRecipients: ["paul@remix.run"] },
+  { code: "1003", description: "International", typeId: AccountType.Operating, activityRecipients: ["paul@remix.run"] },
 ];
 
 export enum LinearTeamID {

@@ -62,7 +62,7 @@ module.exports = {
         "no-console": ["warn", { allow: ["warn", "error", "info"] }],
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/array-type": ["error", { default: "generic" }],
-        "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_" }],
+        "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
         "@typescript-eslint/no-misused-promises": [
           "error",
           {

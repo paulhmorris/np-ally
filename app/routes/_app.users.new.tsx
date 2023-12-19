@@ -46,6 +46,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await prisma.user.create({
     data: {
       role,
+      username: contact.email,
       contact: { create: contact },
     },
   });

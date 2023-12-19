@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-import { defaultAccounts } from "~/lib/constants";
+import { ContactType, defaultAccounts } from "~/lib/constants";
 
 const prisma = new PrismaClient();
 
@@ -44,13 +44,14 @@ async function seed() {
 
   await prisma.user.create({
     data: {
+      username: email,
       role: "SUPERADMIN",
       contact: {
         create: {
           firstName: "Paul",
           lastName: "Morris",
           email,
-          typeId: 4,
+          typeId: ContactType.Admin,
         },
       },
       password: {
@@ -64,13 +65,14 @@ async function seed() {
   const [user, donorContact] = await Promise.all([
     await prisma.user.create({
       data: {
+        username: "j@caudle.com",
         role: "USER",
         contact: {
           create: {
             firstName: "Jessica",
             lastName: "Caudle",
             email: "j@caudle.com",
-            typeId: 4,
+            typeId: ContactType.Missionary,
           },
         },
         password: {
@@ -104,6 +106,7 @@ async function seed() {
     data: {
       typeId: 3,
       code: "3001-CA",
+      activityRecipients: ["j@caudle.com"],
       description: "Jessica Caudle - Ministry Fund",
       organizationId: org.id,
       userId: user.id,

@@ -1,15 +1,9 @@
-import { Resend } from "@trigger.dev/resend";
 import { eventTrigger } from "@trigger.dev/sdk";
 import { z } from "zod";
 
-import { trigger } from "~/integrations/trigger.server";
+import { trigger, triggerResend } from "~/integrations/trigger.server";
 
-const resend = new Resend({
-  id: "resend",
-  apiKey: process.env.RESEND_API_KEY,
-});
-
-export const job = trigger.defineJob({
+export const notifyUserJob = trigger.defineJob({
   id: "notify-user-income",
   name: "Notify user of income",
   version: "0.0.1",
@@ -20,7 +14,7 @@ export const job = trigger.defineJob({
     }),
   }),
   integrations: {
-    resend,
+    resend: triggerResend,
   },
   run: async (payload, io) => {
     await io.resend.emails.send("send-email", {
