@@ -20,6 +20,7 @@ model User {
   isActive              Boolean                @default(true)
   receipts              Receipt[]
   reimbursementRequests ReimbursementRequest[]
+  engagements           Engagement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -210,6 +211,7 @@ model Contact {
   user         User?
   userId       String?       @unique
   transactions Transaction[]
+  engagements  Engagement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -237,6 +239,34 @@ model Address {
   contact   Contact @relation(fields: [contactId], references: [id])
   contactId String  @unique
   isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Engagement {
+  id          Int            @id @default(autoincrement())
+  date        DateTime
+  description String?
+  type        EngagementType @relation(fields: [typeId], references: [id])
+  typeId      Int
+  contact     Contact        @relation(fields: [contactId], references: [id])
+  contactId   String
+  user        User           @relation(fields: [userId], references: [id])
+  userId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([typeId])
+  @@index([contactId])
+  @@index([userId])
+}
+
+model EngagementType {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  engagements Engagement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

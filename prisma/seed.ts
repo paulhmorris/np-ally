@@ -23,18 +23,11 @@ async function seed() {
   ]);
 
   await Promise.all([
-    await prisma.transactionItemType.createMany({
-      data: transactionItemTypes,
-    }),
-    await prisma.transactionItemMethod.createMany({
-      data: transactionItemMethods,
-    }),
-    await prisma.contactType.createMany({
-      data: contactTypes,
-    }),
-    await prisma.accountType.createMany({
-      data: accountTypes,
-    }),
+    await prisma.transactionItemType.createMany({ data: transactionItemTypes }),
+    await prisma.transactionItemMethod.createMany({ data: transactionItemMethods }),
+    await prisma.contactType.createMany({ data: contactTypes }),
+    await prisma.accountType.createMany({ data: accountTypes }),
+    await prisma.engagementType.createMany({ data: engagementTypes }),
   ]);
 
   const email = "paul@remix.run";
@@ -183,4 +176,12 @@ const accountTypes = [
   { id: 1, name: "Operating" },
   { id: 2, name: "Benevolence" },
   { id: 3, name: "Ministry" },
+];
+
+const engagementTypes = [
+  { id: 1, name: "In Person" },
+  { id: 2, name: "Phone" },
+  { id: 3, name: "Text" },
+  { id: 4, name: "Email" },
+  { id: 5, name: "Mail" },
 ];

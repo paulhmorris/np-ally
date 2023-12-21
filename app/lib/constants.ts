@@ -14,6 +14,14 @@ export enum ContactType {
   Admin = 5,
 }
 
+export enum EngagementType {
+  In_Person = 1,
+  Phone = 2,
+  Text = 3,
+  Email = 4,
+  Mail = 5,
+}
+
 export enum TransactionItemType {
   Donation = 1,
   Expense = 2,
