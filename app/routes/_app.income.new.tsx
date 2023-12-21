@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { IconPlus } from "@tabler/icons-react";
@@ -22,7 +22,7 @@ import { trigger } from "~/integrations/trigger.server";
 import { ContactType, TransactionItemType } from "~/lib/constants";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
-import { formatCentsAsDollars, getToday } from "~/lib/utils";
+import { formatCentsAsDollars, getToday, isArray } from "~/lib/utils";
 import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
 
 const validator = withZod(
@@ -68,34 +68,57 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (shouldNotifyUser) {
     const account = await prisma.account.findUnique({
       where: { id: accountId },
-      include: {
-        user: {
-          select: {
-            contact: {
-              select: { email: true },
-            },
-          },
-        },
+      select: {
+        activityRecipients: true,
       },
     });
-    if (!account?.user?.contact.email) {
+
+    if (!account) {
       return toast.json(
         request,
         { message: "Error notifying user" },
         {
           variant: "destructive",
           title: "Error notifying user",
-          description: "There was no user found on this account, or the user has no email address.",
+          description: "We couldn't find the account for this transaction. Please contact support.",
+        },
+        { status: 404 },
+      );
+    }
+
+    if (!isArray(account.activityRecipients)) {
+      return toast.json(
+        request,
+        { message: "Error notifying user" },
+        {
+          variant: "destructive",
+          title: "Error notifying user",
+          description: "The activity recipients for this account are misconfigured. Please contact support.",
         },
         { status: 400 },
       );
     }
-    await trigger.sendEvent({
+
+    if (account.activityRecipients.length === 0) {
+      return toast.json(
+        request,
+        { message: "Error notifying user" },
+        {
+          variant: "destructive",
+          title: "Error notifying user",
+          description:
+            "There are no activity recipients for this account. Please enter at least one recipient in the account settings.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const job = await trigger.sendEvent({
       name: "income.created",
-      payload: {
-        to: account.user.contact.email,
-      },
+      payload: { to: account.activityRecipients },
     });
+
+    return json({ jobId: job.id });
   }
 
   const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
