@@ -24,9 +24,11 @@ export enum EngagementType {
 
 export enum TransactionItemType {
   Donation = 1,
-  Expense = 2,
-  Compensation = 3,
-  Grant = 4,
+  Income = 2,
+  Expense = 3,
+  Compensation = 4,
+  Grant = 5,
+  Tax = 6,
 }
 
 export enum TransactionItemMethod {
@@ -37,9 +39,9 @@ export enum TransactionItemMethod {
 }
 
 export const defaultAccounts: Array<Prisma.AccountUncheckedCreateInput> = [
-  { code: "1001", description: "General Fund", typeId: AccountType.Operating, activityRecipients: ["paul@remix.run"] },
-  { code: "1002", description: "Local", typeId: AccountType.Operating, activityRecipients: ["paul@remix.run"] },
-  { code: "1003", description: "International", typeId: AccountType.Operating, activityRecipients: ["paul@remix.run"] },
+  { code: "1001", description: "General Fund", typeId: AccountType.Operating },
+  { code: "1002", description: "Local", typeId: AccountType.Operating },
+  { code: "1003", description: "International", typeId: AccountType.Operating },
 ];
 
 export enum LinearTeamID {

@@ -34,10 +34,14 @@ export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUser(request, ["SUPERADMIN", "ADMIN"]);
-  const accounts = await prisma.account.findMany();
+  const [accounts, transactionItemMethods] = await Promise.all([
+    prisma.account.findMany(),
+    prisma.transactionItemMethod.findMany(),
+  ]);
 
   return typedjson({
     accounts,
+    transactionItemMethods,
     ...setFormDefaults("expense-form", {
       transactionItems: [{ id: nanoid() }],
     }),
@@ -52,14 +56,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { transactionItems, ...rest } = result.data;
-  const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
+  const total = -1 * transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
   const transaction = await prisma.transaction.create({
     data: {
       ...rest,
-      amountInCents: total * -1,
+      amountInCents: total,
       transactionItems: {
         createMany: {
-          data: transactionItems.map((i) => i),
+          data: transactionItems.map((i) => ({
+            ...i,
+            amountInCents: i.amountInCents * -1,
+          })),
         },
       },
     },
@@ -73,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AddExpensePage() {
-  const { accounts } = useTypedLoaderData<typeof loader>();
+  const { accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "expense-form" });
 
   return (
@@ -113,19 +120,32 @@ export default function AddExpensePage() {
                       <CardContent>
                         <input type="hidden" name={`${fieldPrefix}.id`} />
                         <fieldset className="space-y-3">
-                          <div className="grid grid-cols-4 items-start gap-2">
-                            <div className="col-span-1">
+                          <div className="grid grid-cols-10 items-start gap-2">
+                            <div className="col-span-2">
                               <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
                             </div>
                             <FormSelect
-                              divProps={{ className: "col-span-3" }}
+                              divProps={{ className: "col-span-4" }}
+                              required
+                              name={`${fieldPrefix}.methodId`}
+                              label="Method"
+                              placeholder="Select method"
+                              options={transactionItemMethods.map((t) => ({
+                                value: t.id,
+                                label: t.name,
+                              }))}
+                            />
+                            <FormSelect
+                              divProps={{ className: "col-span-4" }}
                               required
                               name={`${fieldPrefix}.typeId`}
                               label="Type"
                               placeholder="Select type"
                               options={[
-                                { label: "Compensation", value: TransactionItemType.Compensation },
                                 { label: "Expense", value: TransactionItemType.Expense },
+                                { label: "Compensation", value: TransactionItemType.Compensation },
+                                { label: "Grant", value: TransactionItemType.Grant },
+                                { label: "Tax", value: TransactionItemType.Tax },
                               ]}
                             />
                           </div>

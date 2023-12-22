@@ -18,11 +18,11 @@ import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { useConsoleLog } from "~/hooks/useConsoleLog";
 import { prisma } from "~/integrations/prisma.server";
-import { trigger } from "~/integrations/trigger.server";
+import { notifySubscribersJob } from "~/jobs/notify-subscribers.server";
 import { ContactType, TransactionItemType } from "~/lib/constants";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
-import { formatCentsAsDollars, getToday, isArray } from "~/lib/utils";
+import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
 
 const validator = withZod(
@@ -69,53 +69,42 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const account = await prisma.account.findUnique({
       where: { id: accountId },
       select: {
-        activityRecipients: true,
+        subscribers: {
+          select: {
+            contact: true,
+          },
+        },
       },
     });
 
     if (!account) {
       return toast.json(
         request,
-        { message: "Error notifying user" },
+        { message: "Error notifying subscribers" },
         {
           variant: "destructive",
-          title: "Error notifying user",
+          title: "Error notifying subscribers",
           description: "We couldn't find the account for this transaction. Please contact support.",
         },
         { status: 404 },
       );
     }
 
-    if (!isArray(account.activityRecipients)) {
+    if (account.subscribers.length === 0) {
       return toast.json(
         request,
-        { message: "Error notifying user" },
+        { message: "Error notifying subscribers" },
         {
           variant: "destructive",
-          title: "Error notifying user",
-          description: "The activity recipients for this account are misconfigured. Please contact support.",
+          title: "Error notifying subscribers",
+          description: "This account has no subscribers. Please enter at least one in the account settings.",
         },
         { status: 400 },
       );
     }
 
-    if (account.activityRecipients.length === 0) {
-      return toast.json(
-        request,
-        { message: "Error notifying user" },
-        {
-          variant: "destructive",
-          title: "Error notifying user",
-          description:
-            "There are no activity recipients for this account. Please enter at least one recipient in the account settings.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const job = await trigger.sendEvent({
-      name: "income.created",
-      payload: { to: account.activityRecipients },
+    const job = await notifySubscribersJob.invoke({
+      payload: { to: account.subscribers.map((s) => s.contact.email) },
     });
 
     return json({ jobId: job.id });
@@ -216,6 +205,17 @@ export default function AddIncomePage() {
                                 value: t.id,
                                 label: t.name,
                               }))}
+                            />
+                            <FormSelect
+                              divProps={{ className: "col-span-4" }}
+                              required
+                              name={`${fieldPrefix}.typeId`}
+                              label="Type"
+                              placeholder="Select type"
+                              options={[
+                                { value: TransactionItemType.Donation, label: "Donation" },
+                                { value: TransactionItemType.Income, label: "Income" },
+                              ]}
                             />
                           </div>
                           <FormField name={`${fieldPrefix}.description`} label="Description" />
