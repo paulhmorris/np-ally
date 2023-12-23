@@ -56,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { transactionItems, ...rest } = result.data;
-  const total = -1 * transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
+  const total = transactionItems.reduce((acc, i) => acc - i.amountInCents, 0);
   const transaction = await prisma.transaction.create({
     data: {
       ...rest,

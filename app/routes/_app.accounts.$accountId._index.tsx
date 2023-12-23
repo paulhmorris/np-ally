@@ -37,6 +37,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (!account) throw notFound({ message: "Account not found" });
 
   const total = await prisma.transaction.aggregate({
+    where: { accountId: account.id },
     _sum: { amountInCents: true },
   });
 

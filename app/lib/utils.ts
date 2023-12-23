@@ -109,7 +109,7 @@ export function formatCurrency(value: number, decimals?: 0 | 2) {
   return formattedValue;
 }
 
-export function formatCentsAsDollars(value: number | null | undefined, decimals?: 0 | 2) {
+export function formatCentsAsDollars(value: number | null | undefined, decimals: 0 | 2 = 2) {
   if (!value) {
     return formatCurrency(0, decimals);
   }

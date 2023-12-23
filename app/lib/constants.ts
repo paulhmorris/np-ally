@@ -29,6 +29,8 @@ export enum TransactionItemType {
   Compensation = 4,
   Grant = 5,
   Tax = 6,
+  Transfer_In = 7,
+  Transfer_Out = 8,
 }
 
 export enum TransactionItemMethod {
@@ -72,5 +74,6 @@ export const userNavLinks: ReadonlyArray<NavLink> = [
 export const adminNavLinks: ReadonlyArray<NavLink> = [
   { name: "Add Income", href: "/income/new" },
   { name: "Add Expense", href: "/expense/new" },
+  { name: "Add Transfer", href: "/transfer/new" },
   { name: "Accounts", href: "/accounts" },
 ] as const;
