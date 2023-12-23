@@ -4,7 +4,7 @@ import { cn } from "~/lib/utils";
 
 interface Props extends ComponentPropsWithoutRef<"header"> {
   title: string;
-  description?: string;
+  description?: string | React.ReactNode | null;
   children?: React.ReactNode;
 }
 

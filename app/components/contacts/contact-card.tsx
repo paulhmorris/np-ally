@@ -3,20 +3,27 @@ import { Link } from "@remix-run/react";
 import { IconAddressBook, IconMail, IconPhone } from "@tabler/icons-react";
 
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { getInitials } from "~/lib/utils";
+import { getInitials, useUser } from "~/lib/utils";
 
 type Contact = Prisma.ContactGetPayload<{ include: { address: true; type: true } }>;
 export function ContactCard({ contact }: { contact: Contact }) {
+  const user = useUser();
   return (
     <Card>
       <CardHeader className="flex-row items-center gap-4 space-y-0">
         <div className="space-y-1.5">
-          <CardTitle>
-            {contact.firstName} {contact.lastName}
+          <CardTitle className="flex items-center gap-2">
+            <span>
+              {contact.firstName} {contact.lastName}
+            </span>
+            {user.contactId === contact.id ? <Badge variant="outline">This is you</Badge> : null}
           </CardTitle>
-          <CardDescription>{contact.type.name}</CardDescription>
+          <CardDescription>
+            <span>{contact.type.name}</span>
+          </CardDescription>
         </div>
         <Avatar className="ml-auto">
           <AvatarFallback>{getInitials(contact)}</AvatarFallback>

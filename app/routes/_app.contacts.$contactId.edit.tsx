@@ -11,6 +11,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
+import { Callout } from "~/components/ui/callout";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SelectItem } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
@@ -20,6 +21,7 @@ import { ContactType } from "~/lib/constants";
 import { states } from "~/lib/data";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
+import { useUser } from "~/lib/utils";
 import { UpdateContactSchema } from "~/models/schemas";
 
 const UpdateContactValidator = withZod(UpdateContactSchema);
@@ -97,13 +99,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     },
   });
 
-  return toast.redirect(request, `/contacts/${contact.id}`, {
-    title: "Contact updated",
-    description: `${contact.firstName} ${contact.lastName} was updated successfully.`,
-  });
+  return toast.json(
+    request,
+    { contact },
+    {
+      title: "Contact updated",
+      description: `${contact.firstName} ${contact.lastName} was updated successfully.`,
+    },
+  );
 };
 
 export default function EditContactPage() {
+  const user = useUser();
   const { contact } = useTypedLoaderData<typeof loader>();
   const [addressEnabled, setAddressEnabled] = useState(
     Object.values(contact?.address ?? {}).some((v) => v !== "") ? true : false,
@@ -111,7 +118,19 @@ export default function EditContactPage() {
 
   return (
     <>
-      <PageHeader title="Edit Contact" />
+      <PageHeader
+        title="Edit Contact"
+        description={
+          user.contactId === contact?.id ? (
+            <div className="max-w-sm">
+              <Callout className="text-xs">
+                This is your contact information. Changing this email will not affect your login credentials, but may
+                have other unintended effects.
+              </Callout>
+            </div>
+          ) : null
+        }
+      ></PageHeader>
       <PageContainer>
         <ValidatedForm
           id="contact-form"

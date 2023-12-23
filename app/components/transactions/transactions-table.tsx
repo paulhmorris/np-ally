@@ -82,7 +82,9 @@ const columns: Array<ColumnDef<Account>> = [
     cell: ({ row }) => {
       return (
         <div className="max-w-[320px] truncate">
-          <span className="font-medium">{row.getValue("account")}</span>
+          <Link to={`/accounts/${row.original.accountId}`} className="font-medium text-primary">
+            {row.getValue("account")}
+          </Link>
         </div>
       );
     },

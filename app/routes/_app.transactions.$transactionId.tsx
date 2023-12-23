@@ -4,7 +4,7 @@ import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
 import { useState } from "react";
-import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
+import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
@@ -22,9 +22,7 @@ import { cn, formatCentsAsDollars, useUser } from "~/lib/utils";
 
 const validator = withZod(
   z.object({
-    id: z.string().cuid(),
-    description: z.string().optional(),
-    _action: z.enum(["delete", "update"]),
+    _action: z.literal("delete"),
   }),
 );
 
@@ -64,33 +62,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   if (result.error) return validationError(result.error);
 
   const { transactionId } = params;
-  const { _action, ...data } = result.data;
 
-  const transaction = await prisma.transaction.findUnique({
-    where: { id: transactionId },
+  await prisma.transaction.delete({ where: { id: transactionId } });
+  return toast.redirect(request, "/transactions", {
+    title: "Transaction deleted",
+    description: "",
   });
-
-  if (!transaction) throw notFound({ message: "Transaction not found" });
-
-  if (_action === "delete") {
-    await prisma.transaction.delete({ where: { id: transactionId } });
-    return redirect("/transactions");
-  }
-
-  const updatedTransaction = await prisma.transaction.update({
-    where: { id: transactionId },
-    data,
-  });
-
-  return toast.json(
-    request,
-    { user: updatedTransaction },
-    {
-      variant: "default",
-      title: "Transaction updated",
-      description: "Great job.",
-    },
-  );
 };
 
 export default function TransactionDetailsPage() {
