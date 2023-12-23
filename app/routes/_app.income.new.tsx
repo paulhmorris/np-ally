@@ -71,7 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       select: {
         subscribers: {
           select: {
-            contact: true,
+            subscriber: true,
           },
         },
       },
@@ -104,7 +104,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     const job = await notifySubscribersJob.invoke({
-      payload: { to: account.subscribers.map((s) => s.contact.email) },
+      payload: { to: account.subscribers.map((s) => s.subscriber.email) },
     });
 
     return json({ jobId: job.id });

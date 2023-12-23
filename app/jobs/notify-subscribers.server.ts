@@ -1,14 +1,13 @@
-import { eventTrigger } from "@trigger.dev/sdk";
+import { invokeTrigger } from "@trigger.dev/sdk";
 import { z } from "zod";
 
 import { trigger, triggerResend } from "~/integrations/trigger.server";
 
-export const notifyUserJob = trigger.defineJob({
+export const notifySubscribersJob = trigger.defineJob({
   id: "notify-user-income",
   name: "Notify user of income",
   version: "0.0.1",
-  trigger: eventTrigger({
-    name: "income.created",
+  trigger: invokeTrigger({
     schema: z.object({
       to: z.union([z.string(), z.array(z.string())]),
     }),

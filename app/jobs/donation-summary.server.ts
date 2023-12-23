@@ -2,7 +2,7 @@ import { cronTrigger } from "@trigger.dev/sdk";
 
 import { prisma } from "~/integrations/prisma.server";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
-import { formatCentsAsDollars, isArray } from "~/lib/utils";
+import { formatCentsAsDollars } from "~/lib/utils";
 
 export const donationSummaryJob = trigger.defineJob({
   id: "donation-summary",
@@ -19,6 +19,9 @@ export const donationSummaryJob = trigger.defineJob({
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const accounts = await prisma.account.findMany({
       where: {
+        subscribers: {
+          some: {},
+        },
         transactions: {
           some: {
             createdAt: {
@@ -30,22 +33,30 @@ export const donationSummaryJob = trigger.defineJob({
       select: {
         code: true,
         transactions: true,
-        activityRecipients: true,
+        subscribers: {
+          select: {
+            subscriber: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
 
     const emails = accounts
-      .filter((a) => a.activityRecipients && isArray(a.activityRecipients) && a.activityRecipients.length > 0)
+      .filter((a) => a.subscribers.length > 0)
       .map((a) => {
         const totalInCents = a.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
 
         return {
           from: "no-reply@getcosmic.dev",
-          to: a.activityRecipients as Array<string>,
+          to: a.subscribers.map((s) => s.subscriber.email),
           subject: "Alliance 436 - Weekly Donation summary",
-          html: `You have received ${formatCentsAsDollars(totalInCents)} to account ${
-            a.code
-          } this week. Log in to see more details.`,
+          html: `Account ${a.code} has received ${formatCentsAsDollars(
+            totalInCents,
+          )} this week. Log in to see more details.`,
         };
       });
 

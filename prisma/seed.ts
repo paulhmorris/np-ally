@@ -99,7 +99,11 @@ async function seed() {
     data: {
       typeId: 3,
       code: "3001-CA",
-      activityRecipients: ["j@caudle.com"],
+      subscribers: {
+        create: {
+          subscriberId: user.contactId,
+        },
+      },
       description: "Jessica Caudle - Ministry Fund",
       organizationId: org.id,
       userId: user.id,
@@ -161,9 +165,13 @@ const transactionItemMethods = [
 ];
 const transactionItemTypes = [
   { id: 1, name: "Donation" },
-  { id: 2, name: "Expense" },
-  { id: 3, name: "Compensation" },
-  { id: 4, name: "Grant" },
+  { id: 2, name: "Income" },
+  { id: 3, name: "Expense" },
+  { id: 4, name: "Compensation" },
+  { id: 5, name: "Grant" },
+  { id: 6, name: "Tax" },
+  { id: 7, name: "Transfer In" },
+  { id: 8, name: "Transfer Out" },
 ];
 const contactTypes = [
   { id: 1, name: "Donor" },

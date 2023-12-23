@@ -16,11 +16,13 @@ model User {
   role                  UserRole               @default(USER)
   contact               Contact                @relation(fields: [contactId], references: [id])
   contactId             String                 @unique
-  account               Account?
+  account               Account?               @relation(fields: [accountId], references: [id])
+  accountId             String?                @unique
   isActive              Boolean                @default(true)
   receipts              Receipt[]
   reimbursementRequests ReimbursementRequest[]
   engagements           Engagement[]
+  contactAssigments     ContactAssigment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -70,18 +72,17 @@ model Account {
   id                    String                 @id @default(cuid())
   code                  String                 @unique
   description           String
-  user                  User?                  @relation(fields: [userId], references: [id])
+  user                  User?
   userId                String?                @unique
-  /// JSON array of emails
-  activityRecipients    Json                   @default("[]")
   organization          Organization?          @relation(fields: [organizationId], references: [id])
   organizationId        String?
   transactions          Transaction[]
   type                  AccountType            @relation(fields: [typeId], references: [id])
   typeId                Int
   reimbursementRequests ReimbursementRequest[]
-  isActive              Boolean                @default(true)
+  subscribers           AccountSubscription[]
 
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -96,6 +97,20 @@ model AccountType {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AccountSubscription {
+  id           Int     @id @default(autoincrement())
+  account      Account @relation(fields: [accountId], references: [id])
+  accountId    String
+  subscriber   Contact @relation(fields: [subscriberId], references: [id])
+  subscriberId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId])
+  @@index([subscriberId])
 }
 
 model Transaction {
@@ -199,19 +214,21 @@ enum ReimbursementRequestStatus {
 }
 
 model Contact {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  firstName    String?
-  lastName     String?
-  phone        String?
-  address      Address?
-  isActive     Boolean       @default(true)
-  type         ContactType   @relation(fields: [typeId], references: [id])
-  typeId       Int
-  user         User?
-  userId       String?       @unique
-  transactions Transaction[]
-  engagements  Engagement[]
+  id                   String                @id @default(cuid())
+  email                String                @unique
+  firstName            String?
+  lastName             String?
+  phone                String?
+  address              Address?
+  isActive             Boolean               @default(true)
+  type                 ContactType           @relation(fields: [typeId], references: [id])
+  typeId               Int
+  user                 User?
+  userId               String?               @unique
+  transactions         Transaction[]
+  engagements          Engagement[]
+  accountSubscriptions AccountSubscription[]
+  assignedUsers        ContactAssigment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -226,6 +243,20 @@ model ContactType {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ContactAssigment {
+  id        Int     @id @default(autoincrement())
+  contact   Contact @relation(fields: [contactId], references: [id])
+  contactId String
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contactId])
+  @@index([userId])
 }
 
 model Address {
