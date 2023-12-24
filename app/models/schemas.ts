@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { zfd } from "zod-form-data";
 
 import { ContactType, TransactionItemMethod, TransactionItemType } from "~/lib/constants";
 
@@ -40,6 +41,7 @@ export const NewContactSchema = z.object({
     // You can only create donors from this page
     .refine((v) => v === ContactType.Donor),
   address: AddressSchema.optional(),
+  assignedUsers: zfd.repeatableOfType(zfd.text()),
 });
 
 export const UpdateContactSchema = NewContactSchema.extend({
