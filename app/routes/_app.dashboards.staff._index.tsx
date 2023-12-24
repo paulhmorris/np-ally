@@ -36,6 +36,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
         include: { contact: true },
       },
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   return typedjson({ total: total._sum.amountInCents, reimbursementRequests });

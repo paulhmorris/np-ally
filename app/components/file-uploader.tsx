@@ -79,7 +79,12 @@ export function FileUploader() {
       setUploadStatus(() => ({
         uploading: false,
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error:
+          error instanceof Error
+            ? error.message.toLowerCase().includes("failed to fetch")
+              ? "Network error. Please file a bug report."
+              : error.message
+            : "Unknown error",
       }));
     } finally {
       setUploadStatus((s) => ({ ...s, uploading: false }));

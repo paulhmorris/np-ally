@@ -7,14 +7,16 @@ export const CheckboxSchema = z
   .transform((val) => val === "on")
   .or(z.undefined());
 
+export const CurrencySchema = z.coerce
+  .number({ invalid_type_error: "Must be a number", required_error: "Amount required" })
+  .nonnegative({ message: "Must be greater than $0" })
+  .max(99_999, { message: "Must be less than $100,000" })
+  .transform((dollars) => Math.round(dollars * 100));
+
 export const TransactionItemSchema = z.object({
   typeId: z.coerce.number().pipe(z.nativeEnum(TransactionItemType)),
   methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
-  amountInCents: z.coerce
-    .number({ invalid_type_error: "Must be a number", required_error: "Amount required" })
-    .nonnegative({ message: "Must be greater than $0" })
-    .max(99_999, { message: "Must be less than $100,000" })
-    .transform((dollars) => Math.round(dollars * 100)),
+  amountInCents: CurrencySchema,
   description: z.string().optional(),
 });
 

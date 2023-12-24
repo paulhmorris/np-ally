@@ -1,6 +1,6 @@
 import type { Contact, PasswordReset } from "@prisma/client";
 
-import { Resend } from "~/integrations/resend.server";
+import { resend } from "~/integrations/resend.server";
 
 export async function sendPasswordResetEmail({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -16,7 +16,7 @@ export async function sendPasswordResetEmail({
   url.searchParams.set("token", token);
 
   try {
-    const data = await Resend.emails.send({
+    const data = await resend.emails.send({
       from: "Alliance 436 <no-reply@getcosmic.dev>",
       // to: email,
       to: "paulh.morris@gmail.com",

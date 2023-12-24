@@ -1,3 +1,4 @@
+import { ReimbursementRequestStatus } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -14,16 +15,19 @@ import { FormField, FormSelect } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
+import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
 import { requireUser } from "~/lib/session.server";
+import { toast } from "~/lib/toast.server";
 import { getToday, useUser } from "~/lib/utils";
+import { CurrencySchema } from "~/models/schemas";
 
 const validator = withZod(
   z.object({
     date: z.coerce.date(),
     vendor: z.string().optional(),
     description: z.string().optional(),
-    amountInCents: z.coerce.number().positive(),
+    amountInCents: CurrencySchema,
     accountId: z.string().cuid(),
     receiptId: z.string().cuid().optional(),
     methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
@@ -63,14 +67,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: {
       ...data,
       userId: user.id,
-      status: "PENDING",
-      receipts: {
-        connect: { id: receiptId },
-      },
+      status: ReimbursementRequestStatus.PENDING,
+      receipts: receiptId
+        ? {
+            connect: {
+              id: receiptId,
+            },
+          }
+        : undefined,
     },
   });
 
-  return typedjson({ reimbursementRequest });
+  await reimbursementRequestJob.invoke({
+    reimbursementRequestId: reimbursementRequest.id,
+  });
+
+  return toast.redirect(request, "/dashboards/staff", {
+    variant: "default",
+    title: "Reimbursement request submitted",
+    description: "Your request will be processed as soon as possible.",
+  });
 };
 
 export default function NewUserPage() {
@@ -90,7 +106,7 @@ export default function NewUserPage() {
         </p>
         <Separator className="my-8" />
 
-        <ValidatedForm method="post" validator={validator} className="space-y-4 sm:max-w-xl">
+        <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-xl">
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <FormField name="vendor" label="Vendor" />
             <FormField name="description" label="Description" />
@@ -100,7 +116,7 @@ export default function NewUserPage() {
               <FormField name="date" label="Date" type="date" defaultValue={getToday()} required />
             </div>
             <div className="w-auto min-w-[3rem]">
-              <FormField name="amount" label="Amount" required />
+              <FormField name="amountInCents" label="Amount" required isCurrency />
             </div>
             <FormSelect
               required

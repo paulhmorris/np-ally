@@ -103,9 +103,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
-    const job = await notifySubscribersJob.invoke({
-      payload: { to: account.subscribers.map((s) => s.subscriber.email) },
-    });
+    const key = nanoid();
+    const job = await notifySubscribersJob.invoke(
+      {
+        payload: { to: account.subscribers.map((s) => s.subscriber.email) },
+      },
+      {
+        idempotencyKey: key,
+      },
+    );
 
     return json({ jobId: job.id });
   }
