@@ -51,7 +51,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (result.error) return validationError(result.error);
   console.log(result);
 
-  const { address, assignedUsers, ...formData } = result.data;
+  const { address, assignedUserIds, ...formData } = result.data;
 
   const existingContact = await prisma.contact.findUnique({
     where: { email: formData.email },
@@ -71,9 +71,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       address: {
         create: address,
       },
-      assignedUsers: {
-        connect: assignedUsers.map((id) => ({ id: +id })),
-      },
+      assignedUsers: assignedUserIds
+        ? {
+            createMany: {
+              data: assignedUserIds.map((userId) => ({ userId })),
+            },
+          }
+        : undefined,
     },
   });
 
@@ -134,12 +138,14 @@ export default function NewContactPage() {
           )}
           <Separator className="my-4" />
           <fieldset>
-            <legend className="mb-4 text-sm text-muted-foreground">Assign users to this contact.</legend>
+            <legend className="mb-4 text-sm text-muted-foreground">
+              Assign users to this contact. They will receive regular reminders to engage with this Contact.
+            </legend>
             <div className="space-y-2">
               {usersWhoCanBeAssigned.map((user) => {
                 return (
                   <Label key={user.id} className="flex cursor-pointer items-center gap-2">
-                    <Checkbox name={`assignedUsers`} />
+                    <Checkbox name="assignedUserIds" value={user.id} />
                     <span>
                       {user.contact.firstName} {user.contact.lastName}
                     </span>

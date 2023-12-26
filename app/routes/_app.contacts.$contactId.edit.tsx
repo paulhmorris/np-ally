@@ -54,7 +54,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { address, ...formData } = result.data;
 
-  // Users can only edit their donors
+  const existingContact = await prisma.contact.findUnique({
+    where: { email: formData.email },
+  });
+
+  if (existingContact) {
+    return validationError({
+      fieldErrors: {
+        email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
+      },
+    });
+  }
+
+  // Users can only edit their assigned contacts
+  // TODO: change this to use the new ContactAssignment model
   if (user.role === UserRole.USER) {
     const relatedContacts = await prisma.contact.findMany({
       where: {
