@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -27,7 +28,7 @@ export const meta: MetaFunction = () => [{ title: "New Contact • Alliance 436"
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUser(request);
   const usersWhoCanBeAssigned = await prisma.user.findMany({
-    // where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
+    where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
     select: {
       id: true,
       contact: {
@@ -49,7 +50,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   await requireUser(request);
   const result = await NewContactValidator.validate(await request.formData());
   if (result.error) return validationError(result.error);
-  console.log(result);
 
   const { address, assignedUserIds, ...formData } = result.data;
 
@@ -78,6 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             },
           }
         : undefined,
+      shouldTrackEngagements: assignedUserIds && assignedUserIds.length > 0,
     },
   });
 
@@ -141,10 +142,10 @@ export default function NewContactPage() {
             <legend className="mb-4 text-sm text-muted-foreground">
               Assign users to this contact. They will receive regular reminders to engage with this Contact.
             </legend>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               {usersWhoCanBeAssigned.map((user) => {
                 return (
-                  <Label key={user.id} className="flex cursor-pointer items-center gap-2">
+                  <Label key={user.id} className="inline-flex cursor-pointer items-center gap-2">
                     <Checkbox name="assignedUserIds" value={user.id} />
                     <span>
                       {user.contact.firstName} {user.contact.lastName}

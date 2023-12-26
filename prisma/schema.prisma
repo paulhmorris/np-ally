@@ -22,7 +22,7 @@ model User {
   receipts              Receipt[]
   reimbursementRequests ReimbursementRequest[]
   engagements           Engagement[]
-  contactAssigments     ContactAssigment[]
+  contactAssignments    ContactAssigment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -214,21 +214,22 @@ enum ReimbursementRequestStatus {
 }
 
 model Contact {
-  id                   String                @id @default(cuid())
-  email                String                @unique
-  firstName            String?
-  lastName             String?
-  phone                String?
-  address              Address?
-  isActive             Boolean               @default(true)
-  type                 ContactType           @relation(fields: [typeId], references: [id])
-  typeId               Int
-  user                 User?
-  userId               String?               @unique
-  transactions         Transaction[]
-  engagements          Engagement[]
-  accountSubscriptions AccountSubscription[]
-  assignedUsers        ContactAssigment[]
+  id                     String                @id @default(cuid())
+  email                  String                @unique
+  firstName              String?
+  lastName               String?
+  phone                  String?
+  address                Address?
+  isActive               Boolean               @default(true)
+  type                   ContactType           @relation(fields: [typeId], references: [id])
+  typeId                 Int
+  user                   User?
+  userId                 String?               @unique
+  transactions           Transaction[]
+  engagements            Engagement[]
+  accountSubscriptions   AccountSubscription[]
+  assignedUsers          ContactAssigment[]
+  shouldTrackEngagements Boolean               @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -255,6 +256,7 @@ model ContactAssigment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([contactId, userId])
   @@index([contactId])
   @@index([userId])
 }
