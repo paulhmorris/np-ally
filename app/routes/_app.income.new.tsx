@@ -4,7 +4,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { IconPlus } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, useFieldArray, useFormContext, validationError } from "remix-validated-form";
+import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
 import { z } from "zod";
 
 import { ErrorComponent } from "~/components/error-component";
@@ -15,8 +15,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/componen
 import { Checkbox } from "~/components/ui/checkbox";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
+import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { useConsoleLog } from "~/hooks/useConsoleLog";
 import { prisma } from "~/integrations/prisma.server";
 import { notifySubscribersJob } from "~/jobs/notify-subscribers.server";
 import { ContactType, TransactionItemType } from "~/lib/constants";
@@ -141,21 +141,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function AddIncomePage() {
   const { donors, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "income-form" });
-  const ctx = useFormContext("income-form");
-  useConsoleLog(ctx.fieldErrors);
 
   return (
     <>
       <PageHeader title="Add Income" />
       <PageContainer>
         <ValidatedForm id="income-form" method="post" validator={validator} className="sm:max-w-xl">
-          <SubmitButton disabled={items.length === 0}>Submit Income</SubmitButton>
-          <div>
-            <Label className="mt-2 inline-flex cursor-pointer items-center gap-2">
-              <Checkbox name="shouldNotifyUser" />
-              <span>Notify User</span>
-            </Label>
-          </div>
           <div className="mt-8 space-y-8">
             <div className="space-y-2">
               <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
@@ -246,6 +237,16 @@ export default function AddIncomePage() {
               <IconPlus className="h-4 w-4" />
               <span>Add item</span>
             </Button>
+            <Separator className="my-4" />
+            <div>
+              <div>
+                <Label className="mb-2 inline-flex cursor-pointer items-center gap-2">
+                  <Checkbox name="shouldNotifyUser" />
+                  <span>Notify User</span>
+                </Label>
+              </div>
+              <SubmitButton disabled={items.length === 0}>Submit Income</SubmitButton>
+            </div>
           </div>
         </ValidatedForm>
       </PageContainer>

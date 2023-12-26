@@ -13,6 +13,7 @@ import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { FormField, FormSelect } from "~/components/ui/form";
+import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { TransactionItemType } from "~/lib/constants";
@@ -88,7 +89,6 @@ export default function AddExpensePage() {
       <PageHeader title="Add Expense" />
       <PageContainer>
         <ValidatedForm id="expense-form" method="post" validator={validator} className="sm:max-w-xl">
-          <SubmitButton disabled={items.length === 0}>Submit Expense</SubmitButton>
           <div className="mt-8 space-y-8">
             <div className="space-y-2">
               <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
@@ -171,6 +171,8 @@ export default function AddExpensePage() {
               <IconPlus className="h-4 w-4" />
               <span>Add item</span>
             </Button>
+            <Separator />
+            <SubmitButton disabled={items.length === 0}>Submit Expense</SubmitButton>
           </div>
         </ValidatedForm>
       </PageContainer>

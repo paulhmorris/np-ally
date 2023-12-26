@@ -50,7 +50,7 @@ export function FormField({
 
   return (
     <div className={cn("relative w-full")}>
-      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1", error && "text-destructive")}>
+      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1.5", error && "text-destructive")}>
         <span>{label}</span>
         <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>
@@ -88,7 +88,7 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
 
   return (
     <div className={cn("relative w-full")}>
-      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1", error && "text-destructive")}>
+      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1.5", error && "text-destructive")}>
         <span>{label}</span>
         <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>

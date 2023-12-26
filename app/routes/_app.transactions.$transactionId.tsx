@@ -71,7 +71,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 };
 
 export default function TransactionDetailsPage() {
-  const sessionUser = useUser();
+  const authorizedUser = useUser();
   const { transaction } = useTypedLoaderData<typeof loader>();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -79,7 +79,7 @@ export default function TransactionDetailsPage() {
     <>
       <PageHeader title="Transaction Details" description={transaction.id}>
         <div className="flex items-center gap-2">
-          {["SUPERADMIN", "ADMIN"].includes(sessionUser.role) ? (
+          {["SUPERADMIN", "ADMIN"].includes(authorizedUser.role) ? (
             <ConfirmDestructiveModal
               open={modalOpen}
               onOpenChange={setModalOpen}

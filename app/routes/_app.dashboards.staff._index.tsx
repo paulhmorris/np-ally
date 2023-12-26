@@ -9,7 +9,7 @@ import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
 import { prisma } from "~/integrations/prisma.server";
 import { requireUser } from "~/lib/session.server";
-import { formatCentsAsDollars, useUser } from "~/lib/utils";
+import { useUser } from "~/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Home • Alliance 436" }];
 
@@ -55,7 +55,7 @@ export default function Index() {
         {user.role === UserRole.USER ? (
           <div className="space-y-5">
             <div className="max-w-[320px]">
-              <AccountBalanceCard total={formatCentsAsDollars(total)} />
+              <AccountBalanceCard totalCents={total} />
             </div>
             {reimbursementRequests.length > 0 ? (
               <div className="max-w-2xl">

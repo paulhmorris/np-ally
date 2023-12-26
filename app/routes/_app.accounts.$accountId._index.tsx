@@ -13,7 +13,6 @@ import { AccountBalanceCard } from "~/components/users/balance-card";
 import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
 import { requireUser } from "~/lib/session.server";
-import { formatCentsAsDollars } from "~/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Account • Alliance 436" }];
 
@@ -60,7 +59,7 @@ export default function AccountDetailsPage() {
       </PageHeader>
       <PageContainer>
         <div className="max-w-xs">
-          <AccountBalanceCard total={formatCentsAsDollars(total)} />
+          <AccountBalanceCard totalCents={total} code={account.code} />
         </div>
         <div className="mt-12">
           <h2 className="mb-4 text-2xl font-semibold">Transactions</h2>
