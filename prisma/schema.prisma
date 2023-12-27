@@ -94,9 +94,6 @@ model AccountType {
   id       Int       @id @default(autoincrement())
   name     String    @unique
   accounts Account[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model AccountSubscription {
@@ -155,18 +152,12 @@ model TransactionItemMethod {
   name                  String                 @unique
   transactionItems      TransactionItem[]
   reimbursementRequests ReimbursementRequest[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model TransactionItemType {
   id               Int               @id @default(autoincrement())
   name             String            @unique
   transactionItems TransactionItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model ReimbursementRequest {
@@ -241,9 +232,6 @@ model ContactType {
   id       Int       @id @default(autoincrement())
   name     String    @unique
   contacts Contact[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model ContactAssigment {
@@ -300,7 +288,4 @@ model EngagementType {
   id          Int          @id @default(autoincrement())
   name        String       @unique
   engagements Engagement[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
