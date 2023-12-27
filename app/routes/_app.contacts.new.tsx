@@ -78,7 +78,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             },
           }
         : undefined,
-      shouldTrackEngagements: assignedUserIds && assignedUserIds.length > 0,
     },
   });
 

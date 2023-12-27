@@ -156,7 +156,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         deleteMany: {},
         create: assignedUserIds ? assignedUserIds.map((userId) => ({ userId })) : undefined,
       },
-      shouldTrackEngagements: assignedUserIds && assignedUserIds.length > 0,
       address: address
         ? {
             upsert: {
