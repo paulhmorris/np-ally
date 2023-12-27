@@ -6,7 +6,7 @@
     "build": "run-s build:*",
     "build-prod": "run-s build:**",
     "build:remix": "remix build",
-    "build:remix:sourcemaps": "remix build --sourcemap && sentry-upload-sourcemaps --org cosmic-labs --project alliance-admin",
+    "build:remix:sourcemaps": "remix build --sourcemap && sentry-upload-sourcemaps --org cosmic-labs --project alliance-436-admin",
     "build:server": "esbuild --platform=node --format=cjs ./server.ts --outdir=build --bundle --external:fsevents",
     "dev": "run-p dev:*",
     "dev:server": "cross-env NODE_ENV=development npm run build:server -- --watch",
