@@ -59,7 +59,7 @@ export default function ContactDetailsPage() {
           <div className="grid grid-cols-2 gap-5">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
-              <Card className="flex-1 basis-48 bg-white">
+              <Card className="flex-1 basis-48 bg-transparent">
                 <CardHeader>
                   <CardTitle>Assigned Users</CardTitle>
                   <CardDescription>These users receive regular reminders to engage with this Contact.</CardDescription>

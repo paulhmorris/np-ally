@@ -1,4 +1,4 @@
-import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
+import { type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { IconPlus } from "@tabler/icons-react";
@@ -104,16 +104,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     const key = nanoid();
-    const job = await notifySubscribersJob.invoke(
-      {
-        payload: { to: account.subscribers.map((s) => s.subscriber.email) },
-      },
-      {
-        idempotencyKey: key,
-      },
+    await notifySubscribersJob.invoke(
+      { payload: { to: account.subscribers.map((s) => s.subscriber.email) } },
+      { idempotencyKey: key },
     );
-
-    return json({ jobId: job.id });
   }
 
   const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
@@ -131,6 +125,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     },
     include: { account: true },
   });
+
+  // If a donor was selected, update their contact type to Donor
+  if (donorId) {
+    await prisma.contact.update({
+      where: { id: donorId },
+      data: {
+        typeId: ContactType.Donor,
+      },
+    });
+  }
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
     title: "Success",

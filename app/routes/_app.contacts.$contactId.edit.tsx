@@ -61,6 +61,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const contact = await prisma.contact.findUnique({
     where: { id: params.contactId },
     include: {
+      _count: {
+        select: {
+          transactions: true,
+        },
+      },
       user: true,
       assignedUsers: {
         include: {
@@ -94,15 +99,35 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { address, assignedUserIds, ...formData } = result.data;
 
-  // Verify email is unique
   const existingContact = await prisma.contact.findUnique({
     where: { email: formData.email },
+    include: {
+      _count: {
+        select: {
+          transactions: true,
+        },
+      },
+    },
   });
 
-  if (existingContact && existingContact.id !== formData.id) {
+  if (!existingContact) {
+    throw notFound({ message: "Contact not found" });
+  }
+
+  // Verify email is unique
+  if (existingContact.id !== formData.id) {
     return validationError({
       fieldErrors: {
         email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
+      },
+    });
+  }
+
+  // Contacts with transactions cannot have their type changed
+  if (existingContact._count.transactions > 0 && formData.typeId !== ContactType.Donor) {
+    return validationError({
+      fieldErrors: {
+        typeId: `This contact has transactions so it's type must be "Donor".`,
       },
     });
   }
@@ -203,12 +228,17 @@ export default function EditContactPage() {
             label="Type"
             placeholder="Select type"
             defaultValue={contact.typeId}
+            disabled={contact._count.transactions > 0}
+            description={
+              contact._count.transactions > 0
+                ? `This contact has transactions so it's type must be "Donor".`
+                : undefined
+            }
             options={[
               { label: "Donor", value: ContactType.Donor },
               { label: "External", value: ContactType.External },
             ]}
           />
-          <input type="hidden" name="typeId" value={ContactType.Donor} />
 
           {!addressEnabled ? (
             <Button variant="outline" onClick={() => setAddressEnabled(true)}>
