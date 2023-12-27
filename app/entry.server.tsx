@@ -3,19 +3,14 @@ import { PassThrough } from "node:stream";
 import type { EntryContext } from "@remix-run/node";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
+import { wrapRemixHandleError } from "@sentry/remix";
 import isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
 import { prisma } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 
-export function handleError(error: any, { request }: { request: Request }) {
-  if ("internal" in error && "error" in error) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    error = error.error;
-  }
-  void Sentry.captureRemixServerException(error, "remix.server", request);
-}
+export const handleError = wrapRemixHandleError;
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,

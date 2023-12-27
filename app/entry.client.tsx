@@ -6,7 +6,10 @@ import { hydrateRoot } from "react-dom/client";
 import { Sentry } from "~/integrations/sentry";
 
 Sentry.init({
-  dsn: undefined,
+  dsn:
+    window.location.hostname === "localhost"
+      ? undefined
+      : "https://f18051d71458f411f51af7ca0308b1cb@o4505496663359488.ingest.sentry.io/4506395673886720",
   tracesSampleRate: 0.25,
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1,

@@ -8,8 +8,8 @@ const TOAST_REMOVE_DELAY = 1000000;
 
 type ToasterToast = Omit<ToastProps, keyof JSX.IntrinsicElements["div"]> & {
   id: string;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
+  title?: string;
+  description?: string;
   action?: ToastActionElement;
   icon?: React.ReactNode;
 };

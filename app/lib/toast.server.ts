@@ -2,6 +2,7 @@ import type { Session, TypedResponse } from "@remix-run/node";
 import { redirect, typedjson } from "remix-typedjson";
 
 import type { Toast } from "~/components/ui/use-toast";
+import { Sentry } from "~/integrations/sentry";
 import { commitSession, getSession } from "~/lib/session.server";
 
 export function setGlobalToast(session: Session, toast: Toast) {
@@ -39,6 +40,14 @@ class ToastHandler {
     const session = await getSession(request);
     const variant = toast.variant || "default";
 
+    if (variant === "warning" && toast.description) {
+      Sentry.captureMessage(toast.description, "warning");
+    }
+
+    if (variant === "destructive" && toast.description) {
+      Sentry.captureMessage(toast.description, "error");
+    }
+
     setGlobalToast(session, { ...this.defaultToasts[variant], ...toast });
     return redirect(url, {
       ...init,
@@ -52,6 +61,14 @@ class ToastHandler {
   async json<Data>(request: Request, data: Data, toast: Toast, init: ResponseInit = {}): Promise<TypedResponse<Data>> {
     const session = await getSession(request);
     const variant = toast.variant || "default";
+
+    if (variant === "warning" && toast.description) {
+      Sentry.captureMessage(toast.description, "warning");
+    }
+
+    if (variant === "destructive" && toast.description) {
+      Sentry.captureMessage(toast.description, "error");
+    }
 
     setGlobalToast(session, { ...this.defaultToasts[variant], ...toast });
     return typedjson(data, {
