@@ -3,21 +3,20 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { Link, useFetcher } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
 import { ErrorComponent } from "~/components/error-component";
-import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { FormField } from "~/components/ui/form";
+import { FormField, FormSelect } from "~/components/ui/form";
+import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
@@ -25,11 +24,15 @@ import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
 
+export const meta: MetaFunction = () => [{ title: "User • Alliance 436" }];
+
 const validator = withZod(
   z.object({
     id: z.string().cuid(),
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().min(1, { message: "Last name is required" }),
+    username: z.string().email({ message: "Invalid email address" }),
+    role: z.nativeEnum(UserRole),
   }),
 );
 
@@ -73,11 +76,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return typedjson({
     user,
-    ...setFormDefaults("user-form", { ...authorizedUser, ...authorizedUser.contact }),
+    ...setFormDefaults("user-form", { ...user, ...user.contact }),
   });
 };
-
-export const meta: MetaFunction = () => [{ title: "User • Alliance 436" }];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authorizedUser = await requireUser(request);
@@ -87,18 +88,33 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { data } = result;
+  const { username, role, id, ...contact } = result.data;
 
-  if (authorizedUser.role === UserRole.USER && authorizedUser.id !== data.id) {
+  if (authorizedUser.role === UserRole.USER && authorizedUser.id !== id) {
     throw forbidden({ message: "You do not have permission to edit this user." });
   }
 
+  const userToBeUpdated = await prisma.user.findUnique({ where: { id } });
+
+  if (!userToBeUpdated) {
+    throw notFound({ message: "User not found" });
+  }
+
+  // Only super admins can edit roles and usernames
+  if (authorizedUser.role !== UserRole.SUPERADMIN) {
+    if (role !== userToBeUpdated.role || username !== userToBeUpdated.username) {
+      throw forbidden({ message: "You do not have permission to edit this field." });
+    }
+  }
+
   const updatedUser = await prisma.user.update({
-    where: { id: data.id },
+    where: { id },
     data: {
+      role,
+      username,
       contact: {
         update: {
-          ...data,
+          ...contact,
         },
       },
     },
@@ -114,24 +130,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function UserDetailsPage() {
   const authorizedUser = useUser();
   const { user } = useTypedLoaderData<typeof loader>();
-  const [modalOpen, setModalOpen] = useState(false);
   const fetcher = useFetcher();
+
+  const isYou = authorizedUser.id === user.id;
 
   return (
     <>
-      <PageHeader
-        title={`${user.contact.firstName}${user.contact.lastName ? " " + user.contact.lastName : ""}`}
-        description={
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="capitalize">
-              Contact: {user.contact.type.name.toLowerCase()}
-            </Badge>
-            <Badge variant="outline" className="capitalize">
-              Role: {user.role.toLowerCase()}
-            </Badge>
-          </div>
-        }
-      >
+      <PageHeader title={`${user.contact.firstName}${user.contact.lastName ? " " + user.contact.lastName : ""}`}>
         <div className="flex items-center gap-2">
           <ValidatedForm
             id="user-form"
@@ -143,16 +148,16 @@ export default function UserDetailsPage() {
             <input type="hidden" name="email" value={user.contact.email} />
             <SubmitButton variant="outline">Send Password Reset</SubmitButton>
           </ValidatedForm>
-          {authorizedUser.id !== user.id && authorizedUser.role === "SUPERADMIN" ? (
-            <ConfirmDestructiveModal
-              open={modalOpen}
-              onOpenChange={setModalOpen}
-              description="This action cannot be undone. This will permanently delete the
-                  user and remove the data from the server."
-            />
-          ) : null}
         </div>
       </PageHeader>
+      <div className="mt-1 flex items-center gap-2">
+        <Badge variant="outline" className="capitalize">
+          Contact: {user.contact.type.name.toLowerCase()}
+        </Badge>
+        <Badge variant="outline" className="capitalize">
+          Role: {user.role.toLowerCase()}
+        </Badge>
+      </div>
 
       <PageContainer>
         <ValidatedForm id="user-form" validator={validator} method="post" className="space-y-4 sm:max-w-md">
@@ -161,18 +166,24 @@ export default function UserDetailsPage() {
             <FormField label="First name" id="firstName" name="firstName" required />
             <FormField label="Last name" id="lastName" name="lastName" required />
           </div>
-          {/* <FormField label="Email" id="email" name="email" /> */}
-          {/* <FormSelect
-            name="role"
-            label="Role"
-            placeholder="Select a role"
-            options={Object.entries(UserRole)
-              .filter(([key]) => key !== "SUPERADMIN")
-              .map(([key, value]) => ({
-                value: key,
-                label: value,
-              }))}
-          /> */}
+          {/* Super admin only */}
+          {authorizedUser.role === UserRole.SUPERADMIN ? (
+            <>
+              <FormField label="Username" id="email" name="username" />
+              <FormSelect
+                disabled={isYou}
+                description={isYou ? "You cannot edit your own role." : ""}
+                name="role"
+                label="Role"
+                placeholder="Select a role"
+                defaultValue={user.role}
+              >
+                <SelectItem value="USER">User</SelectItem>
+                <SelectItem value="ADMIN">Admin</SelectItem>
+                <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+              </FormSelect>
+            </>
+          ) : null}
           <ButtonGroup>
             <SubmitButton>Save</SubmitButton>
             <Button type="reset" variant="outline">
@@ -182,10 +193,12 @@ export default function UserDetailsPage() {
         </ValidatedForm>
         <div className="mt-4">
           {user.contactAssignments.length > 0 ? (
-            <Card className="flex-1 basis-48 bg-white">
+            <Card className="flex-1 basis-48 bg-transparent">
               <CardHeader>
                 <CardTitle>Contact Assignments</CardTitle>
-                <CardDescription>You will receive regular reminders to engage with these Contacts.</CardDescription>
+                <CardDescription>
+                  {isYou ? "You" : "This user"} will receive regular reminders to engage with these Contacts.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul>
