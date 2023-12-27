@@ -6,6 +6,7 @@ const serverEnvValidation = z.object({
   // Remix
   NODE_ENV: z.enum(["development", "production", "test"]),
   SESSION_SECRET: z.string().min(16),
+  URL: z.string().url(),
 
   // Cloudflare
   AWS_BUCKET_NAME: z.string().min(1),

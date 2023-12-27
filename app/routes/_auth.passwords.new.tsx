@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useSearchParams } from "@remix-run/react";
@@ -8,6 +9,7 @@ import { z } from "zod";
 import { ErrorComponent } from "~/components/error-component";
 import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
 import { expirePasswordReset, getPasswordResetByToken } from "~/models/password_reset.server";
@@ -39,11 +41,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const reset = await getPasswordResetByToken({ token });
-  if (!reset) {
-    return redirect("/");
-  }
-
-  if (reset.expiresAt < new Date()) {
+  if (!reset || reset.expiresAt < new Date()) {
     return redirect("/");
   }
 
@@ -51,11 +49,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const authorizedUser = await requireUser(request);
   const tokenParam = getSearchParam("token", request);
 
   // Validate form
   const result = await validator.validate(await request.formData());
-  if (result.error) return validationError(result.error);
+  if (result.error) {
+    return validationError(result.error);
+  }
 
   const { oldPassword, newPassword, token } = result.data;
   const reset = await getPasswordResetByToken({ token });
@@ -111,7 +112,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // Use token
   await expirePasswordReset({ token });
 
-  return toast.redirect(request, "/", {
+  return toast.redirect(request, authorizedUser.role === UserRole.USER ? "/dashboards/staff" : "dashboards/admin", {
     variant: "default",
     title: "Password reset",
     description: "Your password has been reset.",

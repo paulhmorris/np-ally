@@ -10,8 +10,7 @@ export async function sendPasswordResetEmail({
   email: NonNullable<Contact["email"]>;
   token: PasswordReset["token"];
 }) {
-  if (!process.env.ADMIN_URL) throw new Error("ADMIN_URL is not set");
-  const url = new URL(process.env.ADMIN_URL);
+  const url = new URL(process.env.URL);
   url.pathname = "/passwords/new";
   url.searchParams.set("token", token);
 

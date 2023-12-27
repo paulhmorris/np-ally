@@ -38,7 +38,7 @@ const validator = withZod(
 
 const passwordResetValidator = withZod(
   z.object({
-    email: z.string().email({ message: "Invalid email address" }),
+    username: z.string().email({ message: "Invalid email address" }),
   }),
 );
 
@@ -139,14 +139,16 @@ export default function UserDetailsPage() {
       <PageHeader title={`${user.contact.firstName}${user.contact.lastName ? " " + user.contact.lastName : ""}`}>
         <div className="flex items-center gap-2">
           <ValidatedForm
-            id="user-form"
+            id="reset-password-form"
             fetcher={fetcher}
             validator={passwordResetValidator}
-            method="POST"
-            action="/reset-password"
+            method="post"
+            action="/resources/reset-password"
           >
-            <input type="hidden" name="email" value={user.contact.email} />
-            <SubmitButton variant="outline">Send Password Reset</SubmitButton>
+            <input type="hidden" name="username" value={user.username} />
+            <SubmitButton variant="outline" type="submit" formId="reset-password-form">
+              Send Password Reset
+            </SubmitButton>
           </ValidatedForm>
         </div>
       </PageHeader>
