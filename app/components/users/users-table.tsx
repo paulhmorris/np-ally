@@ -11,7 +11,7 @@ export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ inc
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
+          <TableHead>Username</TableHead>
           <TableHead>Role</TableHead>
           <TableHead>Created</TableHead>
           <TableHead />
@@ -25,7 +25,7 @@ export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ inc
                 {user.contact.firstName}
                 {user.contact.lastName ? ` ${user.contact.lastName}` : ""}
               </TableCell>
-              <TableCell>{user.contact.email}</TableCell>
+              <TableCell>{user.username}</TableCell>
               <TableCell>{normalizeEnum(user.role)}</TableCell>
               <TableCell>{new Date(user.createdAt).toLocaleString()}</TableCell>
               <TableCell>
