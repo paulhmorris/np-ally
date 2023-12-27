@@ -13,13 +13,14 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { Sentry } from "~/integrations/sentry";
 import { createUserSession, getUserId } from "~/lib/session.server";
 import { safeRedirect } from "~/lib/utils";
+import { CheckboxSchema } from "~/models/schemas";
 import { verifyLogin } from "~/models/user.server";
 
 const validator = withZod(
   z.object({
     email: z.string().min(1, { message: "Email is required" }).email(),
     password: z.string().min(8, { message: "Password must be 8 or more characters." }),
-    remember: z.literal("on").optional(),
+    remember: CheckboxSchema,
     redirectTo: z.string().optional(),
   }),
 );
@@ -46,13 +47,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  Sentry.setUser({ id: user.id, email: user.contact.email });
+  Sentry.setUser({ id: user.id, email: user.username });
 
   return createUserSession({
     request,
     userId: user.id,
     redirectTo: safeRedirect(redirectTo, "/"),
-    remember: remember === "on" ? true : false,
+    remember: !!remember,
   });
 };
 

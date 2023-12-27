@@ -1,6 +1,4 @@
-import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
 import { useSearchParams } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
@@ -9,7 +7,8 @@ import { z } from "zod";
 import { ErrorComponent } from "~/components/error-component";
 import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { requireUser } from "~/lib/session.server";
+import { badRequest, unauthorized } from "~/lib/responses.server";
+import { getSession, sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
 import { expirePasswordReset, getPasswordResetByToken } from "~/models/password_reset.server";
@@ -35,21 +34,25 @@ const validator = withZod(
 );
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  const session = await getSession(request);
   const token = getSearchParam("token", request);
   if (!token) {
-    return redirect("/");
+    throw unauthorized("No token provided");
   }
 
   const reset = await getPasswordResetByToken({ token });
   if (!reset || reset.expiresAt < new Date()) {
-    return redirect("/");
+    throw badRequest("Invalid token");
   }
 
-  return json({});
+  return new Response(null, {
+    headers: {
+      "Set-Cookie": await sessionStorage.destroySession(session),
+    },
+  });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const authorizedUser = await requireUser(request);
   const tokenParam = getSearchParam("token", request);
 
   // Validate form
@@ -58,6 +61,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return validationError(result.error);
   }
 
+  // Check token
   const { oldPassword, newPassword, token } = result.data;
   const reset = await getPasswordResetByToken({ token });
   if (!reset) {
@@ -112,10 +116,10 @@ export async function action({ request }: ActionFunctionArgs) {
   // Use token
   await expirePasswordReset({ token });
 
-  return toast.redirect(request, authorizedUser.role === UserRole.USER ? "/dashboards/staff" : "dashboards/admin", {
+  return toast.redirect(request, "/login", {
     variant: "default",
     title: "Password reset",
-    description: "Your password has been reset.",
+    description: "Your password has been reset. Login with your new password.",
   });
 }
 
