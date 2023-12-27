@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 /* shadcn */
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -65,5 +64,9 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  input[type="file" i]::-webkit-file-upload-button {
+    color: hsl(var(--foreground));
+    cursor: pointer;
   }
 }

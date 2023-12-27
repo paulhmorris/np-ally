@@ -20,7 +20,7 @@ function FieldError({ id, error }: { id: string; error?: string }) {
 function FieldDescription({ id, description }: { id: string; description?: string }) {
   if (!description) return null;
   return (
-    <p id={`${id}-description`} className="mt-0.5 text-xs text-muted-foreground">
+    <p id={`${id}-description`} className="mt-1 text-xs text-muted-foreground">
       {description}
     </p>
   );
@@ -61,6 +61,17 @@ export function FormField({
         aria-describedby={`${id}-error`}
         className={cn(error && "border-destructive focus-visible:ring-destructive/50", isCurrency && "pl-7", className)}
         {...getInputProps()}
+        onBlur={(e) => {
+          if (isCurrency) {
+            const value = parseFloat(e.currentTarget.value);
+            if (isNaN(value)) {
+              e.currentTarget.value = "";
+            } else {
+              e.currentTarget.value = value.toFixed(2);
+            }
+          }
+          props.onBlur?.(e);
+        }}
         {...props}
       />
       {isCurrency ? (

@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ContactsTable } from "~/components/contacts/contacts-table";
@@ -47,7 +48,10 @@ export default function ContactIndexPage() {
     <>
       <PageHeader title="Contacts">
         <Button asChild>
-          <Link to="/contacts/new">New Contact</Link>
+          <Link to="/contacts/new">
+            <IconPlus className="mr-2 h-5 w-5" />
+            <span>New Contact</span>
+          </Link>
         </Button>
       </PageHeader>
 

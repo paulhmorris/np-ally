@@ -10,7 +10,8 @@ export const CheckboxSchema = z
 
 export const CurrencySchema = z.coerce
   .number({ invalid_type_error: "Must be a number", required_error: "Amount required" })
-  .nonnegative({ message: "Must be greater than $0" })
+  .multipleOf(0.01, { message: "Must be multiple of $0.01" })
+  .nonnegative({ message: "Must be greater than $0.00" })
   .max(99_999, { message: "Must be less than $100,000" })
   .transform((dollars) => Math.round(dollars * 100));
 

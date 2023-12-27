@@ -186,7 +186,6 @@ export default function AddIncomePage() {
                       </CardHeader>
                       <CardContent>
                         <input type="hidden" name={`${fieldPrefix}.id`} />
-                        <input type="hidden" name={`${fieldPrefix}.typeId`} value={TransactionItemType.Donation} />
                         <fieldset className="space-y-3">
                           <div className="grid grid-cols-10 gap-2">
                             <div className="col-span-2">

@@ -44,6 +44,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         </Link>
       </div>
       <ul className="mt-14 space-x-0 space-y-1">
+        <DesktopNavLink to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"} name="Home" />
         {globalNavLinks.map((link) => (
           <DesktopNavLink key={link.href} to={link.href} name={link.name} />
         ))}
@@ -86,9 +87,16 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
-              <Link to={`/users/${user.id}`}>Profile</Link>
+              <Link className="cursor-pointer" to={`/users/${user.id}`}>
+                Profile
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleToggleTheme}>
+            <DropdownMenuItem asChild>
+              <Link className="cursor-pointer" to="/feature-request">
+                Feature Request
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onSelect={handleToggleTheme}>
               <span>Toggle theme</span>
               <IconSun className="absolute right-2 h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <IconMoon className="absolute right-2 h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -113,7 +121,7 @@ function DesktopNavLink({ to, name }: { to: string; name: string }) {
         to={to}
         className={({ isActive }) =>
           cn(
-            "flex items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-primary/10",
+            "flex cursor-pointer items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-primary/10",
             isActive && "bg-primary/10",
           )
         }

@@ -52,14 +52,14 @@ export default function AccountDetailsPage() {
 
   return (
     <>
-      <PageHeader title={account.code} description={account.id}>
+      <PageHeader title={account.code} description={account.description}>
         <Button variant="outline" asChild>
           <Link to={`/accounts/${account.id}/edit`}>Edit</Link>
         </Button>
       </PageHeader>
       <PageContainer>
         <div className="max-w-xs">
-          <AccountBalanceCard totalCents={total} code={account.code} />
+          <AccountBalanceCard totalCents={total} />
         </div>
         <div className="mt-12">
           <h2 className="mb-4 text-2xl font-semibold">Transactions</h2>

@@ -19,16 +19,19 @@ class ToastHandler {
       variant: "default",
       title: "Success",
       description: "Your action was successful.",
+      duration: 5_000,
     },
     warning: {
       variant: "warning",
       title: "Warning",
       description: "Your action was successful, but there may be some issues.",
+      duration: 8_000,
     },
     destructive: {
       variant: "destructive",
       title: "Something went wrong",
       description: "Your action was not successful.",
+      duration: 20_000,
     },
   };
 
