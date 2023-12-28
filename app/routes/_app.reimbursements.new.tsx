@@ -11,7 +11,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { FileUploader } from "~/components/file-uploader";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
-import { FormField, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
@@ -107,10 +107,8 @@ export default function NewUserPage() {
         <Separator className="my-8" />
 
         <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-xl">
-          <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
-            <FormField name="vendor" label="Vendor" />
-            <FormField name="description" label="Description" />
-          </div>
+          <FormField name="vendor" label="Vendor" />
+          <FormTextarea name="description" label="Description" />
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <div className="w-auto">
               <FormField name="date" label="Date" type="date" defaultValue={getToday()} required />

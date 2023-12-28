@@ -67,7 +67,7 @@ export default function LoginPage() {
     <div className="grid h-full place-items-center">
       <div className="min-w-[400px] px-8">
         <h1 className="text-4xl font-extrabold">Alliance 436</h1>
-        <ValidatedForm validator={validator} method="post" className="mt-4 space-y-3">
+        <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
           <FormField label="Email" id="email" name="email" type="email" autoComplete="email" required />
           <FormField
             label="Password"

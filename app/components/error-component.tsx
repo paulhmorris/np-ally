@@ -1,7 +1,5 @@
-import { Link, isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { captureRemixErrorBoundaryError } from "@sentry/remix";
-
-import { Button } from "~/components/ui/button";
 
 export function ErrorComponent() {
   const error = useRouteError();
@@ -35,11 +33,6 @@ export function ErrorComponent() {
       {isRouteError ? <p className="mb-2 text-base font-semibold text-destructive">{error.status}</p> : null}
       <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">{title}</h1>
       <p className="mt-2 text-base leading-7 text-muted-foreground">{description}</p>
-      <div className="mt-2 flex items-center gap-x-6">
-        <Button asChild variant="secondary">
-          <Link to="/">Go back home</Link>
-        </Button>
-      </div>
       {error instanceof Error && error.stack ? (
         <>
           <p className="mt-24 text-left text-sm font-bold">Stack Trace</p>
