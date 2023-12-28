@@ -8,6 +8,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
 import { prisma } from "~/integrations/prisma.server";
+import { AccountType } from "~/lib/constants";
 import { requireUser } from "~/lib/session.server";
 
 export const meta: MetaFunction = () => [{ title: "Home • Alliance 436" }];
@@ -18,13 +19,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return redirect("/dashboards/staff");
   }
 
-  const total = await prisma.transaction.aggregate({
-    _sum: { amountInCents: true },
+  const accounts = await prisma.account.findMany({
+    where: {
+      typeId: AccountType.Operating,
+    },
+    include: {
+      transactions: true,
+    },
   });
 
   const reimbursementRequests = await prisma.reimbursementRequest.findMany({
     where: {
-      userId: user.id,
       status: ReimbursementRequestStatus.PENDING,
     },
     include: {
@@ -35,25 +40,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  return typedjson({ total: total._sum.amountInCents, reimbursementRequests });
+  return typedjson({ accounts, reimbursementRequests });
 }
 
 export default function Index() {
-  const { total, reimbursementRequests } = useTypedLoaderData<typeof loader>();
+  const { accounts, reimbursementRequests } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
       <PageHeader title="Home" />
-      <PageContainer>
-        <div className="space-y-5">
-          <div className="max-w-[320px]">
-            <AccountBalanceCard totalCents={total} />
+      <PageContainer className="max-w-4xl">
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-4">
+            {accounts.map((a) => {
+              const total = a.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
+              return (
+                <div key={a.id} className="grow">
+                  <AccountBalanceCard totalCents={total} code={`${a.code} - ${a.description}`} />
+                </div>
+              );
+            })}
           </div>
-          {reimbursementRequests.length > 0 ? (
-            <div className="max-w-2xl">
-              <ReimbursementRequestsList requests={reimbursementRequests} />
-            </div>
-          ) : null}
+          {reimbursementRequests.length > 0 ? <ReimbursementRequestsList requests={reimbursementRequests} /> : null}
         </div>
       </PageContainer>
     </>
