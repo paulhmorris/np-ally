@@ -64,12 +64,11 @@ interface NavLink {
 export const globalNavLinks: ReadonlyArray<NavLink> = [
   { name: "Transactions", href: "/transactions" },
   { name: "Contacts", href: "/contacts" },
-] as const;
-
-export const userNavLinks: ReadonlyArray<NavLink> = [
   { name: "Request Reimbursement", href: "/reimbursements/new" },
   { name: "Add Engagement", href: "/engagements/new" },
 ] as const;
+
+export const userNavLinks: ReadonlyArray<NavLink> = [] as const;
 
 export const adminNavLinks: ReadonlyArray<NavLink> = [
   { name: "Add Income", href: "/income/new" },
