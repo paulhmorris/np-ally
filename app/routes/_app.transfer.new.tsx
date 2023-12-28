@@ -56,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     _sum: { amountInCents: true },
   });
 
-  if (!fromAccountBalance._sum.amountInCents) {
+  if (fromAccountBalance._sum.amountInCents === null) {
     return toast.json(
       request,
       { message: "Unable to aggregate account balance." },
@@ -75,7 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       request,
       { message: "Insufficient funds in from account." },
       {
-        variant: "destructive",
+        variant: "warning",
         title: "Error transferring funds",
         description: "Insufficient funds in from account.",
       },
