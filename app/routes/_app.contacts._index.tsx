@@ -17,15 +17,13 @@ export const meta: MetaFunction = () => [{ title: "Contacts • Alliance 436" }]
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireUser(request);
 
-  // Only show a user's donors to them
+  // Only show a user's assigned contacts
   if (user.role === UserRole.USER) {
     const contacts = await prisma.contact.findMany({
       where: {
-        transactions: {
+        assignedUsers: {
           some: {
-            account: {
-              userId: user.id,
-            },
+            userId: user.id,
           },
         },
       },
