@@ -130,7 +130,7 @@ export default function NewPassword() {
     <div className="grid h-full place-items-center">
       <div className="max-w-lg px-8">
         <h1 className="text-4xl font-extrabold">Set a new password.</h1>
-        <ValidatedForm validator={validator} method="post" className="mt-4 space-y-3">
+        <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
           <input type="hidden" name="token" value={searchParams.get("token") ?? ""} />
           <FormField label="Old password" name="oldPassword" type="password" autoComplete="current-password" required />
           <FormField label="New Password" name="newPassword" type="password" autoComplete="new-password" required />
