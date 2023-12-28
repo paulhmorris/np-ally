@@ -192,11 +192,11 @@ export default function AddIncomePage() {
                         <input type="hidden" name={`${fieldPrefix}.id`} />
                         <fieldset className="space-y-3">
                           <div className="grid grid-cols-10 gap-2">
-                            <div className="col-span-2">
+                            <div className="col-span-3 sm:col-span-2">
                               <FormField required name={`${fieldPrefix}.amountInCents`} label="Amount" isCurrency />
                             </div>
                             <FormSelect
-                              divProps={{ className: "col-span-4" }}
+                              divProps={{ className: "col-span-3 sm:col-span-4" }}
                               required
                               name={`${fieldPrefix}.methodId`}
                               label="Method"

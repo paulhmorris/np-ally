@@ -148,10 +148,10 @@ const facets: Array<Facet> = [
   {
     columnId: "type",
     title: "Type",
-    options: [
-      { label: "Donor", value: "Donor" },
-      { label: "Staff", value: "Staff" },
-      { label: "Admin", value: "Admin" },
-    ],
+    // options: [
+    //   { label: "Donor", value: "Donor" },
+    //   { label: "Staff", value: "Staff" },
+    //   { label: "Admin", value: "Admin" },
+    // ],
   },
 ];

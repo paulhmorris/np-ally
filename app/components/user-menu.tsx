@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import { Form, Link } from "@remix-run/react";
 import { IconMoon, IconSun } from "@tabler/icons-react";
 import { Theme, useTheme } from "remix-themes";
@@ -38,7 +39,7 @@ export function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mb-2 w-48" align="start" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col space-y-2 sm:space-y-1">
             <p className="text-sm font-medium leading-none">
               {user.contact.firstName}
               {user.contact.lastName ? ` ${user.contact.lastName}` : null}
@@ -48,6 +49,14 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <Link
+              className="cursor-pointer sm:hidden"
+              to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"}
+            >
+              Home
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link className="cursor-pointer" to={`/users/${user.id}`}>
               Profile
