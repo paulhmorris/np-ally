@@ -11,6 +11,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { FormField, FormSelect } from "~/components/ui/form";
+import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
@@ -21,7 +22,7 @@ const validator = withZod(
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().optional(),
     email: z.string().email({ message: "Invalid email address" }),
-    role: z.coerce.number().pipe(z.nativeEnum(UserRole)),
+    role: z.nativeEnum(UserRole),
     typeId: z.coerce.number().pipe(z.nativeEnum(ContactType)),
   }),
 );
@@ -29,7 +30,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New User • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["SUPERADMIN"]);
   return typedjson({
     accounts: await prisma.account.findMany(),
     contactTypes: await prisma.contactType.findMany(),
@@ -72,15 +73,11 @@ export default function NewUserPage() {
               label: type.name,
             }))}
           />
-          <FormSelect
-            name="role"
-            label="Role"
-            placeholder="Select a role"
-            options={Object.entries(UserRole).map(([key, value]) => ({
-              value: key,
-              label: value,
-            }))}
-          />
+          <FormSelect name="role" label="Role" placeholder="Select a role">
+            <SelectItem value="USER">User</SelectItem>
+            <SelectItem value="ADMIN">Admin</SelectItem>
+            <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+          </FormSelect>
           <div className="flex items-center gap-2">
             <SubmitButton>Create</SubmitButton>
             <Button type="reset" variant="outline">

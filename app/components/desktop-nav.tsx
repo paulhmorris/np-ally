@@ -19,14 +19,14 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         props.className,
       )}
     >
-      <div className="pl-3">
+      <div className="flex h-10 items-center pl-3">
         <Link to="/" className="inline-flex items-center space-x-2 text-sm font-bold text-primary">
           <IconWorld className="h-6 w-6" />
           <span>Alliance 436</span>
           <GlobalLoader />
         </Link>
       </div>
-      <ul className="mt-14 space-x-0 space-y-1">
+      <ul className="mt-12 space-x-0 space-y-1">
         <DesktopNavLink to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"} name="Home" />
         {globalNavLinks.map((link) => (
           <DesktopNavLink key={link.href} to={link.href} name={link.name} />
