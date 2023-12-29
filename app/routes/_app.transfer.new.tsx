@@ -56,19 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     _sum: { amountInCents: true },
   });
 
-  if (fromAccountBalance._sum.amountInCents === null) {
-    return toast.json(
-      request,
-      { message: "Unable to aggregate account balance." },
-      {
-        variant: "destructive",
-        title: "Error transferring funds",
-        description: "Unable to aggregate from account balance. Please contact support.",
-      },
-    );
-  }
-
-  const fromAccountBalanceInCents = fromAccountBalance._sum.amountInCents;
+  const fromAccountBalanceInCents = fromAccountBalance._sum.amountInCents ?? 0;
 
   if (amountInCents > fromAccountBalanceInCents) {
     return toast.json(
