@@ -62,11 +62,10 @@ export async function deleteUserByEmail(email: NonNullable<Contact["email"]>) {
   return prisma.user.delete({ where: { contactId: contact.id } });
 }
 
-export async function verifyLogin(email: NonNullable<Contact["email"]>, password: Password["hash"]) {
-  const contact = await prisma.contact.findUniqueOrThrow({ where: { email } });
+export async function verifyLogin(username: NonNullable<User["username"]>, password: Password["hash"]) {
   const userWithPassword = await prisma.user.findUnique({
-    where: { contactId: contact.id },
-    include: { password: true, contact: { select: { email: true } } },
+    where: { username },
+    include: { password: true },
   });
 
   if (!userWithPassword || !userWithPassword.password) {
