@@ -2,7 +2,15 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-import { ContactType, defaultAccounts } from "~/lib/constants";
+import {
+  ContactType,
+  accountTypes,
+  contactTypes,
+  defaultAccounts,
+  engagementTypes,
+  transactionItemMethods,
+  transactionItemTypes,
+} from "~/lib/constants";
 
 const prisma = new PrismaClient();
 
@@ -89,40 +97,3 @@ seed()
   .finally(() => {
     void prisma.$disconnect();
   });
-
-const transactionItemMethods = [
-  { id: 1, name: "Digital" },
-  { id: 2, name: "Check" },
-  { id: 3, name: "ACH" },
-  { id: 4, name: "Other" },
-];
-const transactionItemTypes = [
-  { id: 1, name: "Donation" },
-  { id: 2, name: "Income" },
-  { id: 3, name: "Expense" },
-  { id: 4, name: "Compensation" },
-  { id: 5, name: "Grant" },
-  { id: 6, name: "Tax" },
-  { id: 7, name: "Transfer In" },
-  { id: 8, name: "Transfer Out" },
-];
-const contactTypes = [
-  { id: 1, name: "Donor" },
-  { id: 2, name: "External" },
-  { id: 3, name: "Missionary" },
-  { id: 4, name: "Staff" },
-  { id: 5, name: "Admin" },
-];
-const accountTypes = [
-  { id: 1, name: "Operating" },
-  { id: 2, name: "Benevolence" },
-  { id: 3, name: "Ministry" },
-];
-
-const engagementTypes = [
-  { id: 1, name: "In Person" },
-  { id: 2, name: "Phone" },
-  { id: 3, name: "Text" },
-  { id: 4, name: "Email" },
-  { id: 5, name: "Mail" },
-];

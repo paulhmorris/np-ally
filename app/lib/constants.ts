@@ -34,11 +34,52 @@ export enum TransactionItemType {
 }
 
 export enum TransactionItemMethod {
-  Digital = 1,
+  PayPal = 1,
   Check = 2,
   ACH = 3,
-  Other = 4,
+  Credit_Card = 4,
+  Debit_Card = 5,
+  Tithely = 6,
 }
+
+export const transactionItemMethods: Array<{ id: TransactionItemMethod; name: string }> = [
+  { id: 1, name: "PayPal" },
+  { id: 2, name: "Check" },
+  { id: 3, name: "ACH" },
+  { id: 4, name: "Credit Card" },
+  { id: 5, name: "Debit Card" },
+  { id: 6, name: "Tithe.ly" },
+];
+export const transactionItemTypes: Array<{ id: TransactionItemType; name: string }> = [
+  { id: 1, name: "Donation" },
+  { id: 2, name: "Income" },
+  { id: 3, name: "Expense" },
+  { id: 4, name: "Compensation" },
+  { id: 5, name: "Grant" },
+  { id: 6, name: "Tax" },
+  { id: 7, name: "Transfer In" },
+  { id: 8, name: "Transfer Out" },
+];
+export const contactTypes: Array<{ id: ContactType; name: string }> = [
+  { id: 1, name: "Donor" },
+  { id: 2, name: "External" },
+  { id: 3, name: "Missionary" },
+  { id: 4, name: "Staff" },
+  { id: 5, name: "Admin" },
+];
+export const accountTypes: Array<{ id: AccountType; name: string }> = [
+  { id: 1, name: "Operating" },
+  { id: 2, name: "Benevolence" },
+  { id: 3, name: "Ministry" },
+];
+
+export const engagementTypes: Array<{ id: EngagementType; name: string }> = [
+  { id: 1, name: "In Person" },
+  { id: 2, name: "Phone" },
+  { id: 3, name: "Text" },
+  { id: 4, name: "Email" },
+  { id: 5, name: "Mail" },
+];
 
 export const defaultAccounts: Array<Prisma.AccountUncheckedCreateInput> = [
   { code: "1001", description: "General Fund", typeId: AccountType.Operating },
