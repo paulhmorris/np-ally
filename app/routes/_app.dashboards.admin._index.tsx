@@ -56,7 +56,7 @@ export default function Index() {
               const total = a.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
               return (
                 <div key={a.id} className="grow">
-                  <AccountBalanceCard totalCents={total} code={`${a.code} - ${a.description}`} />
+                  <AccountBalanceCard title={a.description} totalCents={total} code={a.code} />
                 </div>
               );
             })}
