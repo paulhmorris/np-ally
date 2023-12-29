@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
@@ -51,12 +52,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     }
   }
 
-  const usersWhoCanBeAssigned = await prisma.user.findMany({
-    where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
-    include: {
-      contact: true,
-    },
-  });
+  const [contactTypes, usersWhoCanBeAssigned] = await Promise.all([
+    prisma.contactType.findMany({ where: { id: { not: ContactType.Admin } } }),
+    prisma.user.findMany({
+      where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
+      include: {
+        contact: true,
+      },
+    }),
+  ]);
 
   const contact = await prisma.contact.findUnique({
     where: { id: params.contactId },
@@ -87,6 +91,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return typedjson({
     contact,
+    contactTypes,
     usersWhoCanBeAssigned,
     ...setFormDefaults("contact-form", { ...contact }),
   });
@@ -95,9 +100,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await requireUser(request);
   const result = await UpdateContactValidator.validate(await request.formData());
-  if (result.error) return validationError(result.error);
+  if (result.error) {
+    return validationError(result.error);
+  }
 
   const { address, assignedUserIds, ...formData } = result.data;
+
+  if (formData.typeId === ContactType.Organization && !formData.organizationName) {
+    return validationError({
+      fieldErrors: {
+        organizationName: "Organization name is required for organization contacts.",
+      },
+    });
+  }
 
   const existingContact = await prisma.contact.findUnique({
     where: { email: formData.email },
@@ -119,15 +134,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError({
       fieldErrors: {
         email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
-      },
-    });
-  }
-
-  // Contacts with transactions cannot have their type changed
-  if (existingContact._count.transactions > 0 && formData.typeId !== ContactType.Donor) {
-    return validationError({
-      fieldErrors: {
-        typeId: `This contact has transactions so it's type must be "Donor".`,
       },
     });
   }
@@ -178,7 +184,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function EditContactPage() {
   const user = useUser();
-  const { contact, usersWhoCanBeAssigned } = useTypedLoaderData<typeof loader>();
+  const { contact, contactTypes, usersWhoCanBeAssigned } = useTypedLoaderData<typeof loader>();
   const [addressEnabled, setAddressEnabled] = useState(
     Object.values(contact.address ?? {}).some((v) => v !== "") ? true : false,
   );
@@ -219,6 +225,7 @@ export default function EditContactPage() {
             <FormField label="First name" id="firstName" name="firstName" required />
             <FormField label="Last name" id="lastName" name="lastName" />
           </div>
+          <FormField label="Organization Name" name="organizationName" id="organizationName" />
           <FormField label="Email" id="email" name="email" required />
           <FormField label="Phone" id="phone" name="phone" inputMode="numeric" maxLength={10} />
           <FormSelect
@@ -227,16 +234,7 @@ export default function EditContactPage() {
             label="Type"
             placeholder="Select type"
             defaultValue={contact.typeId}
-            disabled={contact._count.transactions > 0}
-            description={
-              contact._count.transactions > 0
-                ? `This contact has transactions so it's type must be "Donor".`
-                : undefined
-            }
-            options={[
-              { label: "Donor", value: ContactType.Donor },
-              { label: "External", value: ContactType.External },
-            ]}
+            options={contactTypes.map((type) => ({ label: type.name, value: type.id }))}
           />
 
           {!addressEnabled ? (
@@ -264,8 +262,9 @@ export default function EditContactPage() {
             </fieldset>
           )}
           <Separator className="my-4" />
-          {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
-          {contact.typeId === ContactType.Donor || contact.typeId === ContactType.External ? (
+          {contact.typeId === ContactType.Donor ||
+          contact.typeId === ContactType.External ||
+          contact.typeId === ContactType.Organization ? (
             <>
               <fieldset>
                 <legend className="mb-4 text-sm text-muted-foreground">

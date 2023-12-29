@@ -13,10 +13,11 @@ import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { FormField, FormSelect } from "~/components/ui/form";
+import { SelectGroup, SelectItem, SelectLabel } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
-import { TransactionItemType } from "~/lib/constants";
+import { ContactType, TransactionItemType } from "~/lib/constants";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
@@ -35,14 +36,21 @@ export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUser(request, ["SUPERADMIN", "ADMIN"]);
-  const [accounts, transactionItemMethods] = await Promise.all([
+  const [contacts, accounts, transactionItemMethods, contactTypes] = await Promise.all([
+    prisma.contact.findMany({
+      where: { typeId: { not: ContactType.Admin } },
+      include: { type: true },
+    }),
     prisma.account.findMany(),
     prisma.transactionItemMethod.findMany(),
+    prisma.contactType.findMany({ where: { id: { notIn: [ContactType.Admin] } } }),
   ]);
 
   return typedjson({
     accounts,
     transactionItemMethods,
+    contacts,
+    contactTypes,
     ...setFormDefaults("expense-form", {
       transactionItems: [{ id: nanoid() }],
     }),
@@ -81,7 +89,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AddExpensePage() {
-  const { accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
+  const { contacts, contactTypes, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "expense-form" });
 
   return (
@@ -107,6 +115,28 @@ export default function AddExpensePage() {
                   label: `${a.code} - ${a.description}`,
                 }))}
               />
+              <FormSelect name="contactId" label="Payable To" placeholder="Select contact">
+                {contactTypes.map((type) => {
+                  if (!contacts.some((c) => c.typeId === type.id)) {
+                    return null;
+                  }
+                  return (
+                    <SelectGroup key={type.name}>
+                      <SelectLabel>{type.name}</SelectLabel>
+                      {contacts
+                        .filter((c) => c.typeId === type.id)
+                        .map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
+                            {c.typeId === ContactType.Organization
+                              ? `${c.organizationName}`
+                              : `${c.firstName} ${c.lastName}`}
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
+                  );
+                })}
+              </FormSelect>
             </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {

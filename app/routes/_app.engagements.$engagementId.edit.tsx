@@ -34,7 +34,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const [engagement, contacts, engagementTypes] = await Promise.all([
     prisma.engagement.findUnique({ where: { id: Number(params.engagementId) } }),
     prisma.contact.findMany({
-      where: { typeId: { in: [ContactType.External, ContactType.Donor] } },
+      where: { typeId: { in: [ContactType.External, ContactType.Donor, ContactType.Organization] } },
     }),
     prisma.engagementType.findMany(),
   ]);

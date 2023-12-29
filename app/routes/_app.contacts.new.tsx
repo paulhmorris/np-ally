@@ -11,7 +11,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
-import { FormField } from "~/components/ui/form";
+import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
@@ -26,7 +26,17 @@ const NewContactValidator = withZod(NewContactSchema);
 export const meta: MetaFunction = () => [{ title: "New Contact • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request);
+  const user = await requireUser(request);
+  const contactTypes = await prisma.contactType.findMany({
+    where:
+      user.role === UserRole.USER
+        ? {
+            id: {
+              notIn: [ContactType.Admin, ContactType.Staff],
+            },
+          }
+        : {},
+  });
   const usersWhoCanBeAssigned = await prisma.user.findMany({
     where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
     select: {
@@ -42,6 +52,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 
   return typedjson({
+    contactTypes,
     usersWhoCanBeAssigned,
   });
 };
@@ -49,7 +60,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   await requireUser(request);
   const result = await NewContactValidator.validate(await request.formData());
-  if (result.error) return validationError(result.error);
+  if (result.error) {
+    return validationError(result.error);
+  }
 
   const { address, assignedUserIds, ...formData } = result.data;
 
@@ -88,7 +101,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function NewContactPage() {
-  const { usersWhoCanBeAssigned } = useTypedLoaderData<typeof loader>();
+  const { contactTypes, usersWhoCanBeAssigned } = useTypedLoaderData<typeof loader>();
   const [addressEnabled, setAddressEnabled] = useState(false);
 
   return (
@@ -97,7 +110,7 @@ export default function NewContactPage() {
       <PageContainer>
         <ValidatedForm validator={NewContactValidator} method="post" className="space-y-4 sm:max-w-md">
           <div className="flex items-start gap-2">
-            <FormField label="First name" id="firstName" name="firstName" placeholder="Joe" required />
+            <FormField label="First name" id="firstName" name="firstName" placeholder="Joe" />
             <FormField label="Last name" id="lastName" name="lastName" placeholder="Donor" />
           </div>
           <FormField label="Email" id="email" name="email" placeholder="joe@donor.com" required />
@@ -109,8 +122,22 @@ export default function NewContactPage() {
             inputMode="numeric"
             maxLength={10}
           />
-          <input type="hidden" name="typeId" value={ContactType.Donor} />
-
+          <FormSelect
+            required
+            label="Type"
+            name="typeId"
+            placeholder="Select type"
+            options={contactTypes.map((ct) => ({
+              label: ct.name,
+              value: ct.id,
+            }))}
+          />
+          <FormField
+            label="Organization Name"
+            name="organizationName"
+            placeholder="Alliance 436"
+            description="Required if type is Organization"
+          />
           {!addressEnabled ? (
             <Button variant="outline" onClick={() => setAddressEnabled(true)}>
               Add Address

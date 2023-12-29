@@ -88,7 +88,7 @@ async function seed() {
         firstName: "Joe",
         lastName: "Donor",
         email: "mr@donor.com",
-        phone: "555-555-5555",
+        phone: "5555555555",
         typeId: 1,
         address: {
           create: {
@@ -132,7 +132,7 @@ async function seed() {
         date: faker.date.past(),
         description: faker.lorem.word(),
         accountId: account.id,
-        donorId: donorContact.id,
+        contactId: donorContact.id,
         transactionItems: {
           createMany: {
             data: [

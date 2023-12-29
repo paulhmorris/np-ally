@@ -26,7 +26,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       organization: true,
       transactions: {
         include: {
-          donor: true,
+          contact: true,
         },
         orderBy: { createdAt: "desc" },
       },

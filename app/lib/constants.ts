@@ -12,6 +12,7 @@ export enum ContactType {
   Missionary = 3,
   Staff = 4,
   Admin = 5,
+  Organization = 6,
 }
 
 export enum EngagementType {
@@ -66,6 +67,7 @@ export const contactTypes: Array<{ id: ContactType; name: string }> = [
   { id: 3, name: "Missionary" },
   { id: 4, name: "Staff" },
   { id: 5, name: "Admin" },
+  { id: 6, name: "Organization" },
 ];
 export const accountTypes: Array<{ id: AccountType; name: string }> = [
   { id: 1, name: "Operating" },

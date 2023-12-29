@@ -69,7 +69,7 @@ export function AccountTransactionsTable<TData>({ data }: DataTableProps<TData>)
 }
 
 type Account = Prisma.TransactionGetPayload<{
-  include: { donor: true };
+  include: { contact: true };
 }>;
 const columns: Array<ColumnDef<Account>> = [
   {
@@ -111,14 +111,14 @@ const columns: Array<ColumnDef<Account>> = [
     enableColumnFilter: false,
   },
   {
-    accessorKey: "donor",
-    accessorFn: (row) => (row.donor ? `${row.donor.firstName} ${row.donor.lastName}` : ""),
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Donor" />,
+    accessorKey: "contact",
+    accessorFn: (row) => (row.contact ? `${row.contact.firstName} ${row.contact.lastName}` : ""),
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Contact" />,
     cell: ({ row }) => {
       return (
         <div>
-          <Link to={`/contacts/${row.original.donorId}`} className="max-w-[500px] truncate font-medium text-primary">
-            {row.getValue("donor")}
+          <Link to={`/contacts/${row.original.contactId}`} className="max-w-[500px] truncate font-medium text-primary">
+            {row.getValue("contact")}
           </Link>
         </div>
       );
@@ -141,7 +141,7 @@ const columns: Array<ColumnDef<Account>> = [
 
 const facets: Array<Facet> = [
   {
-    columnId: "donor",
-    title: "Donor",
+    columnId: "contact",
+    title: "Contact",
   },
 ];

@@ -7,12 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { formatCentsAsDollars } from "~/lib/utils";
 
 type Transaction = Prisma.TransactionGetPayload<{ include: { account: true } }>;
-export function RecentDonationsTable({ transactions }: { transactions: Array<Transaction> }) {
+export function RecentTransactionsTable({ transactions }: { transactions: Array<Transaction> }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recent Transactions</CardTitle>
-        <CardDescription>A list of donations from the last 90 days</CardDescription>
+        <CardDescription>A list of transactions from the last 90 days</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>

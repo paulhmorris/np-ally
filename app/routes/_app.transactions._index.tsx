@@ -23,7 +23,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           }
         : {},
     include: {
-      donor: true,
+      contact: true,
       account: true,
     },
     orderBy: { createdAt: "desc" },

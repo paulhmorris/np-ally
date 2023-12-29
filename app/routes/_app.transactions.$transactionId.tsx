@@ -34,7 +34,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     where: { id: params.transactionId },
     include: {
       account: true,
-      donor: true,
+      contact: true,
       transactionItems: {
         include: {
           type: true,
@@ -101,12 +101,12 @@ export default function TransactionDetailsPage() {
                 </Link>
               </DetailItem>
               <DetailItem label="Created" value={dayjs(transaction.createdAt).format("MM/DD/YYYY h:mm a")} />
-              {transaction.donor ? (
-                <DetailItem label="Donor">
+              {transaction.contact ? (
+                <DetailItem label="Contact">
                   <Link
-                    to={`/contacts/${transaction.donorId}`}
+                    to={`/contacts/${transaction.contactId}`}
                     className="font-medium text-primary"
-                  >{`${transaction.donor.firstName} ${transaction.donor.lastName}`}</Link>
+                  >{`${transaction.contact.firstName} ${transaction.contact.lastName}`}</Link>
                 </DetailItem>
               ) : null}
               {transaction.description ? <DetailItem label="Description" value={transaction.description} /> : null}

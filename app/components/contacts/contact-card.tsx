@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { ContactType } from "~/lib/constants";
 import { getInitials, useUser } from "~/lib/utils";
 
 type Contact = Prisma.ContactGetPayload<{ include: { address: true; type: true } }>;
@@ -17,7 +18,9 @@ export function ContactCard({ contact }: { contact: Contact }) {
         <div className="space-y-1.5">
           <CardTitle className="flex items-center gap-2">
             <span>
-              {contact.firstName} {contact.lastName}
+              {(contact.typeId as ContactType) === ContactType.Organization
+                ? contact.organizationName
+                : `${contact.firstName} ${contact.lastName}`}
             </span>
             {user.contactId === contact.id ? <Badge variant="outline">This is you</Badge> : null}
           </CardTitle>

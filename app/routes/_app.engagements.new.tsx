@@ -30,7 +30,7 @@ export const meta: MetaFunction = () => [{ title: "New Engagement • Alliance 4
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUser(request);
   const contacts = await prisma.contact.findMany({
-    where: { typeId: { in: [ContactType.External, ContactType.Donor] } },
+    where: { typeId: { in: [ContactType.External, ContactType.Donor, ContactType.Organization] } },
   });
   const engagementTypes = await prisma.engagementType.findMany();
 

@@ -32,15 +32,12 @@ export const AddressSchema = z.object({
 });
 
 export const NewContactSchema = z.object({
-  firstName: z.string().min(1, { message: "First name is required" }),
+  firstName: z.string().optional(),
   lastName: z.string().optional(),
+  organizationName: z.string().optional(),
   email: z.string().email({ message: "Invalid email address" }),
   phone: z.string().length(10, "Phone number must be 10 digits").or(z.literal("")),
-  typeId: z.coerce
-    .number()
-    .pipe(z.nativeEnum(ContactType))
-    // You can only create external contacts from this page
-    .refine((v) => v === ContactType.Donor || v === ContactType.External),
+  typeId: z.coerce.number().pipe(z.nativeEnum(ContactType)),
   address: AddressSchema.optional(),
   assignedUserIds: zfd.repeatableOfType(zfd.text()).optional(),
 });

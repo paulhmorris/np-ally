@@ -15,6 +15,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/componen
 import { Checkbox } from "~/components/ui/checkbox";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
+import { SelectGroup, SelectItem, SelectLabel } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
@@ -31,7 +32,7 @@ const validator = withZod(
     description: z.string().optional(),
     shouldNotifyUser: CheckboxSchema,
     accountId: z.string().cuid({ message: "Account required" }),
-    donorId: z.string().cuid().optional(),
+    contactId: z.string().cuid().optional(),
     transactionItems: z.array(TransactionItemSchema),
   }),
 );
@@ -40,17 +41,20 @@ export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUser(request, ["SUPERADMIN", "ADMIN"]);
-  const [donors, accounts, transactionItemMethods] = await Promise.all([
+  const [contacts, accounts, transactionItemMethods, contactTypes] = await Promise.all([
     prisma.contact.findMany({
-      where: { typeId: ContactType.Donor },
+      where: { typeId: { not: ContactType.Admin } },
+      include: { type: true },
     }),
     prisma.account.findMany(),
     prisma.transactionItemMethod.findMany(),
+    prisma.contactType.findMany({ where: { id: { notIn: [ContactType.Admin] } } }),
   ]);
   return typedjson({
-    donors,
+    contacts,
     accounts,
     transactionItemMethods,
+    contactTypes,
     ...setFormDefaults("income-form", {
       transactionItems: [{ id: nanoid() }],
     }),
@@ -63,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (result.error) {
     return validationError(result.error);
   }
-  const { transactionItems, donorId, accountId, shouldNotifyUser, ...rest } = result.data;
+  const { transactionItems, contactId, accountId, shouldNotifyUser, ...rest } = result.data;
 
   if (shouldNotifyUser) {
     const account = await prisma.account.findUnique({
@@ -115,7 +119,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: {
       ...rest,
       account: { connect: { id: accountId } },
-      donor: donorId ? { connect: { id: donorId } } : undefined,
+      contact: contactId ? { connect: { id: contactId } } : undefined,
       amountInCents: total,
       transactionItems: {
         createMany: {
@@ -126,16 +130,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     include: { account: true },
   });
 
-  // If a donor was selected, update their contact type to Donor
-  if (donorId) {
-    await prisma.contact.update({
-      where: { id: donorId },
-      data: {
-        typeId: ContactType.Donor,
-      },
-    });
-  }
-
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
     title: "Success",
     description: `Income of ${formatCentsAsDollars(total)} added to account ${transaction.account.code}`,
@@ -143,7 +137,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AddIncomePage() {
-  const { donors, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
+  const { contacts, contactTypes, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "income-form" });
 
   return (
@@ -169,15 +163,28 @@ export default function AddIncomePage() {
                   label: `${a.code} - ${a.description}`,
                 }))}
               />
-              <FormSelect
-                name="donorId"
-                label="Donor"
-                placeholder="Select donor"
-                options={donors.map((c) => ({
-                  value: c.id,
-                  label: `${c.firstName} ${c.lastName}`,
-                }))}
-              />
+              <FormSelect name="contactId" label="Contact" placeholder="Select contact">
+                {contactTypes.map((t) => {
+                  if (!contacts.some((c) => c.typeId === t.id)) {
+                    return null;
+                  }
+                  return (
+                    <SelectGroup key={t.name}>
+                      <SelectLabel>{t.name}</SelectLabel>
+                      {contacts
+                        .filter((c) => c.typeId === t.id)
+                        .map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
+                            {c.typeId === ContactType.Organization
+                              ? `${c.organizationName}`
+                              : `${c.firstName} ${c.lastName}`}
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
+                  );
+                })}
+              </FormSelect>
             </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {

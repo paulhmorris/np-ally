@@ -145,7 +145,7 @@ export function FormSelect(props: FormSelectProps) {
       </Label>
       <Select
         name={field.name}
-        defaultValue={String(field.defaultValue) as string | undefined}
+        defaultValue={typeof field.defaultValue !== "undefined" ? String(field.defaultValue) : undefined}
         onValueChange={field.onChange}
       >
         <SelectTrigger id={id} {...rest} className={cn(error && "focus:ring-destructive/50", rest.className)}>
