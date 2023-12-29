@@ -32,7 +32,16 @@ export const donationSummaryJob = trigger.defineJob({
       },
       select: {
         code: true,
-        transactions: true,
+        transactions: {
+          where: {
+            createdAt: {
+              gte: sevenDaysAgo,
+            },
+          },
+          select: {
+            amountInCents: true,
+          },
+        },
         subscribers: {
           select: {
             subscriber: {
