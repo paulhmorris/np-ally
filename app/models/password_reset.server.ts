@@ -1,4 +1,4 @@
-import type { Contact, PasswordReset, User } from "@prisma/client";
+import type { PasswordReset, User } from "@prisma/client";
 import dayjs from "dayjs";
 
 import { prisma } from "~/integrations/prisma.server";
@@ -24,12 +24,12 @@ export function expirePasswordReset({ token }: { token: PasswordReset["token"] }
   });
 }
 
-export async function generatePasswordReset({ email }: { email: NonNullable<Contact["email"]> }) {
-  const contact = await prisma.contact.findUniqueOrThrow({ where: { email } });
+export async function generatePasswordReset({ username }: { username: NonNullable<User["username"]> }) {
+  const user = await prisma.user.findUniqueOrThrow({ where: { username } });
   return prisma.passwordReset.create({
     data: {
       expiresAt: dayjs().add(15, "minute").toDate(),
-      user: { connect: { contactId: contact.id } },
+      user: { connect: { id: user.id } },
     },
   });
 }

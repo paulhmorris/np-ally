@@ -46,7 +46,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           </ul>
         </>
       ) : null}
-      {user.role === UserRole.SUPERADMIN ? (
+      {user.role === UserRole.SUPERADMIN && superAdminNavLinks.length > 0 ? (
         <>
           <Separator className="my-4" />
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">SUPER ADMIN</p>

@@ -1,4 +1,4 @@
-import type { User, UserRole } from "@prisma/client";
+import { User, UserRole } from "@prisma/client";
 import type { Session } from "@remix-run/node";
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
 import { createThemeSessionResolver } from "remix-themes";
@@ -59,6 +59,11 @@ export async function requireUser(request: Request, allowedRoles?: Array<UserRol
   const userId = await requireUserId(request);
 
   const user = await getUserById(userId);
+
+  if (user && user.role === UserRole.SUPERADMIN) {
+    return user;
+  }
+
   if (user && allowedRoles) {
     if (allowedRoles.includes(user.role)) {
       return user;

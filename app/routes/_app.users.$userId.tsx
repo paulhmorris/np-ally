@@ -31,7 +31,7 @@ const validator = withZod(
     id: z.string().cuid(),
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().min(1, { message: "Last name is required" }),
-    username: z.string().email({ message: "Invalid email address" }),
+    username: z.string().email({ message: "Invalid email address" }).optional(),
     role: z.nativeEnum(UserRole),
   }),
 );
@@ -50,7 +50,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw forbidden({ message: "You do not have permission to view this page" });
   }
 
-  const user = await prisma.user.findUnique({
+  const userWithPassword = await prisma.user.findUnique({
     where: { id: params.userId },
     include: {
       contactAssignments: {
@@ -58,6 +58,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
           contact: true,
         },
       },
+      password: true,
       contact: {
         select: {
           firstName: true,
@@ -72,11 +73,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     },
   });
-  if (!user) throw notFound({ message: "User not found" });
+  if (!userWithPassword) throw notFound({ message: "User not found" });
+
+  const { password: _password, ...userWithoutPassword } = userWithPassword;
 
   return typedjson({
-    user,
-    ...setFormDefaults("user-form", { ...user, ...user.contact }),
+    user: userWithoutPassword,
+    hasPassword: !!_password,
+    ...setFormDefaults("user-form", { ...userWithPassword, ...userWithPassword.contact }),
   });
 };
 
@@ -90,21 +94,44 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { username, role, id, ...contact } = result.data;
 
-  if (authorizedUser.role === UserRole.USER && authorizedUser.id !== id) {
-    throw forbidden({ message: "You do not have permission to edit this user." });
-  }
-
   const userToBeUpdated = await prisma.user.findUnique({ where: { id } });
-
   if (!userToBeUpdated) {
     throw notFound({ message: "User not found" });
   }
 
-  // Only super admins can edit roles and usernames
-  if (authorizedUser.role !== UserRole.SUPERADMIN) {
-    if (role !== userToBeUpdated.role || username !== userToBeUpdated.username) {
-      throw forbidden({ message: "You do not have permission to edit this field." });
+  if (authorizedUser.role === UserRole.USER) {
+    let message = "";
+    // Users can only edit themselves
+    if (authorizedUser.id !== id) {
+      message = "You do not have permission to edit this user.";
     }
+    // Users can't edit their role or username
+    if (role !== userToBeUpdated.role || username !== userToBeUpdated.username) {
+      message = "You do not have permission to edit this field.";
+    }
+    return toast.json(
+      request,
+      { message },
+      {
+        variant: "warning",
+        title: "Permission denied",
+        description: message,
+      },
+      { status: 403 },
+    );
+  }
+
+  if (authorizedUser.role !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
+    return toast.json(
+      request,
+      { message: "You do not have permission to create a Super Admin." },
+      {
+        variant: "warning",
+        title: "Permission denied",
+        description: "You do not have permission to create a Super Admin.",
+      },
+      { status: 403 },
+    );
   }
 
   const updatedUser = await prisma.user.update({
@@ -129,7 +156,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function UserDetailsPage() {
   const authorizedUser = useUser();
-  const { user } = useTypedLoaderData<typeof loader>();
+  const { user, hasPassword } = useTypedLoaderData<typeof loader>();
   const fetcher = useFetcher();
 
   const isYou = authorizedUser.id === user.id;
@@ -147,7 +174,7 @@ export default function UserDetailsPage() {
           >
             <input type="hidden" name="username" value={user.username} />
             <SubmitButton variant="outline" type="submit" formId="reset-password-form">
-              Send Password Reset
+              Send Password {hasPassword ? "Reset" : "Setup"}
             </SubmitButton>
           </ValidatedForm>
         </div>
@@ -168,10 +195,9 @@ export default function UserDetailsPage() {
             <FormField label="First name" id="firstName" name="firstName" required />
             <FormField label="Last name" id="lastName" name="lastName" required />
           </div>
-          {/* Super admin only */}
-          {authorizedUser.role === UserRole.SUPERADMIN ? (
+          {authorizedUser.role === UserRole.SUPERADMIN || authorizedUser.role === UserRole.ADMIN ? (
             <>
-              <FormField label="Username" id="email" name="username" />
+              <FormField label="Username" id="username" name="username" disabled />
               <FormSelect
                 disabled={isYou}
                 description={isYou ? "You cannot edit your own role." : ""}
@@ -182,7 +208,6 @@ export default function UserDetailsPage() {
               >
                 <SelectItem value="USER">User</SelectItem>
                 <SelectItem value="ADMIN">Admin</SelectItem>
-                <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
               </FormSelect>
             </>
           ) : null}
@@ -193,7 +218,7 @@ export default function UserDetailsPage() {
             </Button>
           </ButtonGroup>
         </ValidatedForm>
-        <div className="mt-4">
+        <div className="mt-4 max-w-lg">
           {user.contactAssignments.length > 0 ? (
             <Card className="flex-1 basis-48 bg-transparent">
               <CardHeader>

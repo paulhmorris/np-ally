@@ -16,12 +16,16 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { requireUser } from "~/lib/session.server";
+import { toast } from "~/lib/toast.server";
+import { useUser } from "~/lib/utils";
+import { sendPasswordSetupEmail } from "~/models/mail.server";
+import { generatePasswordReset } from "~/models/password_reset.server";
 
 const validator = withZod(
   z.object({
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().optional(),
-    email: z.string().email({ message: "Invalid email address" }),
+    username: z.string().email({ message: "Invalid email address" }),
     role: z.nativeEnum(UserRole),
     typeId: z.coerce.number().pipe(z.nativeEnum(ContactType)),
   }),
@@ -30,7 +34,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New User • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["SUPERADMIN"]);
+  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   return typedjson({
     accounts: await prisma.account.findMany(),
     contactTypes: await prisma.contactType.findMany(),
@@ -38,23 +42,47 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["SUPERADMIN"]);
+  const authorizedUser = await requireUser(request, ["ADMIN", "SUPERADMIN"]);
   const result = await validator.validate(await request.formData());
-  if (result.error) return validationError(result.error);
+  if (result.error) {
+    return validationError(result.error);
+  }
 
-  const { role, ...contact } = result.data;
+  const { role, username, ...contact } = result.data;
+
+  if (authorizedUser.role !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
+    return toast.json(
+      request,
+      { message: "You do not have permission to create a Super Admin" },
+      {
+        variant: "warning",
+        title: "Permission denied",
+        description: "You do not have permission to create a Super Admin",
+      },
+      { status: 403 },
+    );
+  }
 
   const user = await prisma.user.create({
     data: {
       role,
-      username: contact.email,
-      contact: { create: contact },
+      username,
+      contact: {
+        create: {
+          email: username,
+          ...contact,
+        },
+      },
     },
   });
+
+  const { token } = await generatePasswordReset({ username: user.username });
+  await sendPasswordSetupEmail({ email: user.username, token });
   return redirect(`/users/${user.id}`);
 };
 
 export default function NewUserPage() {
+  const user = useUser();
   const { contactTypes } = useTypedLoaderData<typeof loader>();
   return (
     <>
@@ -63,7 +91,7 @@ export default function NewUserPage() {
         <ValidatedForm id="userForm" validator={validator} method="post" className="space-y-4 sm:max-w-md">
           <FormField label="First name" id="firstName" name="firstName" required />
           <FormField label="Last name" id="lastName" name="lastName" />
-          <FormField label="Email" id="email" name="email" />
+          <FormField label="Username" id="username" name="username" />
           <FormSelect
             name="typeId"
             label="Type"
@@ -76,7 +104,7 @@ export default function NewUserPage() {
           <FormSelect name="role" label="Role" placeholder="Select a role">
             <SelectItem value="USER">User</SelectItem>
             <SelectItem value="ADMIN">Admin</SelectItem>
-            <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+            {user.role === UserRole.SUPERADMIN ? <SelectItem value="SUPERADMIN">Super Admin</SelectItem> : null}
           </FormSelect>
           <div className="flex items-center gap-2">
             <SubmitButton>Create</SubmitButton>

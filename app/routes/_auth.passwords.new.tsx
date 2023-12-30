@@ -7,7 +7,7 @@ import { z } from "zod";
 import { ErrorComponent } from "~/components/error-component";
 import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { badRequest, unauthorized } from "~/lib/responses.server";
+import { unauthorized } from "~/lib/responses.server";
 import { getSession, sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
@@ -18,16 +18,24 @@ const validator = withZod(
   z
     .object({
       token: z.string(),
-      oldPassword: z.string().min(8, "Password must be at least 8 characters"),
+      isReset: z.string().transform((val) => val === "true"),
+      oldPassword: z.string().min(8, "Password must be at least 8 characters").or(z.literal("")),
       newPassword: z.string().min(8, "Password must be at least 8 characters"),
       confirmation: z.string().min(8, "Password must be at least 8 characters"),
     })
-    .superRefine(({ newPassword, confirmation }, ctx) => {
+    .superRefine(({ oldPassword, newPassword, confirmation, isReset }, ctx) => {
       if (newPassword !== confirmation) {
         ctx.addIssue({
           code: "custom",
           message: "Passwords must match",
           path: ["confirmation"],
+        });
+      }
+      if (isReset && !oldPassword) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Old password is required",
+          path: ["oldPassword"],
         });
       }
     }),
@@ -42,7 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const reset = await getPasswordResetByToken({ token });
   if (!reset || reset.expiresAt < new Date()) {
-    throw badRequest("Invalid token");
+    throw unauthorized("Invalid token");
   }
 
   return new Response(null, {
@@ -125,14 +133,26 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function NewPassword() {
   const [searchParams] = useSearchParams();
+  const isReset = searchParams.get("isReset") === "true";
 
   return (
     <div className="grid h-full place-items-center">
       <div className="max-w-lg px-8">
         <h1 className="text-4xl font-extrabold">Set a new password.</h1>
-        <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
+        <ValidatedForm id="password-form" validator={validator} method="post" className="mt-4 space-y-4">
           <input type="hidden" name="token" value={searchParams.get("token") ?? ""} />
-          <FormField label="Old password" name="oldPassword" type="password" autoComplete="current-password" required />
+          <input type="hidden" name="isReset" value={String(isReset)} />
+          {isReset ? (
+            <FormField
+              label="Old password"
+              name="oldPassword"
+              type="password"
+              autoComplete="current-password"
+              required={false}
+            />
+          ) : (
+            <input type="hidden" name="oldPassword" value="" />
+          )}
           <FormField label="New Password" name="newPassword" type="password" autoComplete="new-password" required />
           <FormField
             label="Confirm New Password"

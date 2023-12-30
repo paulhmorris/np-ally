@@ -50,7 +50,14 @@ export function FormField({
 
   return (
     <div className={cn("relative w-full")}>
-      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1.5", error && "text-destructive")}>
+      <Label
+        htmlFor={id}
+        className={cn(
+          hideLabel ? "sr-only" : "mb-1.5",
+          error && "text-destructive",
+          props.disabled && "cursor-not-allowed opacity-50",
+        )}
+      >
         <span>{label}</span>
         <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>

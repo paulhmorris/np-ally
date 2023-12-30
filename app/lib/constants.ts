@@ -118,6 +118,7 @@ export const adminNavLinks: ReadonlyArray<NavLink> = [
   { name: "Add Expense", href: "/expense/new" },
   { name: "Add Transfer", href: "/transfer/new" },
   { name: "Accounts", href: "/accounts" },
+  { name: "Users", href: "/users" },
 ] as const;
 
-export const superAdminNavLinks: ReadonlyArray<NavLink> = [{ name: "Users", href: "/users" }] as const;
+export const superAdminNavLinks: ReadonlyArray<NavLink> = [] as const;

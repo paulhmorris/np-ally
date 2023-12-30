@@ -5,7 +5,7 @@ import { validationError } from "remix-validated-form";
 import { z } from "zod";
 
 import { toast } from "~/lib/toast.server";
-import { sendPasswordResetEmail } from "~/models/mail.server";
+import { sendPasswordSetupEmail } from "~/models/mail.server";
 import { deletePasswordReset, generatePasswordReset, getCurrentPasswordReset } from "~/models/password_reset.server";
 import { getUserByEmail } from "~/models/user.server";
 
@@ -47,8 +47,8 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  const reset = await generatePasswordReset({ email: user.username });
-  const { data, error } = await sendPasswordResetEmail({ email: user.username, token: reset.token });
+  const reset = await generatePasswordReset({ username: user.username });
+  const { data, error } = await sendPasswordSetupEmail({ email: user.username, token: reset.token });
 
   // Unknown Resend error
   if (error || !data) {
