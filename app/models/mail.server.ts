@@ -42,7 +42,6 @@ export async function sendPasswordSetupEmail({
   const url = new URL(process.env.URL);
   url.pathname = "/passwords/new";
   url.searchParams.set("token", token);
-  url.searchParams.set("isReset", "true");
 
   try {
     const data = await resend.emails.send({
