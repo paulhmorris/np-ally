@@ -7,7 +7,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { ContactType } from "~/lib/constants";
-import { getInitials, useUser } from "~/lib/utils";
+import { formatPhoneNumber, getInitials, useUser } from "~/lib/utils";
 
 type Contact = Prisma.ContactGetPayload<{ include: { address: true; type: true } }>;
 export function ContactCard({ contact }: { contact: Contact }) {
@@ -60,7 +60,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
                 <IconPhone className="h-5 w-5 text-muted-foreground" />
               </dt>
               <dd>
-                <a href={`tel:${contact.phone}`}>{contact.phone}</a>
+                <a href={`tel:${contact.phone}`}>{formatPhoneNumber(contact.phone)}</a>
               </dd>
             </div>
           ) : null}
