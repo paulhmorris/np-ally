@@ -11,8 +11,8 @@ export const engagementReminderJob = trigger.defineJob({
   name: "Engagement Reminder",
   version: "0.0.1",
   trigger: cronTrigger({
-    // Every day at 1pm UTC
-    cron: "0 13 * * *",
+    // Every day at 3pm UTC / 9am CST
+    cron: "0 15 * * *",
   }),
   integrations: {
     resend: triggerResend,
