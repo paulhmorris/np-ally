@@ -2,7 +2,7 @@ import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
+import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
@@ -78,7 +78,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { token } = await generatePasswordReset({ username: user.username });
   await sendPasswordSetupEmail({ email: user.username, token });
-  return redirect(`/users/${user.id}`);
+  return toast.redirect(request, `/users/${user.id}`, {
+    title: "User created",
+    description: "They will receive an email with instructions to set their password",
+  });
 };
 
 export default function NewUserPage() {
