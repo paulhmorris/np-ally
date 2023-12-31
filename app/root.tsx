@@ -27,6 +27,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       user: await getUser(request),
       theme: getTheme(),
       serverToast: getGlobalToast(session),
+      ENV: {
+        VERCEL_URL: process.env.VERCEL_URL,
+        VERCEL_ENV: process.env.VERCEL_ENV,
+      },
     },
     {
       headers: {
@@ -66,6 +70,11 @@ function App() {
         <Outlet />
         <Notifications serverToast={data.serverToast} />
         <ScrollRestoration />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
+          }}
+        />
         <Scripts />
         <LiveReload />
       </body>

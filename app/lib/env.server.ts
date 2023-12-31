@@ -6,7 +6,10 @@ const serverEnvValidation = z.object({
   // Remix
   NODE_ENV: z.enum(["development", "production", "test"]),
   SESSION_SECRET: z.string().min(16),
-  URL: z.string().url(),
+  SITE_URL: z.string().url().optional(),
+
+  // Resend
+  RESEND_API_KEY: z.string().startsWith("re_"),
 
   // Cloudflare
   AWS_BUCKET_NAME: z.string().min(1),
@@ -33,15 +36,22 @@ const clientEnvValidation = z.object({
   TRIGGER_PUBLIC_API_KEY: z.string().startsWith("pk_"),
 });
 
+const deploymentPublicEnvValidation = z.object({
+  // Vercel
+  VERCEL_URL: z.string(),
+  VERCEL_ENV: z.enum(["production", "preview", "development"]),
+});
+
 declare global {
   // Server side
   namespace NodeJS {
-    interface ProcessEnv extends TypeOf<typeof serverEnvValidation & typeof clientEnvValidation> {}
+    interface ProcessEnv
+      extends TypeOf<typeof serverEnvValidation & typeof clientEnvValidation & typeof deploymentPublicEnvValidation> {}
   }
 
   // Client side
   interface Window {
-    ENV: TypeOf<typeof clientEnvValidation>;
+    ENV: TypeOf<typeof clientEnvValidation & typeof deploymentPublicEnvValidation>;
   }
 }
 

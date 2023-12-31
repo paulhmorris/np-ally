@@ -16,6 +16,7 @@ Sentry.init({
   dsn: process.env.SENTRY_DSN,
   sampleRate: 1,
   tracesSampleRate: 0.25,
+  environment: process.env.VERCEL_ENV,
   enabled: process.env.NODE_ENV === "production",
   integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
 });

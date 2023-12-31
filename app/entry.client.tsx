@@ -13,7 +13,8 @@ Sentry.init({
   tracesSampleRate: 0.25,
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1,
-
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  environment: window?.ENV?.VERCEL_ENV,
   integrations: [
     new Sentry.BrowserTracing({
       routingInstrumentation: Sentry.remixRouterInstrumentation(useEffect, useLocation, useMatches),

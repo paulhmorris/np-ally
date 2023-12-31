@@ -9,7 +9,7 @@ export async function sendPasswordResetEmail({
   email: NonNullable<Contact["email"]>;
   token: PasswordReset["token"];
 }) {
-  const url = new URL(process.env.URL);
+  const url = new URL(process.env.SITE_URL ?? `https://${process.env.VERCEL_URL}`);
   url.pathname = "/passwords/new";
   url.searchParams.set("token", token);
   url.searchParams.set("isReset", "true");
@@ -39,7 +39,7 @@ export async function sendPasswordSetupEmail({
   email: NonNullable<Contact["email"]>;
   token: PasswordReset["token"];
 }) {
-  const url = new URL(process.env.URL);
+  const url = new URL(process.env.URL ?? `https://${process.env.VERCEL_URL}`);
   url.pathname = "/passwords/new";
   url.searchParams.set("token", token);
 
