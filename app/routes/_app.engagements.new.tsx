@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useSearchParams, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -28,9 +29,19 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New Engagement • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request);
+  const user = await requireUser(request);
   const contacts = await prisma.contact.findMany({
-    where: { typeId: { in: [ContactType.External, ContactType.Donor, ContactType.Organization] } },
+    where: {
+      assignedUsers:
+        user.role === UserRole.USER
+          ? {
+              some: {
+                userId: user.id,
+              },
+            }
+          : undefined,
+      typeId: { in: [ContactType.External, ContactType.Donor, ContactType.Organization] },
+    },
   });
   const engagementTypes = await prisma.engagementType.findMany();
 

@@ -22,7 +22,7 @@ const validator = withZod(
     id: z.coerce.number(),
     date: z.coerce.date(),
     description: z.string().optional(),
-    typeId: z.nativeEnum(EngagementType),
+    typeId: z.coerce.number().pipe(z.nativeEnum(EngagementType)),
     contactId: z.string().cuid({ message: "Contact required" }),
   }),
 );
@@ -65,19 +65,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: result.data,
   });
 
-  return toast.redirect(request, `/engagements/${engagement.id}`, {
-    title: "Engagement updated",
-    description: "Thanks!",
-  });
+  return toast.json(
+    request,
+    { engagement },
+    {
+      title: "Engagement updated",
+      description: "Thanks!",
+    },
+  );
 };
 
 export default function EditEngagementPage() {
   const { engagement, engagementTypes, contacts } = useTypedLoaderData<typeof loader>();
+
   return (
     <>
       <PageHeader title="Edit Engagement" />
       <PageContainer>
         <ValidatedForm id="engagement-form" method="post" validator={validator} className="space-y-4 sm:max-w-md">
+          <input type="hidden" name="id" value={engagement.id} />
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <FormField
               required
