@@ -17,57 +17,61 @@ export const donationSummaryJob = trigger.defineJob({
   },
   run: async (_, io) => {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const accounts = await prisma.account.findMany({
-      where: {
-        subscribers: {
-          some: {},
-        },
-        transactions: {
-          some: {
-            createdAt: {
-              gte: sevenDaysAgo,
-            },
+    const accounts = await io.runTask("get-accounts", async () => {
+      return prisma.account.findMany({
+        where: {
+          subscribers: {
+            some: {},
           },
-        },
-      },
-      select: {
-        code: true,
-        transactions: {
-          where: {
-            createdAt: {
-              gte: sevenDaysAgo,
-            },
-          },
-          select: {
-            amountInCents: true,
-          },
-        },
-        subscribers: {
-          select: {
-            subscriber: {
-              select: {
-                email: true,
+          transactions: {
+            some: {
+              createdAt: {
+                gte: sevenDaysAgo,
               },
             },
           },
         },
-      },
+        select: {
+          code: true,
+          transactions: {
+            where: {
+              createdAt: {
+                gte: sevenDaysAgo,
+              },
+            },
+            select: {
+              amountInCents: true,
+            },
+          },
+          subscribers: {
+            select: {
+              subscriber: {
+                select: {
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      });
     });
 
-    const emails = accounts
-      .filter((a) => a.subscribers.length > 0)
-      .map((a) => {
-        const totalInCents = a.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
+    if (accounts.length === 0) {
+      await io.logger.info("No emails to send. Exiting.");
+    }
 
-        return {
-          from: "Alliance 436 <no-reply@alliance436.org>",
-          to: a.subscribers.map((s) => s.subscriber.email),
-          subject: "Weekly Donation summary",
-          html: `Account ${a.code} has received ${formatCentsAsDollars(
-            totalInCents,
-          )} this week. Log in to see more details.`,
-        };
-      });
+    const emails = accounts.map((a) => {
+      const totalInCents = a.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
+
+      return {
+        from: "Alliance 436 <no-reply@alliance436.org>",
+        to: a.subscribers.map((s) => s.subscriber.email),
+        subject: "Weekly Donation summary",
+        html: `Account ${a.code} has received ${formatCentsAsDollars(
+          totalInCents,
+        )} this week. Log in to see more details.`,
+      };
+    });
 
     if (emails.length > 90) {
       await io.logger.warn(
