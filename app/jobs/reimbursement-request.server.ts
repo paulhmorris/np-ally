@@ -51,12 +51,12 @@ export const reimbursementRequestJob = trigger.defineJob({
     const emailAddresses = admins.map((admin) => admin.contact.email);
 
     await io.resend.emails.send("send-email", {
+      from: "Alliance 436 <no-reply@alliance436.org>",
       to: emailAddresses,
-      subject: "New reimbursement request",
+      subject: "New Reimbursement Request",
       text: `There's a new reimbursement request for ${formatCentsAsDollars(reimbursementRequest.amountInCents)} from ${
         reimbursementRequest.user.contact.email
       }, View it on your <a href="http://localhost:3000">Dashboard</a>.`,
-      from: "no-reply@getcosmic.dev",
     });
   },
 });

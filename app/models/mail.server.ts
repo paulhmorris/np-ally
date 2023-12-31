@@ -16,7 +16,7 @@ export async function sendPasswordResetEmail({
 
   try {
     const data = await resend.emails.send({
-      from: "Alliance 436 <alliance-436@getcosmic.dev>",
+      from: "Alliance 436 <alliance-436@alliance436.org>",
       to: email,
       subject: "Reset Your Password",
       html: `
@@ -46,7 +46,7 @@ export async function sendPasswordSetupEmail({
 
   try {
     const data = await resend.emails.send({
-      from: "Alliance 436 <alliance-436@getcosmic.dev>",
+      from: "Alliance 436 <alliance-436@alliance436.org>",
       to: email,
       subject: "Setup Your Password",
       html: `

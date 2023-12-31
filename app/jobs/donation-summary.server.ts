@@ -60,14 +60,20 @@ export const donationSummaryJob = trigger.defineJob({
         const totalInCents = a.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
 
         return {
-          from: "no-reply@getcosmic.dev",
+          from: "Alliance 436 <no-reply@alliance436.org>",
           to: a.subscribers.map((s) => s.subscriber.email),
-          subject: "Alliance 436 - Weekly Donation summary",
+          subject: "Weekly Donation summary",
           html: `Account ${a.code} has received ${formatCentsAsDollars(
             totalInCents,
           )} this week. Log in to see more details.`,
         };
       });
+
+    if (emails.length > 90) {
+      await io.logger.warn(
+        "Resend only supports up to 100 emails per batch. Please return to this code and add batch splitting.",
+      );
+    }
 
     await io.resend.batch.send("send-emails", [...emails]);
 

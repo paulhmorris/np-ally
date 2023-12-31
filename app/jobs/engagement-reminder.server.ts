@@ -63,12 +63,18 @@ export const engagementReminderJob = trigger.defineJob({
 
     const emails = usersToRemind.map((u) => {
       return {
-        from: "no-reply@getcosmic.dev",
+        from: "Alliance 436 <no-reply@alliance436.org>",
         to: u.email,
-        subject: "Alliance 436 - Contact Reminder",
+        subject: "Contact Reminder",
         html: `Hi ${u.firstName}, your contact <span style="font:bold;">${u.assignedContact}</span> has not been contacted in 30 days. This is a friendly reminder to reach out to them.`,
       };
     });
+
+    if (emails.length > 90) {
+      await io.logger.warn(
+        "Resend only supports up to 100 emails per batch. Please return to this code and add batch splitting.",
+      );
+    }
 
     await io.resend.batch.send("send-emails", [...emails]);
 
