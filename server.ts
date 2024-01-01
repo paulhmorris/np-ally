@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import fs from "node:fs";
 import path from "node:path";
@@ -7,6 +8,7 @@ import prom from "@isaacs/express-prometheus-middleware";
 import { createRequestHandler } from "@remix-run/express";
 import type { ServerBuild } from "@remix-run/node";
 import { broadcastDevReady, installGlobals } from "@remix-run/node";
+import { wrapExpressCreateRequestHandler } from "@sentry/remix";
 import chokidar from "chokidar";
 import compression from "compression";
 import type { RequestHandler } from "express";
@@ -17,6 +19,7 @@ import sourceMapSupport from "source-map-support";
 import { validateEnv } from "~/lib/env.server";
 
 validateEnv();
+const sentryCreateRequestHandler = wrapExpressCreateRequestHandler(createRequestHandler);
 sourceMapSupport.install();
 installGlobals();
 void run();
@@ -65,7 +68,7 @@ async function run() {
     "*",
     process.env.NODE_ENV === "development"
       ? createDevRequestHandler(initialBuild)
-      : createRequestHandler({
+      : sentryCreateRequestHandler({
           build: initialBuild,
           mode: process.env.NODE_ENV,
         }),
@@ -119,7 +122,7 @@ async function run() {
     // wrap request handler to make sure its recreated with the latest build for every request
     return async (req, res, next) => {
       try {
-        return createRequestHandler({
+        return sentryCreateRequestHandler({
           build,
           mode: "development",
         })(req, res, next);
