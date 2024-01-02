@@ -99,7 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         request,
         { message: "Error notifying subscribers" },
         {
-          variant: "destructive",
+          variant: "warning",
           title: "Error notifying subscribers",
           description: "This account has no subscribers. Please enter at least one in the account settings.",
         },
