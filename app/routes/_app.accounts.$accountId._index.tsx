@@ -17,7 +17,7 @@ import { requireUser } from "~/lib/session.server";
 export const meta: MetaFunction = () => [{ title: "Account • Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   invariant(params.accountId, "accountId not found");
 
   const account = await prisma.account.findUnique({

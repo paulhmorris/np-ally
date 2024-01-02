@@ -27,7 +27,7 @@ const validator = withZod(
 );
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
 
   const accountTypes = await prisma.accountType.findMany();
   const users = await prisma.user.findMany({
@@ -46,7 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction = () => [{ title: "Edit Account • Alliance 436" }];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);

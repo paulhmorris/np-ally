@@ -57,7 +57,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction = () => [{ title: "Transaction Details • Alliance 436" }];
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
