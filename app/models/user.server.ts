@@ -35,7 +35,7 @@ export async function createUser(data: Prisma.UserUncheckedCreateInput & { passw
   });
 }
 
-export async function resetUserPassword({ userId, password }: { userId: User["id"]; password: string }) {
+export async function resetOrSetupUserPassword({ userId, password }: { userId: User["id"]; password: string }) {
   const hash = await bcrypt.hash(password, 10);
   return prisma.user.update({
     where: { id: userId },
