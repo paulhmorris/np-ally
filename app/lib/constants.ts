@@ -32,6 +32,7 @@ export enum TransactionItemType {
   Tax = 6,
   Transfer_In = 7,
   Transfer_Out = 8,
+  Other = 9,
 }
 
 export enum TransactionItemMethod {
@@ -60,6 +61,7 @@ export const transactionItemTypes: Array<{ id: TransactionItemType; name: string
   { id: 6, name: "Tax" },
   { id: 7, name: "Transfer In" },
   { id: 8, name: "Transfer Out" },
+  { id: 9, name: "Other" },
 ];
 export const contactTypes: Array<{ id: ContactType; name: string }> = [
   { id: 1, name: "Donor" },

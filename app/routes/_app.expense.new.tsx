@@ -176,6 +176,7 @@ export default function AddExpensePage() {
                                 { label: "Compensation", value: TransactionItemType.Compensation },
                                 { label: "Grant", value: TransactionItemType.Grant },
                                 { label: "Tax", value: TransactionItemType.Tax },
+                                { label: "Other", value: TransactionItemType.Other },
                               ]}
                             />
                           </div>

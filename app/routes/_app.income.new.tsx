@@ -222,6 +222,7 @@ export default function AddIncomePage() {
                               options={[
                                 { value: TransactionItemType.Donation, label: "Donation" },
                                 { value: TransactionItemType.Income, label: "Income" },
+                                { value: TransactionItemType.Other, label: "Other" },
                               ]}
                             />
                           </div>
