@@ -42,6 +42,7 @@ export enum TransactionItemMethod {
   Credit_Card = 4,
   Debit_Card = 5,
   Tithely = 6,
+  Other = 7,
 }
 
 export const transactionItemMethods: Array<{ id: TransactionItemMethod; name: string }> = [
@@ -51,6 +52,7 @@ export const transactionItemMethods: Array<{ id: TransactionItemMethod; name: st
   { id: 4, name: "Credit Card" },
   { id: 5, name: "Debit Card" },
   { id: 6, name: "Tithe.ly" },
+  { id: 7, name: "Other" },
 ];
 export const transactionItemTypes: Array<{ id: TransactionItemType; name: string }> = [
   { id: 1, name: "Donation" },
