@@ -115,7 +115,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const existingContact = await prisma.contact.findUnique({
-    where: { email: formData.email },
+    where: { id: formData.id },
     include: {
       _count: {
         select: {
@@ -126,7 +126,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   if (!existingContact) {
-    throw notFound({ message: "Contact not found" });
+    return toast.json(
+      request,
+      { message: "Contact not found" },
+      {
+        variant: "destructive",
+        title: "Contact not found",
+        description: "The contact you were trying to edit was not found. Please contact support.",
+      },
+    );
   }
 
   // Verify email is unique
