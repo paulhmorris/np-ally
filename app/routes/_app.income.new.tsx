@@ -32,7 +32,7 @@ const validator = withZod(
     description: z.string().optional(),
     shouldNotifyUser: CheckboxSchema,
     accountId: z.string().cuid({ message: "Account required" }),
-    contactId: z.string().cuid().optional(),
+    contactId: z.string().optional(),
     transactionItems: z.array(TransactionItemSchema),
   }),
 );
