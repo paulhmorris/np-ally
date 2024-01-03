@@ -13,10 +13,12 @@ export function AccountBalanceCard({
   title?: string;
 }) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <IconBuildingBank className="h-6 w-6" />
+          <div>
+            <IconBuildingBank className="h-6 w-6" />
+          </div>
           <span>{title}</span>
         </CardTitle>
         {code ? <CardDescription>{code}</CardDescription> : null}

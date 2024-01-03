@@ -41,11 +41,11 @@ class ToastHandler {
     const variant = toast.variant || "default";
 
     if (variant === "warning" && toast.description) {
-      Sentry.captureMessage(toast.description, "warning");
+      Sentry.captureMessage(`${toast.title} - ${toast.description}`, "warning");
     }
 
     if (variant === "destructive" && toast.description) {
-      Sentry.captureMessage(toast.description, "error");
+      Sentry.captureMessage(`${toast.title} - ${toast.description}`, "error");
     }
 
     setGlobalToast(session, { ...this.defaultToasts[variant], ...toast });

@@ -51,11 +51,11 @@ export default function Index() {
       <PageHeader title="Home" />
       <PageContainer className="max-w-4xl">
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-4">
+          <div className="grid auto-rows-fr grid-cols-1 gap-4 lg:grid-cols-2">
             {accounts.map((a) => {
               const total = a.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
               return (
-                <div key={a.id} className="grow">
+                <div key={a.id} className="h-full">
                   <AccountBalanceCard title={a.description} totalCents={total} code={a.code} />
                 </div>
               );

@@ -32,7 +32,7 @@ const validator = withZod(
     description: z.string().optional(),
     shouldNotifyUser: CheckboxSchema,
     accountId: z.string().cuid({ message: "Account required" }),
-    contactId: z.string().cuid().optional(),
+    contactId: z.string().optional(),
     transactionItems: z.array(TransactionItemSchema),
   }),
 );
@@ -99,7 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         request,
         { message: "Error notifying subscribers" },
         {
-          variant: "destructive",
+          variant: "warning",
           title: "Error notifying subscribers",
           description: "This account has no subscribers. Please enter at least one in the account settings.",
         },
@@ -222,6 +222,7 @@ export default function AddIncomePage() {
                               options={[
                                 { value: TransactionItemType.Donation, label: "Donation" },
                                 { value: TransactionItemType.Income, label: "Income" },
+                                { value: TransactionItemType.Other, label: "Other" },
                               ]}
                             />
                           </div>

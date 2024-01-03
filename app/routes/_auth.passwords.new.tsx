@@ -12,7 +12,7 @@ import { getSession, sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
 import { expirePasswordReset, getPasswordResetByToken } from "~/models/password_reset.server";
-import { getUserById, resetUserPassword, verifyLogin } from "~/models/user.server";
+import { getUserById, resetOrSetupUserPassword, verifyLogin } from "~/models/user.server";
 
 const validator = withZod(
   z
@@ -62,6 +62,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
   const tokenParam = getSearchParam("token", request);
+  const isReset = getSearchParam("isReset", request) === "true";
 
   // Validate form
   const result = await validator.validate(await request.formData());
@@ -108,26 +109,32 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  // Check old password is correct
-  const user = await verifyLogin(userFromToken.contact.email, oldPassword);
-  if (!user) {
-    return validationError({
-      fieldErrors: {
-        oldPassword: "Incorrect password",
-      },
-    });
-  }
+  // Reset flow
+  if (isReset) {
+    // Check old password is correct
+    const user = await verifyLogin(userFromToken.contact.email, oldPassword);
+    if (!user) {
+      return validationError({
+        fieldErrors: {
+          oldPassword: "Incorrect password",
+        },
+      });
+    }
 
-  // Reset password
-  await resetUserPassword({ userId: user.id, password: newPassword });
+    // Reset password
+    await resetOrSetupUserPassword({ userId: user.id, password: newPassword });
+  } else {
+    // Setup flow
+    await resetOrSetupUserPassword({ userId: userFromToken.id, password: newPassword });
+  }
 
   // Use token
   await expirePasswordReset({ token });
 
   return toast.redirect(request, "/login", {
     variant: "default",
-    title: "Password reset",
-    description: "Your password has been reset. Login with your new password.",
+    title: `Password ${isReset ? "reset" : "set up"}`,
+    description: `Your password has been ${isReset ? "reset" : "set up"}. Login with your new password.`,
   });
 }
 
@@ -161,7 +168,7 @@ export default function NewPassword() {
             autoComplete="new-password"
             required
           />
-          <SubmitButton>Reset Password</SubmitButton>
+          <SubmitButton>{isReset ? "Reset" : "Create"} Password</SubmitButton>
         </ValidatedForm>
       </div>
     </div>

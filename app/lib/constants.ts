@@ -32,6 +32,7 @@ export enum TransactionItemType {
   Tax = 6,
   Transfer_In = 7,
   Transfer_Out = 8,
+  Other = 9,
 }
 
 export enum TransactionItemMethod {
@@ -41,6 +42,7 @@ export enum TransactionItemMethod {
   Credit_Card = 4,
   Debit_Card = 5,
   Tithely = 6,
+  Other = 7,
 }
 
 export const transactionItemMethods: Array<{ id: TransactionItemMethod; name: string }> = [
@@ -50,6 +52,7 @@ export const transactionItemMethods: Array<{ id: TransactionItemMethod; name: st
   { id: 4, name: "Credit Card" },
   { id: 5, name: "Debit Card" },
   { id: 6, name: "Tithe.ly" },
+  { id: 7, name: "Other" },
 ];
 export const transactionItemTypes: Array<{ id: TransactionItemType; name: string }> = [
   { id: 1, name: "Donation" },
@@ -60,6 +63,7 @@ export const transactionItemTypes: Array<{ id: TransactionItemType; name: string
   { id: 6, name: "Tax" },
   { id: 7, name: "Transfer In" },
   { id: 8, name: "Transfer Out" },
+  { id: 9, name: "Other" },
 ];
 export const contactTypes: Array<{ id: ContactType; name: string }> = [
   { id: 1, name: "Donor" },
