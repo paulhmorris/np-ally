@@ -54,7 +54,7 @@ function App() {
   const [theme] = useTheme();
 
   return (
-    <html lang="en" className={cn(theme)}>
+    <html lang="en" className={cn("h-full", theme)}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -66,7 +66,7 @@ function App() {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
-      <body className="h-full font-sans">
+      <body className="h-full min-h-full font-sans">
         <Outlet />
         <Notifications serverToast={data.serverToast} />
         <ScrollRestoration />
