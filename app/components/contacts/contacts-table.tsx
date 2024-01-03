@@ -19,7 +19,7 @@ import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
 import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
 import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { fuzzyFilter } from "~/lib/utils";
+import { formatPhoneNumber, fuzzyFilter } from "~/lib/utils";
 
 interface DataTableProps<TData> {
   data: Array<TData>;
@@ -127,7 +127,7 @@ const columns: Array<ColumnDef<Contact>> = [
     cell: ({ row }) => {
       return (
         <div>
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("phone")}</span>
+          <span className="max-w-[500px] truncate font-medium">{formatPhoneNumber(row.getValue("phone"))}</span>
         </div>
       );
     },

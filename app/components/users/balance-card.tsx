@@ -15,7 +15,7 @@ export function AccountBalanceCard({
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-start gap-2">
           <div>
             <IconBuildingBank className="h-6 w-6" />
           </div>

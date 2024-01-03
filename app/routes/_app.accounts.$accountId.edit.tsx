@@ -20,39 +20,54 @@ import { toast } from "~/lib/toast.server";
 
 const validator = withZod(
   z.object({
+    id: z.string().cuid(),
     code: z.string().min(1, { message: "Code is required" }),
     description: z.string().min(1, { message: "Description is required" }),
     typeId: z.coerce.number().pipe(z.nativeEnum(AccountType)),
+    userId: z.string().optional(),
   }),
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   invariant(params.accountId, "accountId not found");
 
-  const account = await prisma.account.findUnique({ where: { id: params.accountId } });
-  const accountTypes = await prisma.accountType.findMany();
+  const [account, accountTypes, users] = await Promise.all([
+    prisma.account.findUnique({ where: { id: params.accountId } }),
+    prisma.accountType.findMany(),
+    prisma.user.findMany({
+      where: { role: "USER" },
+      include: {
+        contact: true,
+      },
+    }),
+  ]);
+
   if (!account || !accountTypes.length) throw notFound({ message: "Account or Account Types not found" });
 
   return typedjson({
+    account,
     accountTypes,
+    users,
     ...setFormDefaults("account-form", { ...account }),
   });
 };
 
 export const meta: MetaFunction = () => [{ title: "Edit Account • Alliance 436" }];
 
-export const action = async ({ params, request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+export const action = async ({ request }: ActionFunctionArgs) => {
+  await requireUser(request, ["ADMIN"]);
   const result = await validator.validate(await request.formData());
-  if (result.error) return validationError(result.error);
+  if (result.error) {
+    return validationError(result.error);
+  }
 
   await prisma.account.update({
-    where: { id: params.accountId },
+    where: { id: result.data.id },
     data: result.data,
   });
 
-  return toast.redirect(request, `/accounts/${params.accountId}`, {
+  return toast.redirect(request, `/accounts/${result.data.id}`, {
     variant: "default",
     title: "Account updated",
     description: "Great job.",
@@ -60,12 +75,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 };
 
 export default function EditAccountPage() {
-  const { accountTypes } = useTypedLoaderData<typeof loader>();
+  const { account, accountTypes, users } = useTypedLoaderData<typeof loader>();
   return (
     <>
       <PageHeader title="Edit Account" />
       <PageContainer>
         <ValidatedForm id="account-form" validator={validator} method="post" className="space-y-4 sm:max-w-md">
+          <input type="hidden" name="id" value={account.id} />
           <FormField label="Code" id="name" name="code" required />
           <FormField label="Description" id="name" name="description" required />
           <FormSelect
@@ -74,6 +90,13 @@ export default function EditAccountPage() {
             name="typeId"
             placeholder="Select type"
             options={accountTypes.map((a) => ({ label: a.name, value: a.id }))}
+          />
+          <FormSelect
+            label="Linked User"
+            name="userId"
+            placeholder="Select user"
+            description="Link this account to a user. They will be able to see this account and all related transactions."
+            options={users.map((a) => ({ label: `${a.contact.firstName} ${a.contact.lastName}`, value: a.id }))}
           />
 
           <ButtonGroup>

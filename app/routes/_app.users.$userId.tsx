@@ -3,6 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { Link, useFetcher } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import { IconAddressBook, IconBuildingBank, IconKey } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
@@ -59,6 +60,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         },
       },
       password: true,
+      account: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
       contact: {
         select: {
           firstName: true,
@@ -179,44 +187,62 @@ export default function UserDetailsPage() {
           </ValidatedForm>
         </div>
       </PageHeader>
-      <div className="mt-1 flex items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-1">
         <Badge variant="outline" className="capitalize">
-          Contact: {user.contact.type.name.toLowerCase()}
+          <div>
+            <IconAddressBook className="size-3" />
+          </div>
+          <span>{user.contact.type.name.toLowerCase()}</span>
         </Badge>
         <Badge variant="outline" className="capitalize">
-          Role: {user.role.toLowerCase()}
+          <div>
+            <IconKey className="size-3" />
+          </div>
+          <span>{user.role.toLowerCase()}</span>
         </Badge>
+        {user.account ? (
+          <Badge variant="secondary">
+            <Link to={`/accounts/${user.account.id}`} className="flex items-center gap-2">
+              <div>
+                <IconBuildingBank className="size-3" />
+              </div>
+              {`${user.account.code} - ${user.account.description}`}
+            </Link>
+          </Badge>
+        ) : null}
       </div>
 
       <PageContainer>
-        <ValidatedForm id="user-form" validator={validator} method="post" className="space-y-4 sm:max-w-md">
-          <input type="hidden" name="id" value={user.id} />
-          <div className="flex gap-2">
-            <FormField label="First name" id="firstName" name="firstName" required />
-            <FormField label="Last name" id="lastName" name="lastName" required />
+        <ValidatedForm id="user-form" validator={validator} method="post" className="sm:max-w-md">
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <FormField label="First name" id="firstName" name="firstName" required />
+              <FormField label="Last name" id="lastName" name="lastName" required />
+            </div>
+            <input type="hidden" name="id" value={user.id} />
+            {authorizedUser.role === UserRole.SUPERADMIN || authorizedUser.role === UserRole.ADMIN ? (
+              <>
+                <FormField label="Username" id="username" name="username" disabled />
+                <FormSelect
+                  disabled={isYou}
+                  description={isYou ? "You cannot edit your own role." : ""}
+                  name="role"
+                  label="Role"
+                  placeholder="Select a role"
+                  defaultValue={user.role}
+                >
+                  <SelectItem value="USER">User</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                </FormSelect>
+              </>
+            ) : null}
+            <ButtonGroup>
+              <SubmitButton>Save</SubmitButton>
+              <Button type="reset" variant="outline">
+                Reset
+              </Button>
+            </ButtonGroup>
           </div>
-          {authorizedUser.role === UserRole.SUPERADMIN || authorizedUser.role === UserRole.ADMIN ? (
-            <>
-              <FormField label="Username" id="username" name="username" disabled />
-              <FormSelect
-                disabled={isYou}
-                description={isYou ? "You cannot edit your own role." : ""}
-                name="role"
-                label="Role"
-                placeholder="Select a role"
-                defaultValue={user.role}
-              >
-                <SelectItem value="USER">User</SelectItem>
-                <SelectItem value="ADMIN">Admin</SelectItem>
-              </FormSelect>
-            </>
-          ) : null}
-          <ButtonGroup>
-            <SubmitButton>Save</SubmitButton>
-            <Button type="reset" variant="outline">
-              Reset
-            </Button>
-          </ButtonGroup>
         </ValidatedForm>
         <div className="mt-4 max-w-lg">
           {user.contactAssignments.length > 0 ? (

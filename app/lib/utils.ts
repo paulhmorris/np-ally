@@ -116,6 +116,15 @@ export function formatCentsAsDollars(value: number | null | undefined, decimals:
   return formatCurrency(value / 100, decimals);
 }
 
+export function formatPhoneNumber(value: string) {
+  const cleaned = `${value}`.replace(/\D/g, "");
+  const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+  if (match) {
+    return `(${match[1]}) ${match[2]}-${match[3]}`;
+  }
+  return null;
+}
+
 export function getToday() {
   const today = new Date();
   const dd = String(today.getDate()).padStart(2, "0");

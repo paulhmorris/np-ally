@@ -31,7 +31,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New Transfer • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["SUPERADMIN", "ADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   const [accounts, transactionItemMethods] = await Promise.all([
     prisma.account.findMany(),
     prisma.transactionItemMethod.findMany(),
@@ -44,7 +44,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);

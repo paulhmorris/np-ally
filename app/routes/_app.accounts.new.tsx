@@ -22,12 +22,12 @@ const validator = withZod(
     code: z.string().min(1, { message: "Code is required" }),
     description: z.string().min(1, { message: "Description is required" }),
     typeId: z.coerce.number().pipe(z.nativeEnum(AccountType)),
-    userId: z.string().cuid().optional(),
+    userId: z.string().optional(),
   }),
 );
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
 
   const accountTypes = await prisma.accountType.findMany();
   const users = await prisma.user.findMany({
@@ -46,7 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction = () => [{ title: "Edit Account • Alliance 436" }];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -90,11 +90,11 @@ export default function NewAccountPage() {
             options={accountTypes.map((a) => ({ label: a.name, value: a.id }))}
           />
           <FormSelect
-            label="User"
+            label="Linked User"
             name="userId"
             placeholder="Select user"
             description="Link this account to a user. They will be able to see this account and all related transactions."
-            options={users.map((a) => ({ label: a.contact.email, value: a.id }))}
+            options={users.map((a) => ({ label: `${a.contact.firstName} ${a.contact.lastName}`, value: a.id }))}
           />
 
           <ButtonGroup>

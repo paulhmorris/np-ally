@@ -16,32 +16,50 @@ export const meta: MetaFunction = () => [{ title: "Home • Alliance 436" }];
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireUser(request);
 
-  const total = await prisma.transaction.aggregate({
-    where: {
-      account: {
+  const [total, contactsToEngage, reimbursementRequests] = await Promise.all([
+    prisma.transaction.aggregate({
+      where: {
+        account: {
+          userId: user.id,
+        },
+      },
+      _sum: { amountInCents: true },
+    }),
+    prisma.contact.findMany({
+      where: {
+        assignedUsers: {
+          some: {
+            userId: user.id,
+          },
+        },
+        engagements: {
+          some: {},
+          every: {
+            date: {
+              lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            },
+          },
+        },
+      },
+    }),
+    prisma.reimbursementRequest.findMany({
+      where: {
         userId: user.id,
+        status: "PENDING",
       },
-    },
-    _sum: { amountInCents: true },
-  });
-
-  const reimbursementRequests = await prisma.reimbursementRequest.findMany({
-    where: {
-      userId: user.id,
-      status: "PENDING",
-    },
-    include: {
-      account: true,
-      user: {
-        include: { contact: true },
+      include: {
+        account: true,
+        user: {
+          include: { contact: true },
+        },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+  ]);
 
-  return typedjson({ total: total._sum.amountInCents, reimbursementRequests });
+  return typedjson({ total: total._sum.amountInCents, reimbursementRequests, contactsToEngage });
 }
 
 export default function Index() {

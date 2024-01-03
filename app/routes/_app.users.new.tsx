@@ -34,7 +34,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New User • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   return typedjson({
     accounts: await prisma.account.findMany(),
     contactTypes: await prisma.contactType.findMany(),
@@ -42,7 +42,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const authorizedUser = await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  const authorizedUser = await requireUser(request, ["ADMIN"]);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);

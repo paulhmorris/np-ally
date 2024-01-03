@@ -14,7 +14,7 @@ import { requireUser } from "~/lib/session.server";
 export const meta: MetaFunction = () => [{ title: "Accounts • Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUser(request, ["ADMIN", "SUPERADMIN"]);
+  await requireUser(request, ["ADMIN"]);
   const accounts = await prisma.account.findMany({
     include: { transactions: true, type: true },
     orderBy: { code: "desc" },

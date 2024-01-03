@@ -108,6 +108,7 @@ export function FileUploader() {
             id="file"
             name="file"
             type="file"
+            accept="image/*,application/pdf,image/heic"
             className="cursor-pointer hover:bg-muted"
             disabled={uploadStatus.uploading || uploadStatus.success}
             onChange={(e) => {
