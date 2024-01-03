@@ -73,9 +73,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const account = await prisma.account.findUnique({
       where: { id: accountId },
       select: {
-        subscribers: {
+        user: {
           select: {
-            subscriber: true,
+            contact: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
       },
@@ -94,24 +98,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
-    if (account.subscribers.length === 0) {
-      return toast.json(
-        request,
-        { message: "Error notifying subscribers" },
-        {
-          variant: "warning",
-          title: "Error notifying subscribers",
-          description: "This account has no subscribers. Please enter at least one in the account settings.",
-        },
-        { status: 400 },
-      );
-    }
-
     const key = nanoid();
-    await notifySubscribersJob.invoke(
-      { payload: { to: account.subscribers.map((s) => s.subscriber.email) } },
-      { idempotencyKey: key },
-    );
+    if (account.user?.contact.email) {
+      await notifySubscribersJob.invoke({ to: account.user.contact.email }, { idempotencyKey: key });
+    }
   }
 
   const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
