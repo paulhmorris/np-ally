@@ -31,7 +31,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const accountTypes = await prisma.accountType.findMany();
   const users = await prisma.user.findMany({
-    where: { role: UserRole.USER },
+    where: {
+      role: UserRole.USER,
+      accountId: null,
+    },
     include: {
       contact: true,
     },
@@ -52,9 +55,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const account = await prisma.account.create({
-    data: result.data,
-  });
+  const account = await prisma.account.create({ data: result.data });
 
   return toast.redirect(request, `/accounts/${account.id}`, {
     title: "Account created",

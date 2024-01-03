@@ -26,7 +26,7 @@ export default function UserIndexPage() {
   return (
     <>
       <PageHeader title="Users">
-        <Button asChild>
+        <Button>
           <IconPlus className="mr-2 size-5" />
           <span>New User</span>
         </Button>
