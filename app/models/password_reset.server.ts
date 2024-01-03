@@ -13,7 +13,7 @@ export function getPasswordResetByToken({ token }: { token: PasswordReset["token
 export function getCurrentPasswordReset({ userId }: { userId: User["id"] }) {
   return prisma.passwordReset.findFirst({
     where: { userId, expiresAt: { gte: new Date() } },
-    select: { id: true },
+    select: { id: true, expiresAt: true },
   });
 }
 

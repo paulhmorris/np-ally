@@ -1,9 +1,11 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { withZod } from "@remix-validated-form/with-zod";
+import dayjs from "dayjs";
 import { typedjson } from "remix-typedjson";
 import { validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
 import { sendPasswordSetupEmail } from "~/models/mail.server";
 import { deletePasswordReset, generatePasswordReset, getCurrentPasswordReset } from "~/models/password_reset.server";
@@ -40,9 +42,11 @@ export async function action({ request }: ActionFunctionArgs) {
       request,
       { message: "User not found" },
       {
-        variant: "destructive",
+        variant: "warning",
         title: "Existing request found",
-        description: "A password reset request has already been sent to this email address.",
+        description: `A password reset request has already been sent. It expires in ${dayjs(
+          existingReset.expiresAt,
+        ).diff(dayjs(), "minutes")} minutes.`,
       },
     );
   }
@@ -52,6 +56,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Unknown Resend error
   if (error || !data) {
+    Sentry.captureException(error);
     await deletePasswordReset({ token: reset.token });
     return toast.json(
       request,

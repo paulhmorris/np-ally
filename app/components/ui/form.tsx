@@ -184,7 +184,7 @@ export function FormSelect(props: FormSelectProps) {
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {!options || options.length === 0 ? (
+          {options && options.length === 0 ? (
             // @ts-expect-error see https://github.com/radix-ui/primitives/issues/1569#issuecomment-1567414323
             <SelectItem value={null} disabled>
               No options
