@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { Link } from "@remix-run/react";
 import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
@@ -26,9 +27,11 @@ export default function UserIndexPage() {
   return (
     <>
       <PageHeader title="Users">
-        <Button>
-          <IconPlus className="mr-2 size-5" />
-          <span>New User</span>
+        <Button asChild>
+          <Link to="/users/new">
+            <IconPlus className="mr-2 size-5" />
+            <span>New User</span>
+          </Link>
         </Button>
       </PageHeader>
 
