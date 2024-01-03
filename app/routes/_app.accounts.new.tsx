@@ -52,19 +52,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { userId, ...data } = result.data;
-
   const account = await prisma.account.create({
-    data: {
-      ...data,
-      user: userId
-        ? {
-            connect: {
-              id: userId,
-            },
-          }
-        : undefined,
-    },
+    data: result.data,
   });
 
   return toast.redirect(request, `/accounts/${account.id}`, {
