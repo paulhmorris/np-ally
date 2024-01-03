@@ -33,7 +33,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const transaction = await prisma.transaction.findUnique({
     where: { id: params.transactionId },
     include: {
-      account: true,
+      account: {
+        include: {
+          user: true,
+        },
+      },
       contact: true,
       transactionItems: {
         include: {
@@ -43,7 +47,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     },
   });
-  if (user.role === UserRole.USER && transaction?.account.userId !== user.id) {
+  if (user.role === UserRole.USER && transaction?.account.user?.id !== user.id) {
     throw forbidden({ message: "You do not have permission to view this transaction" });
   }
   if (!transaction) throw notFound({ message: "Transaction not found" });

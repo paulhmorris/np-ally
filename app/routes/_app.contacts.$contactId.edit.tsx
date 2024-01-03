@@ -93,7 +93,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     contact,
     contactTypes,
     usersWhoCanBeAssigned,
-    ...setFormDefaults("contact-form", { ...contact }),
+    ...setFormDefaults("contact-form", { ...contact, typeId: contact.typeId.toString() }),
   });
 };
 

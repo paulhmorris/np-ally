@@ -34,6 +34,7 @@ const validator = withZod(
     lastName: z.string().min(1, { message: "Last name is required" }),
     username: z.string().email({ message: "Invalid email address" }).optional(),
     role: z.nativeEnum(UserRole),
+    accountId: z.string().optional(),
   }),
 );
 
@@ -50,6 +51,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (authorizedUser.role === UserRole.USER && authorizedUser.id !== params.userId) {
     throw forbidden({ message: "You do not have permission to view this page" });
   }
+
+  const accounts = await prisma.account.findMany({
+    where: {
+      OR: [{ user: null }, { user: { id: params.userId } }],
+    },
+  });
 
   const userWithPassword = await prisma.user.findUnique({
     where: { id: params.userId },
@@ -86,9 +93,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { password: _password, ...userWithoutPassword } = userWithPassword;
 
   return typedjson({
+    accounts,
     user: userWithoutPassword,
     hasPassword: !!_password,
-    ...setFormDefaults("user-form", { ...userWithPassword, ...userWithPassword.contact }),
+    ...setFormDefaults("user-form", {
+      ...userWithPassword,
+      ...userWithPassword.contact,
+      accountId: userWithPassword.account?.id,
+    }),
   });
 };
 
@@ -100,7 +112,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { username, role, id, ...contact } = result.data;
+  const { username, role, id, accountId, ...contact } = result.data;
 
   const userToBeUpdated = await prisma.user.findUnique({ where: { id } });
   if (!userToBeUpdated) {
@@ -108,25 +120,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (authorizedUser.role === UserRole.USER) {
-    let message = "";
     // Users can only edit themselves
     if (authorizedUser.id !== id) {
-      message = "You do not have permission to edit this user.";
+      return toast.json(
+        request,
+        { message: "You do not have permission to edit this user." },
+        {
+          variant: "warning",
+          title: "Permission denied",
+          description: "You do not have permission to edit this user.",
+        },
+        { status: 403 },
+      );
     }
-    // Users can't edit their role or username
-    if (role !== userToBeUpdated.role || username !== userToBeUpdated.username) {
-      message = "You do not have permission to edit this field.";
+
+    // Users can't edit their role, username, or assigned account
+    if (
+      role !== userToBeUpdated.role ||
+      username !== userToBeUpdated.username ||
+      accountId !== userToBeUpdated.accountId
+    ) {
+      return toast.json(
+        request,
+        { message: "You do not have permission to edit this field." },
+        {
+          variant: "warning",
+          title: "Permission denied",
+          description: "You do not have permission to edit this field.",
+        },
+        { status: 403 },
+      );
     }
-    return toast.json(
-      request,
-      { message },
-      {
-        variant: "warning",
-        title: "Permission denied",
-        description: message,
-      },
-      { status: 403 },
-    );
   }
 
   if (authorizedUser.role !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
@@ -147,6 +171,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: {
       role,
       username,
+      account: accountId ? { connect: { id: accountId } } : { disconnect: true },
       contact: {
         update: {
           ...contact,
@@ -164,7 +189,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function UserDetailsPage() {
   const authorizedUser = useUser();
-  const { user, hasPassword } = useTypedLoaderData<typeof loader>();
+  const { user, hasPassword, accounts } = useTypedLoaderData<typeof loader>();
   const fetcher = useFetcher();
 
   const isYou = authorizedUser.id === user.id;
@@ -224,18 +249,35 @@ export default function UserDetailsPage() {
               <>
                 <FormField label="Username" id="username" name="username" disabled />
                 <FormSelect
+                  required
                   disabled={isYou}
                   description={isYou ? "You cannot edit your own role." : ""}
                   name="role"
                   label="Role"
                   placeholder="Select a role"
-                  defaultValue={user.role}
                 >
                   <SelectItem value="USER">User</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                 </FormSelect>
               </>
-            ) : null}
+            ) : (
+              <>
+                <input type="hidden" name="username" value={user.username} />
+                <input type="hidden" name="role" value={user.role} />
+              </>
+            )}
+            {authorizedUser.role !== UserRole.USER ? (
+              <FormSelect
+                name="accountId"
+                label="Linked Account"
+                placeholder="Select an account"
+                defaultValue={user.account?.id}
+                description="Link this user to an account. They will be able to see this account and all related transactions."
+                options={accounts.map((a) => ({ label: `${a.code} - ${a.description}`, value: a.id }))}
+              />
+            ) : (
+              <input type="hidden" name="accountId" value={user.account?.id} />
+            )}
             <ButtonGroup>
               <SubmitButton>Save</SubmitButton>
               <Button type="reset" variant="outline">

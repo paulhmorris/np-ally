@@ -1,4 +1,4 @@
-import { ReimbursementRequestStatus } from "@prisma/client";
+import { ReimbursementRequestStatus, UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -49,7 +49,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       orderBy: { createdAt: "desc" },
     }),
     prisma.transactionItemMethod.findMany(),
-    prisma.account.findMany({ where: { userId: user.id }, include: { type: true } }),
+    prisma.account.findMany({
+      where: user.role === UserRole.USER ? { user: { id: user.id } } : undefined,
+      include: { type: true },
+    }),
   ]);
   return typedjson({ receipts, methods, accounts });
 };
@@ -89,7 +92,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
-export default function NewUserPage() {
+export default function NewReimbursementPage() {
   const { receipts, methods, accounts } = useTypedLoaderData<typeof loader>();
   const user = useUser();
 

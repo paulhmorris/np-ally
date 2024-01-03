@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     prisma.transaction.aggregate({
       where: {
         account: {
-          userId: user.id,
+          user: { id: user.id },
         },
       },
       _sum: { amountInCents: true },

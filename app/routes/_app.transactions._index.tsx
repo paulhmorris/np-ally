@@ -18,7 +18,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       user.role === UserRole.USER
         ? {
             account: {
-              userId: user.id,
+              user: {
+                id: user.id,
+              },
             },
           }
         : {},

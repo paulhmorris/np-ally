@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -33,10 +34,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.accountId, "accountId not found");
 
   const [account, accountTypes, users] = await Promise.all([
-    prisma.account.findUnique({ where: { id: params.accountId } }),
+    prisma.account.findUnique({ where: { id: params.accountId }, include: { user: true } }),
     prisma.accountType.findMany(),
     prisma.user.findMany({
-      where: { role: "USER" },
+      where: {
+        role: { in: [UserRole.USER, UserRole.ADMIN] },
+        OR: [{ accountId: null }, { accountId: params.accountId }],
+      },
       include: {
         contact: true,
       },
@@ -49,7 +53,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     account,
     accountTypes,
     users,
-    ...setFormDefaults("account-form", { ...account }),
+    ...setFormDefaults("account-form", { ...account, userId: account.user?.id, typeId: String(account.typeId) }),
   });
 };
 
@@ -62,9 +66,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
+  const { userId, ...data } = result.data;
   await prisma.account.update({
-    where: { id: result.data.id },
-    data: result.data,
+    where: { id: data.id },
+    data: {
+      ...data,
+      user: userId
+        ? {
+            connect: { id: userId },
+          }
+        : {
+            disconnect: true,
+          },
+    },
   });
 
   return toast.redirect(request, `/accounts/${result.data.id}`, {

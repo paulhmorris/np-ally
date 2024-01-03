@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
-import { IconCoins, IconUser } from "@tabler/icons-react";
+import { IconCoins, IconExclamationCircle, IconUser } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { setFormDefaults } from "remix-validated-form";
 import invariant from "tiny-invariant";
@@ -13,6 +13,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { AccountBalanceCard } from "~/components/users/balance-card";
 import { prisma } from "~/integrations/prisma.server";
+import { AccountType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { requireUser } from "~/lib/session.server";
 
@@ -71,12 +72,22 @@ export default function AccountDetailsPage() {
           <span>{account.type.name}</span>
         </Badge>
         {account.user ? (
-          <Link to={`/users/${account.userId}`}>
+          <Link to={`/users/${account.user.id}`}>
             <Badge variant="secondary">
               <div>
                 <IconUser className="size-3" />
               </div>
               {account.user.contact.firstName} {account.user.contact.lastName}
+            </Badge>
+          </Link>
+        ) : // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+        account.typeId === AccountType.Ministry ? (
+          <Link to={`/accounts/${account.id}/edit`}>
+            <Badge variant="secondary">
+              <div>
+                <IconExclamationCircle className="size-3 text-warning" />
+              </div>
+              <span>No linked user</span>
             </Badge>
           </Link>
         ) : null}

@@ -114,7 +114,11 @@ async function seed() {
       },
       description: "Jessica Caudle - Ministry Fund",
       organizationId: org.id,
-      userId: user.id,
+      user: {
+        connect: {
+          id: user.id,
+        },
+      },
     },
   });
 

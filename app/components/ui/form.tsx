@@ -1,6 +1,6 @@
 import { IconCurrencyDollar } from "@tabler/icons-react";
 import { useId } from "react";
-import { useField } from "remix-validated-form";
+import { useControlField, useField } from "remix-validated-form";
 
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -106,7 +106,14 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
 
   return (
     <div className={cn("relative w-full")}>
-      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1.5", error && "text-destructive")}>
+      <Label
+        htmlFor={id}
+        className={cn(
+          hideLabel ? "sr-only" : "mb-1.5",
+          error && "text-destructive",
+          props.disabled && "cursor-not-allowed opacity-50",
+        )}
+      >
         <span>{label}</span>
         <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>
@@ -139,26 +146,50 @@ export interface FormSelectProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 export function FormSelect(props: FormSelectProps) {
   const { name, label, placeholder, options, hideLabel, divProps, ...rest } = props;
-  const { error, getInputProps } = useField(name);
+  const { error, getInputProps, validate } = useField(name);
   const field = getInputProps({});
   const fallbackId = useId();
   const id = props.id ?? fallbackId;
+  const [value, setValue] = useControlField<string>(name);
 
   return (
     <div {...divProps} className={cn("relative w-full", divProps?.className)}>
-      <Label htmlFor={id} className={cn(hideLabel ? "sr-only" : "mb-1", error && "text-destructive")}>
+      <Label
+        htmlFor={id}
+        className={cn(
+          hideLabel ? "sr-only" : "mb-1",
+          error && "text-destructive",
+          props.disabled && "cursor-not-allowed opacity-50",
+        )}
+      >
         <span>{label}</span>
         <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
       </Label>
+      {!props.required && value && !props.disabled ? (
+        <button type="button" onClick={() => setValue("")} className="ml-1 text-xs font-bold text-primary">
+          Clear
+        </button>
+      ) : null}
       <Select
         name={field.name}
         defaultValue={typeof field.defaultValue !== "undefined" ? String(field.defaultValue) : undefined}
-        onValueChange={field.onChange}
+        value={value}
+        onValueChange={(e) => {
+          setValue(e);
+          field.onChange?.(e);
+          validate();
+        }}
       >
         <SelectTrigger id={id} {...rest} className={cn(error && "focus:ring-destructive/50", rest.className)}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
+          {!options || options.length === 0 ? (
+            // @ts-expect-error see https://github.com/radix-ui/primitives/issues/1569#issuecomment-1567414323
+            <SelectItem value={null} disabled>
+              No options
+            </SelectItem>
+          ) : null}
           {options
             ? options.map((o) => {
                 if (o.value === null || o.label === null) return null;
