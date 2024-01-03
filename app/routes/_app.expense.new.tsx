@@ -28,7 +28,7 @@ const validator = withZod(
     date: z.coerce.date(),
     description: z.string().optional(),
     accountId: z.string().cuid({ message: "Account required" }),
-    transactionItems: z.array(TransactionItemSchema.pick({ amountInCents: true, typeId: true, description: true })),
+    transactionItems: z.array(TransactionItemSchema),
   }),
 );
 

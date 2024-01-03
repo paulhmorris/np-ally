@@ -16,8 +16,8 @@ export const CurrencySchema = z.coerce
   .transform((dollars) => Math.round(dollars * 100));
 
 export const TransactionItemSchema = z.object({
-  typeId: z.coerce.number().pipe(z.nativeEnum(TransactionItemType)),
-  methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
+  typeId: z.coerce.number().pipe(z.nativeEnum(TransactionItemType, { invalid_type_error: "Invalid type" })),
+  methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod, { invalid_type_error: "Invalid type" })),
   amountInCents: CurrencySchema,
   description: z.string().optional(),
 });
