@@ -1,7 +1,7 @@
 import { Engagement } from "@prisma/client";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
-import { IconPlus } from "@tabler/icons-react";
+import { IconAddressBook, IconPlus, IconUser } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
@@ -11,6 +11,7 @@ import { RecentTransactionsTable } from "~/components/contacts/recent-donations-
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { prisma } from "~/integrations/prisma.server";
@@ -61,6 +62,24 @@ export default function ContactDetailsPage() {
   return (
     <>
       <PageHeader title="View Contact" />
+      <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-1">
+        <Badge variant="outline" className="capitalize">
+          <div>
+            <IconAddressBook className="size-3" />
+          </div>
+          <span>{contact.type.name.toLowerCase()}</span>
+        </Badge>
+        {contact.user ? (
+          <Badge variant="secondary">
+            <Link to={`/users/${contact.user.id}`} className="flex items-center gap-1.5">
+              <div>
+                <IconUser className="size-3" />
+              </div>
+              <span>{contact.user.username}</span>
+            </Link>
+          </Badge>
+        ) : null}
+      </div>
       <PageContainer className="max-w-screen-md">
         <div className="space-y-5">
           <div className="space-y-2">
@@ -77,7 +96,7 @@ export default function ContactDetailsPage() {
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
               <Card className="flex-1 basis-48 bg-transparent">

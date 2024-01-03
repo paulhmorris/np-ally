@@ -158,10 +158,8 @@ export default function NewUserPage() {
               }))}
             />
           </div>
-          <div>
-            <span className="rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
-              Please allow up to two weeks for processing.
-            </span>
+          <div className="rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
+            <span>High quality images of itemized receipts are required. Please allow two weeks for processing.</span>
           </div>
           <SubmitButton>Submit</SubmitButton>
         </ValidatedForm>
