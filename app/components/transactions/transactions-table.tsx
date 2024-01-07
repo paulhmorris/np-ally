@@ -14,7 +14,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import * as React from "react";
+dayjs.extend(utc);
 
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
@@ -99,7 +101,9 @@ const columns: Array<ColumnDef<Account>> = [
     cell: ({ row }) => {
       return (
         <div>
-          <span className="max-w-[120px] truncate font-medium">{dayjs(row.getValue("date")).format("MM/DD/YYYY")}</span>
+          <span className="max-w-[120px] truncate font-medium">
+            {dayjs(row.getValue("date")).utc().format("MM/DD/YYYY")}
+          </span>
         </div>
       );
     },
