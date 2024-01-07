@@ -6,12 +6,13 @@ import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 
+import { AddressForm } from "~/components/contacts/address-fields";
+import { ContactFields } from "~/components/contacts/contact-fields";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
-import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
@@ -109,59 +110,13 @@ export default function NewContactPage() {
       <PageHeader title="New Contact" />
       <PageContainer>
         <ValidatedForm validator={NewContactValidator} method="post" className="space-y-4 sm:max-w-md">
-          <div className="flex items-start gap-2">
-            <FormField label="First name" id="firstName" name="firstName" placeholder="Joe" />
-            <FormField label="Last name" id="lastName" name="lastName" placeholder="Donor" />
-          </div>
-          <FormField label="Email" id="email" name="email" placeholder="joe@donor.com" required />
-          <FormField
-            label="Phone"
-            id="phone"
-            name="phone"
-            placeholder="8885909724"
-            inputMode="numeric"
-            maxLength={10}
-          />
-          <FormSelect
-            required
-            label="Type"
-            name="typeId"
-            placeholder="Select type"
-            options={contactTypes.map((ct) => ({
-              label: ct.name,
-              value: ct.id,
-            }))}
-          />
-          <FormField
-            label="Organization Name"
-            name="organizationName"
-            placeholder="Alliance 436"
-            description="Required if type is Organization"
-          />
+          <ContactFields contactTypes={contactTypes} />
           {!addressEnabled ? (
             <Button variant="outline" onClick={() => setAddressEnabled(true)}>
               Add Address
             </Button>
           ) : (
-            <fieldset className="space-y-4">
-              <FormField label="Street 1" id="street" placeholder="1234 Main St." name="address.street" required />
-              <div className="flex items-start gap-2">
-                <FormField label="Street 2" id="street" placeholder="Apt 4" name="address.street2" />
-                <FormField label="City" id="city" placeholder="Richardson" name="address.city" required />
-              </div>
-              <div className="flex items-start gap-2">
-                <FormField label="State" id="state" placeholder="TX" name="address.state" required />
-                <FormField label="Zip" id="zip" placeholder="75080" name="address.zip" required />
-                <FormField
-                  label="Country"
-                  id="zip"
-                  placeholder="US"
-                  name="address.country"
-                  required
-                  defaultValue="US"
-                />
-              </div>
-            </fieldset>
+            <AddressForm />
           )}
           <Separator className="my-4" />
           <fieldset>

@@ -8,6 +8,8 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 
+import { AddressForm } from "~/components/contacts/address-fields";
+import { ContactFields } from "~/components/contacts/contact-fields";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
@@ -15,14 +17,11 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Callout } from "~/components/ui/callout";
 import { Checkbox } from "~/components/ui/checkbox";
-import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
-import { SelectItem } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
-import { states } from "~/lib/data";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
@@ -229,45 +228,14 @@ export default function EditContactPage() {
           className="space-y-4 sm:max-w-md"
         >
           <input type="hidden" name="id" value={contact.id} />
-          <div className="flex items-start gap-2">
-            <FormField label="First name" id="firstName" name="firstName" required />
-            <FormField label="Last name" id="lastName" name="lastName" />
-          </div>
-          <FormField label="Organization Name" name="organizationName" id="organizationName" />
-          <FormField label="Email" id="email" name="email" required />
-          <FormField label="Phone" id="phone" name="phone" inputMode="numeric" maxLength={10} />
-          <FormSelect
-            required
-            name="typeId"
-            label="Type"
-            placeholder="Select type"
-            defaultValue={contact.typeId}
-            options={contactTypes.map((type) => ({ label: type.name, value: type.id }))}
-          />
+          <ContactFields contactTypes={contactTypes} />
 
           {!addressEnabled ? (
             <Button variant="outline" onClick={() => setAddressEnabled(true)}>
               Add Address
             </Button>
           ) : (
-            <fieldset className="space-y-4">
-              <FormField label="Street 1" id="street" placeholder="1234 Main St." name="address.street" required />
-              <div className="flex items-start gap-2">
-                <FormField label="Street 2" id="street" placeholder="Apt 4" name="address.street2" />
-                <FormField label="City" id="city" placeholder="Richardson" name="address.city" required />
-              </div>
-              <div className="flex items-start gap-2">
-                <FormSelect label="State" id="state" placeholder="Select state" name="address.state" required>
-                  {states.map((state) => (
-                    <SelectItem key={state} value={state}>
-                      {state}
-                    </SelectItem>
-                  ))}
-                </FormSelect>
-                <FormField label="Zip" id="zip" placeholder="75080" name="address.zip" required />
-                <FormField label="Country" id="zip" placeholder="US" name="address.country" required />
-              </div>
-            </fieldset>
+            <AddressForm />
           )}
           <Separator className="my-4" />
           {contact.typeId === ContactType.Donor ||

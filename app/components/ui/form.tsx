@@ -1,6 +1,6 @@
 import { IconCurrencyDollar } from "@tabler/icons-react";
 import { useId } from "react";
-import { useControlField, useField } from "remix-validated-form";
+import { useField } from "remix-validated-form";
 
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -59,7 +59,15 @@ export function FormField({
         )}
       >
         <span>{label}</span>
-        <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
+        <span
+          className={cn(
+            "ml-1 inline-block font-normal",
+            props.required || error ? "text-destructive" : "text-muted-foreground/60",
+            !props.required && "text-xs",
+          )}
+        >
+          {props.required ? "*" : "(optional)"}
+        </span>
       </Label>
       <Input
         id={id}
@@ -115,7 +123,14 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
         )}
       >
         <span>{label}</span>
-        <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
+        <span
+          className={cn(
+            "ml-1 inline-block font-normal",
+            props.required ? "text-destructive" : "text-xs text-muted-foreground/60",
+          )}
+        >
+          {props.required ? "*" : "(optional)"}
+        </span>
       </Label>
       <Textarea
         id={id}
@@ -146,11 +161,10 @@ export interface FormSelectProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 export function FormSelect(props: FormSelectProps) {
   const { name, label, placeholder, options, hideLabel, divProps, ...rest } = props;
-  const { error, getInputProps, validate } = useField(name);
-  const field = getInputProps({});
+  const { error, getInputProps } = useField(name);
+  const { onChange, ...field } = getInputProps({});
   const fallbackId = useId();
   const id = props.id ?? fallbackId;
-  const [value, setValue] = useControlField<string>(name);
 
   return (
     <div {...divProps} className={cn("relative w-full", divProps?.className)}>
@@ -163,23 +177,16 @@ export function FormSelect(props: FormSelectProps) {
         )}
       >
         <span>{label}</span>
-        <span className="ml-1 inline-block font-normal text-destructive">{props.required ? "*" : ""}</span>
+        <span
+          className={cn(
+            "ml-1 inline-block font-normal",
+            props.required ? "text-destructive" : "text-xs text-muted-foreground/60",
+          )}
+        >
+          {props.required ? "*" : "(optional)"}
+        </span>
       </Label>
-      {!props.required && value && !props.disabled ? (
-        <button type="button" onClick={() => setValue("")} className="ml-1 text-xs font-bold text-primary">
-          Clear
-        </button>
-      ) : null}
-      <Select
-        name={field.name}
-        defaultValue={typeof field.defaultValue !== "undefined" ? String(field.defaultValue) : undefined}
-        value={value}
-        onValueChange={(e) => {
-          setValue(e);
-          field.onChange?.(e);
-          validate();
-        }}
-      >
+      <Select {...field} onValueChange={onChange}>
         <SelectTrigger id={id} {...rest} className={cn(error && "focus:ring-destructive/50", rest.className)}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
@@ -189,7 +196,14 @@ export function FormSelect(props: FormSelectProps) {
             <SelectItem value={null} disabled>
               No options
             </SelectItem>
-          ) : null}
+          ) : (
+            !props.required && (
+              // @ts-expect-error see https://github.com/radix-ui/primitives/issues/1569#issuecomment-1567414323
+              <SelectItem value={null} className="text-muted-foreground/60 focus:text-muted-foreground/60">
+                {placeholder}
+              </SelectItem>
+            )
+          )}
           {options
             ? options.map((o) => {
                 if (o.value === null || o.label === null) return null;
