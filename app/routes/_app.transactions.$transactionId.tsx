@@ -3,11 +3,13 @@ import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
+dayjs.extend(utc);
 
 import { ErrorComponent } from "~/components/error-component";
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
@@ -104,7 +106,7 @@ export default function TransactionDetailsPage() {
                   {`${transaction.account.code}`} - {transaction.account.description}
                 </Link>
               </DetailItem>
-              <DetailItem label="Created" value={dayjs(transaction.createdAt).format("MM/DD/YYYY h:mm a")} />
+              <DetailItem label="Date" value={dayjs(transaction.date).utc().format("MM/DD/YYYY")} />
               {transaction.contact ? (
                 <DetailItem label="Contact">
                   <Link
