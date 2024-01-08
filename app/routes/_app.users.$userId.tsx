@@ -269,6 +269,9 @@ export default function UserDetailsPage() {
                 >
                   <SelectItem value="USER">User</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
+                  {authorizedUser.role === UserRole.SUPERADMIN ? (
+                    <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+                  ) : null}
                 </FormSelect>
               </>
             ) : (
