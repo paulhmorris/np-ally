@@ -16,13 +16,13 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
-import { requireUser } from "~/lib/session.server";
 import { cn } from "~/lib/utils";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Contact • Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request);
+  await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
 
   const contact = await prisma.contact.findUnique({

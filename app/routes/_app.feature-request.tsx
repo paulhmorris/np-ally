@@ -13,8 +13,8 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { Linear } from "~/integrations/linear.server";
 import { Sentry } from "~/integrations/sentry";
 import { LinearLabelID, LinearTeamID } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z.object({
@@ -26,7 +26,7 @@ const validator = withZod(
 );
 
 export async function action({ request }: ActionFunctionArgs) {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   if (request.method !== "POST") {
     return new Response(null, { status: 405 });
   }

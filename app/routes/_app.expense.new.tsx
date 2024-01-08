@@ -1,3 +1,4 @@
+import { TransactionItemTypeDirection } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -17,11 +18,12 @@ import { SelectGroup, SelectItem, SelectLabel } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
-import { ContactType, TransactionItemType } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
+import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { TransactionItemSchema } from "~/models/schemas";
+import { SessionService } from "~/services/SessionService.server";
+import { TransactionService } from "~/services/TransactionService.server";
 
 const validator = withZod(
   z.object({
@@ -36,20 +38,22 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
-  const [contacts, accounts, transactionItemMethods, contactTypes] = await Promise.all([
+  await SessionService.requireAdmin(request);
+  const [contacts, accounts, transactionItemMethods, transactionItemTypes, contactTypes] = await Promise.all([
     prisma.contact.findMany({
       where: { typeId: { not: ContactType.Admin } },
       include: { type: true },
     }),
     prisma.account.findMany(),
-    prisma.transactionItemMethod.findMany(),
+    TransactionService.getItemMethods(),
+    TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.OUT } }),
     prisma.contactType.findMany({ where: { id: { notIn: [ContactType.Admin] } } }),
   ]);
 
   return typedjson({
     accounts,
     transactionItemMethods,
+    transactionItemTypes,
     contacts,
     contactTypes,
     ...setFormDefaults("expense-form", {
@@ -59,7 +63,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -94,7 +98,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AddExpensePage() {
-  const { contacts, contactTypes, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
+  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes } =
+    useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "expense-form" });
 
   return (
@@ -176,13 +181,10 @@ export default function AddExpensePage() {
                               name={`${fieldPrefix}.typeId`}
                               label="Type"
                               placeholder="Select type"
-                              options={[
-                                { label: "Expense", value: TransactionItemType.Expense },
-                                { label: "Compensation", value: TransactionItemType.Compensation },
-                                { label: "Grant", value: TransactionItemType.Grant },
-                                { label: "Tax", value: TransactionItemType.Tax },
-                                { label: "Other", value: TransactionItemType.Other },
-                              ]}
+                              options={transactionItemTypes.map((t) => ({
+                                value: t.id,
+                                label: t.name,
+                              }))}
                             />
                           </div>
                           <FormField name={`${fieldPrefix}.description`} label="Description" />

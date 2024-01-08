@@ -3,8 +3,10 @@ import { typedjson } from "remix-typedjson";
 
 import { Linear } from "~/integrations/linear.server";
 import { Sentry } from "~/integrations/sentry";
+import { SessionService } from "~/services/SessionService.server";
 
 export async function action({ request }: ActionFunctionArgs) {
+  await SessionService.requireUserId(request);
   const formData = await request.formData();
   const file = formData.get("file") as File;
   const uploadPayload = await Linear.fileUpload(file.type, file.name, file.size);

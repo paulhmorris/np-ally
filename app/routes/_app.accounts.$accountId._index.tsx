@@ -15,12 +15,12 @@ import { AccountBalanceCard } from "~/components/users/balance-card";
 import { prisma } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
-import { requireUser } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Account • Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   invariant(params.accountId, "accountId not found");
 
   const account = await prisma.account.findUnique({

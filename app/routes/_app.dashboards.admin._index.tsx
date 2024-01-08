@@ -9,12 +9,12 @@ import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
 import { prisma } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Home • Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   if (user.role === UserRole.USER) {
     return redirect("/dashboards/staff");
   }

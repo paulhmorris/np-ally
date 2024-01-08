@@ -1,3 +1,4 @@
+import { TransactionItemTypeDirection } from "@prisma/client";
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -20,11 +21,13 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { notifySubscribersJob } from "~/jobs/notify-subscribers.server";
-import { ContactType, TransactionItemType } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
+import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
+import { ContactService } from "~/services/ContactService.server";
+import { SessionService } from "~/services/SessionService.server";
+import { TransactionService } from "~/services/TransactionService.server";
 
 const validator = withZod(
   z.object({
@@ -40,21 +43,23 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New Transaction • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
-  const [contacts, accounts, transactionItemMethods, contactTypes] = await Promise.all([
-    prisma.contact.findMany({
+  await SessionService.requireAdmin(request);
+  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
+    ContactService.getContacts({
       where: { typeId: { not: ContactType.Admin } },
       include: { type: true },
     }),
+    ContactService.getContactTypes({ where: { id: { notIn: [ContactType.Admin] } } }),
     prisma.account.findMany(),
-    prisma.transactionItemMethod.findMany(),
-    prisma.contactType.findMany({ where: { id: { notIn: [ContactType.Admin] } } }),
+    TransactionService.getItemMethods(),
+    TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.IN } }),
   ]);
   return typedjson({
     contacts,
+    contactTypes,
     accounts,
     transactionItemMethods,
-    contactTypes,
+    transactionItemTypes,
     ...setFormDefaults("income-form", {
       transactionItems: [{ id: nanoid() }],
     }),
@@ -62,16 +67,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
-  const { transactionItems, contactId, accountId, shouldNotifyUser, ...rest } = result.data;
+  const { transactionItems, shouldNotifyUser, ...rest } = result.data;
 
   if (shouldNotifyUser) {
     const account = await prisma.account.findUnique({
-      where: { id: accountId },
+      where: { id: result.data.accountId },
       select: {
         user: {
           select: {
@@ -103,31 +108,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await notifySubscribersJob.invoke({ to: account.user.contact.email }, { idempotencyKey: key });
     }
   }
-
-  const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
-  const transaction = await prisma.transaction.create({
-    data: {
-      ...rest,
-      account: { connect: { id: accountId } },
-      contact: contactId ? { connect: { id: contactId } } : undefined,
-      amountInCents: total,
-      transactionItems: {
-        createMany: {
-          data: transactionItems.map((i) => i),
-        },
-      },
-    },
+  const transaction = await TransactionService.createTransaction({
+    transactionItems,
+    data: { ...rest },
     include: { account: true },
   });
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
     title: "Success",
-    description: `Income of ${formatCentsAsDollars(total)} added to account ${transaction.account.code}`,
+    description: `Income of ${formatCentsAsDollars(transaction.amountInCents)} added to account ${
+      transaction.account.code
+    }`,
   });
 };
 
 export default function AddIncomePage() {
-  const { contacts, contactTypes, accounts, transactionItemMethods } = useTypedLoaderData<typeof loader>();
+  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes } =
+    useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "income-form" });
 
   return (
@@ -209,11 +206,10 @@ export default function AddIncomePage() {
                               name={`${fieldPrefix}.typeId`}
                               label="Type"
                               placeholder="Select type"
-                              options={[
-                                { value: TransactionItemType.Donation, label: "Donation" },
-                                { value: TransactionItemType.Income, label: "Income" },
-                                { value: TransactionItemType.Other, label: "Other" },
-                              ]}
+                              options={transactionItemTypes.map((t) => ({
+                                value: t.id,
+                                label: t.name,
+                              }))}
                             />
                           </div>
                           <FormField name={`${fieldPrefix}.description`} label="Description" />

@@ -9,12 +9,12 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { prisma } from "~/integrations/prisma.server";
-import { requireUser } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Accounts • Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   const accounts = await prisma.account.findMany({
     include: { transactions: true, type: true },
     orderBy: { code: "desc" },

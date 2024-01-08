@@ -17,10 +17,10 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getToday, useUser } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z.object({
@@ -37,7 +37,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "Reimbursement Request • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const [receipts, methods, accounts] = await Promise.all([
     prisma.receipt.findMany({
       // Admins can see all receipts, users can only see their own
@@ -58,7 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);

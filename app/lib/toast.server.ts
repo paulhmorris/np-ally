@@ -3,7 +3,7 @@ import { redirect, typedjson } from "remix-typedjson";
 
 import type { Toast } from "~/components/ui/use-toast";
 import { Sentry } from "~/integrations/sentry";
-import { commitSession, getSession } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 export function setGlobalToast(session: Session, toast: Toast) {
   session.flash("globalMessage", toast);
@@ -37,7 +37,7 @@ class ToastHandler {
   };
 
   async redirect(request: Request, url: string, toast: Toast, init: ResponseInit = {}) {
-    const session = await getSession(request);
+    const session = await SessionService.getSession(request);
     const variant = toast.variant || "default";
 
     if (variant === "warning" && toast.description) {
@@ -53,13 +53,13 @@ class ToastHandler {
       ...init,
       headers: {
         ...init.headers,
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await SessionService.commitSession(session),
       },
     });
   }
 
   async json<Data>(request: Request, data: Data, toast: Toast, init: ResponseInit = {}): Promise<TypedResponse<Data>> {
-    const session = await getSession(request);
+    const session = await SessionService.getSession(request);
     const variant = toast.variant || "default";
 
     if (variant === "warning" && toast.description) {
@@ -75,7 +75,7 @@ class ToastHandler {
       ...init,
       headers: {
         ...init.headers,
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await SessionService.commitSession(session),
       },
     });
   }

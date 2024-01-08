@@ -12,10 +12,10 @@ import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { TransactionItemType } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { TransactionItemSchema } from "~/models/schemas";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z
@@ -31,7 +31,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New Transfer • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   const [accounts, transactionItemMethods] = await Promise.all([
     prisma.account.findMany(),
     prisma.transactionItemMethod.findMany(),
@@ -44,7 +44,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);

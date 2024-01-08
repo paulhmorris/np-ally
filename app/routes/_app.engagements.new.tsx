@@ -13,9 +13,9 @@ import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType, EngagementType } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z.object({
@@ -29,7 +29,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New Engagement • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const contacts = await prisma.contact.findMany({
     where: {
       assignedUsers:
@@ -52,7 +52,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);

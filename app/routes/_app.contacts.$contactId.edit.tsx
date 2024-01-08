@@ -23,17 +23,17 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
 import { UpdateContactSchema } from "~/models/schemas";
+import { SessionService } from "~/services/SessionService.server";
 
 const UpdateContactValidator = withZod(UpdateContactSchema);
 
 export const meta: MetaFunction = () => [{ title: "Edit Contact • Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
 
   // Users can only edit their assigned contacts
@@ -97,7 +97,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const result = await UpdateContactValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);

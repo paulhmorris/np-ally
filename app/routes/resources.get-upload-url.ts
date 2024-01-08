@@ -4,7 +4,7 @@ import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 import { Bucket } from "~/integrations/bucket.server";
-import { requireUserId } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = z.object({
   fileName: z.string(),
@@ -12,7 +12,7 @@ const validator = z.object({
 });
 
 export async function action({ request }: ActionFunctionArgs) {
-  const userId = await requireUserId(request);
+  const userId = await SessionService.requireUserId(request);
 
   if (request.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });

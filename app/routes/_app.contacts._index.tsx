@@ -10,12 +10,12 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { prisma } from "~/integrations/prisma.server";
-import { requireUser } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Contacts • Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
 
   // Only show a user's assigned contacts
   if (user.role === UserRole.USER) {
