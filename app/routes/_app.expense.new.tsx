@@ -28,6 +28,7 @@ const validator = withZod(
     date: z.coerce.date(),
     description: z.string().optional(),
     accountId: z.string().cuid({ message: "Account required" }),
+    contactId: z.string().optional(),
     transactionItems: z.array(TransactionItemSchema),
   }),
 );
@@ -64,11 +65,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { transactionItems, ...rest } = result.data;
+  const { transactionItems, accountId, contactId, ...rest } = result.data;
   const total = transactionItems.reduce((acc, i) => acc - i.amountInCents, 0);
   const transaction = await prisma.transaction.create({
     data: {
       ...rest,
+      account: {
+        connect: { id: accountId },
+      },
+      contact: contactId ? { connect: { id: contactId } } : undefined,
       amountInCents: total,
       transactionItems: {
         createMany: {

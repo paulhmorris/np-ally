@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { Link, useFetcher } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { IconAddressBook, IconBuildingBank, IconKey } from "@tabler/icons-react";
+import { IconAddressBook, IconBuildingBank, IconKey, IconUserCircle } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
@@ -76,6 +76,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
       contact: {
         select: {
+          id: true,
           firstName: true,
           lastName: true,
           email: true,
@@ -224,6 +225,16 @@ export default function UserDetailsPage() {
             <IconKey className="size-3" />
           </div>
           <span>{user.role.toLowerCase()}</span>
+        </Badge>
+        <Badge variant="secondary" className="capitalize">
+          <Link to={`/contacts/${user.contact.id}`} className="flex items-center gap-2">
+            <div>
+              <IconUserCircle className="size-3" />
+            </div>
+            <span>
+              {user.contact.firstName} {user.contact.lastName}
+            </span>
+          </Link>
         </Badge>
         {user.account ? (
           <Badge variant="secondary">

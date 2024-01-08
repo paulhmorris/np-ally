@@ -23,6 +23,9 @@ export function RecentTransactionsTable({ transactions }: { transactions: Array<
               <TableHead className="w-[100px]">Date</TableHead>
               <TableHead>Account</TableHead>
               <TableHead>Amount</TableHead>
+              <TableHead>
+                <span className="sr-only">Action</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -35,6 +38,11 @@ export function RecentTransactionsTable({ transactions }: { transactions: Array<
                   </Link>
                 </TableCell>
                 <TableCell>{formatCentsAsDollars(trx.amountInCents)}</TableCell>
+                <TableCell>
+                  <Link className="font-medium text-primary" to={`/transactions/${trx.id}`}>
+                    View
+                  </Link>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
