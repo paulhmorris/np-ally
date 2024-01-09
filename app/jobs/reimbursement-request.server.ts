@@ -48,7 +48,7 @@ export const reimbursementRequestJob = trigger.defineJob({
         status: "success",
         message: "No admins to notify",
       };
-    const emailAddresses = admins.map((admin) => admin.contact.email);
+    const emailAddresses = admins.map((admin) => admin.contact.email).filter(Boolean);
 
     await io.resend.emails.send("send-email", {
       from: "Alliance 436 <no-reply@alliance436.org>",

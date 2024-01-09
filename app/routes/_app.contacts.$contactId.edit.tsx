@@ -231,7 +231,7 @@ export default function EditContactPage() {
           <ContactFields contactTypes={contactTypes} />
 
           {!addressEnabled ? (
-            <Button variant="outline" onClick={() => setAddressEnabled(true)}>
+            <Button type="button" variant="outline" onClick={() => setAddressEnabled(true)}>
               Add Address
             </Button>
           ) : (

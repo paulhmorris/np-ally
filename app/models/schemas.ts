@@ -32,11 +32,17 @@ export const AddressSchema = z.object({
 });
 
 export const NewContactSchema = z.object({
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  organizationName: z.string().optional(),
-  email: z.string().email({ message: "Invalid email address" }),
-  phone: z.string().length(10, "Phone number must be 10 digits").or(z.literal("")),
+  firstName: z.string().max(255).optional(),
+  lastName: z.string().max(255).optional(),
+  organizationName: z.string().max(255).optional(),
+  email: zfd.text(z.string().email({ message: "Invalid email address" }).optional()),
+  phone: zfd.text(
+    z
+      .string()
+      .transform((val) => val.replace(/\D/g, ""))
+      .pipe(z.string().length(10, { message: "Invalid phone number" }))
+      .optional(),
+  ),
   typeId: z.coerce.number().pipe(z.nativeEnum(ContactType)),
   address: AddressSchema.optional(),
   assignedUserIds: zfd.repeatableOfType(zfd.text()).optional(),

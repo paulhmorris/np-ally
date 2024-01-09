@@ -112,7 +112,7 @@ export default function NewContactPage() {
         <ValidatedForm validator={NewContactValidator} method="post" className="space-y-4 sm:max-w-md">
           <ContactFields contactTypes={contactTypes} />
           {!addressEnabled ? (
-            <Button variant="outline" onClick={() => setAddressEnabled(true)}>
+            <Button type="button" variant="outline" onClick={() => setAddressEnabled(true)}>
               Add Address
             </Button>
           ) : (
