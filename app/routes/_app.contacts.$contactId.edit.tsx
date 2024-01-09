@@ -27,6 +27,7 @@ import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
 import { UpdateContactSchema } from "~/models/schemas";
+import { ContactService } from "~/services/ContactService.server";
 import { SessionService } from "~/services/SessionService.server";
 
 const UpdateContactValidator = withZod(UpdateContactSchema);
@@ -53,9 +54,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   const [contactTypes, usersWhoCanBeAssigned] = await Promise.all([
-    prisma.contactType.findMany({ where: { id: { not: ContactType.Admin } } }),
+    ContactService.getContactTypes({ where: { id: { notIn: [ContactType.Admin] } } }),
     prisma.user.findMany({
-      where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
+      where: {
+        role: { in: [UserRole.USER, UserRole.ADMIN] },
+        contactId: { not: params.contactId },
+      },
       include: {
         contact: true,
       },
@@ -114,38 +118,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  const existingContact = await prisma.contact.findUnique({
-    where: { id: formData.id },
-    include: {
-      _count: {
-        select: {
-          transactions: true,
-        },
-      },
-    },
-  });
-
-  if (!existingContact) {
-    return toast.json(
-      request,
-      { message: "Contact not found" },
-      {
-        variant: "destructive",
-        title: "Contact not found",
-        description: "The contact you were trying to edit was not found. Please contact support.",
-      },
-    );
-  }
-
-  // Verify email is unique
-  if (existingContact.id !== formData.id) {
-    return validationError({
-      fieldErrors: {
-        email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
-      },
-    });
-  }
-
   // Users can only edit their assigned contacts
   if (user.role === UserRole.USER) {
     const assignment = await prisma.contactAssigment.findUnique({
@@ -159,6 +131,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!assignment) {
       throw forbidden({ message: "You do not have permission to edit this contact." });
     }
+  }
+
+  // Verify email is unique
+  const existingContact = await prisma.contact.findUnique({
+    where: { email: formData.email },
+  });
+
+  if (existingContact && existingContact.id !== formData.id) {
+    return validationError({
+      fieldErrors: {
+        email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
+      },
+    });
   }
 
   const contact = await prisma.contact.update({
@@ -254,6 +239,11 @@ export default function EditContactPage() {
               <fieldset>
                 <legend className="mb-4 text-sm text-muted-foreground">
                   Assign users to this Contact. They will receive regular reminders to log an engagement.
+                  {contact.assignedUsers.some((a) => a.user.id === user.id) && user.role === UserRole.USER ? (
+                    <p className="mt-2 rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
+                      If you unassign yourself, you will no longer be able to view this contact.
+                    </p>
+                  ) : null}
                 </legend>
                 <div className="flex flex-col gap-2">
                   {usersWhoCanBeAssigned.map((user) => {
