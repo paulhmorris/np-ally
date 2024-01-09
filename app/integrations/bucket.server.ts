@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 interface GetPresignedUrlParams {
@@ -21,7 +21,7 @@ class BucketStorageClient {
     });
   }
 
-  async getPresignedUrl({
+  async getPUTPresignedUrl({
     fileName,
     contentType,
     userId,
@@ -36,6 +36,17 @@ class BucketStorageClient {
 
     const url = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
     return { url, key };
+  }
+
+  async getGETPresignedUrl(key: string): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+    });
+
+    // Valid for 7 days
+    const url = await getSignedUrl(this.s3Client, command, { expiresIn: 604_800 });
+    return url;
   }
 }
 

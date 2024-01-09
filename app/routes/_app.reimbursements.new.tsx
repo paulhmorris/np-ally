@@ -85,7 +85,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     reimbursementRequestId: reimbursementRequest.id,
   });
 
-  return toast.redirect(request, "/dashboards/staff", {
+  return toast.redirect(request, `/dashboards/${user.role === UserRole.USER ? "staff" : "admin"}`, {
     variant: "default",
     title: "Reimbursement request submitted",
     description: "Your request will be processed as soon as possible.",
@@ -146,14 +146,13 @@ export default function NewReimbursementPage() {
               label="Receipt"
               placeholder="Select a receipt"
               className="max-w-[400px]"
-              disabled={receipts.length === 0}
               options={receipts.map((r) => ({
                 value: r.id,
                 label: (
                   <span className="inline-block">
                     {r.title}{" "}
                     <span className="inline-block text-xs text-muted-foreground">
-                      {dayjs(r.createdAt).format("MM/D h:mm A")}
+                      {dayjs(r.createdAt).format("M/D")}
                       {user.role !== "USER" ? ` by ${r.user.contact.email}` : null}
                     </span>
                   </span>

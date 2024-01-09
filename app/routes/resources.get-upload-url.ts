@@ -24,7 +24,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const { fileName, contentType } = result.data;
-  const { url, key } = await Bucket.getPresignedUrl({ fileName, contentType, userId });
+  const { url, key } = await Bucket.getPUTPresignedUrl({ fileName, contentType, userId });
 
   return typedjson({ signedUrl: url, s3Key: key });
 }
