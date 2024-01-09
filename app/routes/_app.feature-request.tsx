@@ -100,7 +100,7 @@ export default function FeatureRequestPage() {
                   body: formData,
                 });
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const json = await result.json();
+                const json = (await result.json()) as { url: string; error?: string };
 
                 if (result.ok) {
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access

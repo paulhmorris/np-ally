@@ -62,12 +62,13 @@ export const donationSummaryJob = trigger.defineJob({
 
     const emails = accounts.map((a) => {
       const totalInCents = a.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
+      const to = a.subscribers.map((s) => s.subscriber.email).filter(Boolean);
 
       return {
         from: "Alliance 436 <no-reply@alliance436.org>",
-        to: a.subscribers.map((s) => s.subscriber.email),
+        to,
         subject: "Weekly Donation summary",
-        html: `Account ${a.code} has received ${formatCentsAsDollars(
+        text: `Account ${a.code} has received ${formatCentsAsDollars(
           totalInCents,
         )} this week. Log in to see more details.`,
       };

@@ -61,14 +61,19 @@ export const engagementReminderJob = trigger.defineJob({
       })),
     );
 
-    const emails = usersToRemind.map((u) => {
-      return {
-        from: "Alliance 436 <no-reply@alliance436.org>",
-        to: u.email,
-        subject: "Contact Reminder",
-        html: `Hi ${u.firstName}, your contact <span style="font:bold;">${u.assignedContact}</span> has not been contacted in 30 days. This is a friendly reminder to reach out to them.`,
-      };
-    });
+    const emails = usersToRemind
+      .map((u) => {
+        if (!u.email) {
+          return null;
+        }
+        return {
+          from: "Alliance 436 <no-reply@alliance436.org>",
+          to: u.email,
+          subject: "Contact Reminder",
+          html: `Hi ${u.firstName}, your contact <span style="font:bold;">${u.assignedContact}</span> has not been contacted in 30 days. This is a friendly reminder to reach out to them.`,
+        };
+      })
+      .filter(Boolean);
 
     if (emails.length > 90) {
       await io.logger.warn(

@@ -9,7 +9,7 @@ export function ContactFields({ contactTypes }: { contactTypes: Array<ContactTyp
         <FormField label="First name" id="firstName" name="firstName" placeholder="Joe" required />
         <FormField label="Last name" id="lastName" name="lastName" placeholder="Donor" />
       </div>
-      <FormField label="Email" id="email" name="email" placeholder="joe@donor.com" required />
+      <FormField label="Email" id="email" name="email" placeholder="joe@donor.com" />
       <FormField label="Phone" id="phone" name="phone" placeholder="8885909724" inputMode="numeric" maxLength={10} />
       <FormSelect
         required

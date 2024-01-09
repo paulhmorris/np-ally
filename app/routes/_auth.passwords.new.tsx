@@ -112,7 +112,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // Reset flow
   if (isReset) {
     // Check old password is correct
-    const user = await verifyLogin(userFromToken.contact.email, oldPassword);
+    const user = await verifyLogin(userFromToken.username, oldPassword);
     if (!user) {
       return validationError({
         fieldErrors: {
@@ -155,7 +155,7 @@ export default function NewPassword() {
               name="oldPassword"
               type="password"
               autoComplete="current-password"
-              required={false}
+              required={isReset}
             />
           ) : (
             <input type="hidden" name="oldPassword" value="" />

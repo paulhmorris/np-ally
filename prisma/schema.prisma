@@ -209,7 +209,7 @@ enum ReimbursementRequestStatus {
 
 model Contact {
   id                   String                @id @default(cuid())
-  email                String                @unique
+  email                String?               @unique
   firstName            String?
   lastName             String?
   organizationName     String?
