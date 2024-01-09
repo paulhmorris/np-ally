@@ -5,10 +5,10 @@ import { MobileNav } from "~/components/mobile-nav";
 
 export default function AppLayout() {
   return (
-    <div className="mx-auto flex h-full w-full flex-col bg-background sm:flex-row">
+    <div className="mx-auto flex h-full w-full flex-col bg-background md:flex-row">
       <MobileNav />
       <DesktopNav />
-      <main className="w-full max-w-screen-2xl grow p-6 sm:ml-64 sm:p-10">
+      <main className="w-full max-w-screen-2xl grow p-6 md:ml-64 md:p-10">
         <Outlet />
       </main>
     </div>

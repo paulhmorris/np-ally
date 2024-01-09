@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import type { MetaFunction } from "@remix-run/react";
+import { Link, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import { IconAddressBook, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
@@ -208,13 +209,21 @@ export default function EditContactPage() {
             </Callout>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-1">
             <Badge variant="outline" className="capitalize">
-              Type: {contact.type.name.toLowerCase()}
+              <div>
+                <IconAddressBook className="size-3" />
+              </div>
+              <span>{contact.type.name.toLowerCase()}</span>
             </Badge>
             {contact.user ? (
-              <Badge variant="outline" className="capitalize">
-                Role: {contact.user.role.toLowerCase()}
+              <Badge variant="secondary">
+                <Link to={`/users/${contact.user.id}`} className="flex items-center gap-1.5">
+                  <div>
+                    <IconUser className="size-3" />
+                  </div>
+                  <span>{contact.user.username}</span>
+                </Link>
               </Badge>
             ) : null}
           </div>

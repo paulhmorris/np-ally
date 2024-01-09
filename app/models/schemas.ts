@@ -26,9 +26,9 @@ export const AddressSchema = z.object({
   street: z.string(),
   street2: z.string().optional(),
   city: z.string(),
-  state: z.string().refine((val) => /^[A-Z]{2}$/.test(val), { message: "Invalid state" }),
-  zip: z.string().refine((val) => /^\d{5}$/.test(val), { message: "Invalid zip code" }),
-  country: z.string(),
+  state: z.string(),
+  zip: z.string(),
+  country: z.string().max(5),
 });
 
 export const NewContactSchema = z.object({

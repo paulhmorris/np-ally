@@ -14,7 +14,7 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className={cn("flex items-center justify-between border-b px-6 py-4 sm:hidden", props.className)}>
+    <nav className={cn("flex items-center justify-between border-b px-6 py-4 md:hidden", props.className)}>
       <UserMenu />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger>

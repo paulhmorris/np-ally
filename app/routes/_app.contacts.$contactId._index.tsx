@@ -15,6 +15,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { prisma } from "~/integrations/prisma.server";
+import { ContactType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { cn } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
@@ -58,6 +59,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export default function ContactDetailsPage() {
   const { contact } = useTypedLoaderData<typeof loader>();
+  const { Donor, External, Organization } = ContactType;
 
   return (
     <>
@@ -82,20 +84,22 @@ export default function ContactDetailsPage() {
       </div>
       <PageContainer className="max-w-screen-md">
         <div className="space-y-5">
-          <div className="space-y-2">
-            <DaysSinceLastEngagement engagements={contact.engagements} />
-            <Button asChild variant="outline">
-              <Link
-                to={{
-                  pathname: "/engagements/new",
-                  search: `?contactId=${contact.id}`,
-                }}
-              >
-                <IconPlus className="mr-2 h-5 w-5" />
-                <span>New Engagement</span>
-              </Link>
-            </Button>
-          </div>
+          {[Donor, External, Organization].includes(contact.typeId) ? (
+            <div className="space-y-2">
+              <DaysSinceLastEngagement engagements={contact.engagements} />
+              <Button asChild variant="outline">
+                <Link
+                  to={{
+                    pathname: "/engagements/new",
+                    search: `?contactId=${contact.id}`,
+                  }}
+                >
+                  <IconPlus className="mr-2 h-5 w-5" />
+                  <span>New Engagement</span>
+                </Link>
+              </Button>
+            </div>
+          ) : null}
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
@@ -131,7 +135,7 @@ function DaysSinceLastEngagement({ engagements }: { engagements: Array<Engagemen
 
   return (
     <p className="text-sm">
-      <span className={cn("font-bold", daysSinceLastEngagement > 30 ? "text-destructive" : "")}>
+      <span className={cn("font-bold", daysSinceLastEngagement > 30 ? "text-destructive" : "text-success")}>
         {daysSinceLastEngagement} day{daysSinceLastEngagement === 1 ? "" : "s"}{" "}
       </span>
       since last engagement.
