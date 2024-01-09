@@ -38,7 +38,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   invariant(params.reimbursementId, "reimbursementId not found");
 
-  const reimbursementRequest = await prisma.reimbursementRequest.findUnique({
+  const rr = await prisma.reimbursementRequest.findUnique({
     where: { id: params.reimbursementId },
     include: {
       user: { include: { contact: true } },
@@ -48,14 +48,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     },
   });
 
-  if (!reimbursementRequest) {
+  if (!rr) {
     throw notFound("Reimbursement request not found");
   }
 
   // Get presigned URLs for all receipts and save them for a week
-  if (reimbursementRequest.receipts.some((r) => !r.s3Url || (r.s3UrlExpiry && new Date(r.s3UrlExpiry) < new Date()))) {
-    const updatePromises = reimbursementRequest.receipts.map(async (receipt) => {
-      if (receipt.s3Url && receipt.s3UrlExpiry && new Date(receipt.s3UrlExpiry) > new Date()) {
+  if (
+    rr.receipts.some((r) => !r.s3Url || (r.s3UrlExpiry && new Date(r.s3UrlExpiry).getTime() < new Date().getTime()))
+  ) {
+    const updatePromises = rr.receipts.map(async (receipt) => {
+      if (!receipt.s3Url || (receipt.s3UrlExpiry && new Date(receipt.s3UrlExpiry).getTime() < new Date().getTime())) {
         console.info(`Generating url for ${receipt.title}`);
         const url = await Bucket.getGETPresignedUrl(receipt.s3Key);
         return prisma.receipt.update({
@@ -71,12 +73,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const accounts = await prisma.account.findMany({
     where: {
       id: {
-        not: reimbursementRequest.accountId,
+        not: rr.accountId,
       },
     },
   });
 
-  return typedjson({ reimbursementRequest, accounts });
+  return typedjson({ reimbursementRequest: rr, accounts });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -91,11 +93,15 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Reopen
   if (_action === "REOPEN") {
-    const reimbursementRequest = await prisma.reimbursementRequest.update({
+    const rr = await prisma.reimbursementRequest.update({
       where: { id },
       data: { status: ReimbursementRequestStatus.PENDING },
     });
-    return toast.json(request, { reimbursementRequest }, { title: "Reimbursement Request reopened", description: "" });
+    return toast.json(
+      request,
+      { reimbursementRequest: rr },
+      { title: "Reimbursement Request reopened", description: "" },
+    );
   }
 
   // Approved
@@ -107,18 +113,60 @@ export async function action({ request }: ActionFunctionArgs) {
         },
       });
     }
+    const rr = await prisma.reimbursementRequest.findUnique({
+      where: { id },
+      include: { account: true },
+    });
 
-    const reimbursementRequest = await prisma.reimbursementRequest.update({
+    if (!rr) {
+      return toast.json(
+        request,
+        { message: "Error" },
+        {
+          variant: "destructive",
+          title: "Reimbursement request not found",
+          description: `The reimbursement request you were trying to approve wasn't found. Support has been notified.`,
+        },
+      );
+    }
+
+    const total = rr.amountInCents;
+
+    // Verify the account has enough funds
+    const account = await prisma.account.findUnique({ where: { id: accountId }, include: { transactions: true } });
+    if (!account) {
+      return validationError({
+        fieldErrors: {
+          accountId: "Account not found.",
+        },
+      });
+    }
+    const balance = account.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
+    if (balance < total) {
+      return toast.json(
+        request,
+        { message: "Insufficient Funds" },
+        {
+          variant: "warning",
+          title: "Insufficient Funds",
+          description: `The reimbursement request couldn't be completed because account ${
+            account.code
+          } has a balance of ${formatCentsAsDollars(balance)}.`,
+        },
+      );
+    }
+
+    await prisma.reimbursementRequest.update({
       where: { id },
       data: { status: _action },
       include: { account: true },
     });
-    const total = reimbursementRequest.amountInCents;
+
     await prisma.$transaction([
       // Incoming transaction
       prisma.transaction.create({
         data: {
-          accountId: reimbursementRequest.accountId,
+          accountId: rr.accountId,
           amountInCents: total,
           description: note,
           date: new Date(),
@@ -138,7 +186,7 @@ export async function action({ request }: ActionFunctionArgs) {
             connect: { id: accountId },
           },
           amountInCents: -1 * total,
-          description: `Reimbursement to account ${reimbursementRequest.account.code}`,
+          description: `Reimbursement to account ${rr.account.code}`,
           date: new Date(),
           transactionItems: {
             create: {
@@ -153,7 +201,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return toast.json(
       request,
-      { reimbursementRequest },
+      { reimbursementRequest: rr },
       {
         title: "Reimbursement Request Approved",
         description: "The reimbursement request has been approved and transactions have been created.",
@@ -162,14 +210,14 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Rejected or Voided
-  const reimbursementRequest = await prisma.reimbursementRequest.update({
+  const rr = await prisma.reimbursementRequest.update({
     where: { id },
     data: { status: _action },
   });
   const normalizedAction = _action === ReimbursementRequestStatus.REJECTED ? "Rejected" : "Voided";
   return toast.json(
     request,
-    { reimbursementRequest },
+    { reimbursementRequest: rr },
     {
       title: `Reimbursement Request ${normalizedAction}`,
       description: `The reimbursement request has been ${normalizedAction} and the requester will be notified.`,
@@ -179,7 +227,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function ReimbursementRequestPage() {
-  const { reimbursementRequest: r, accounts } = useTypedLoaderData<typeof loader>();
+  const { reimbursementRequest: rr, accounts } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -189,46 +237,46 @@ export default function ReimbursementRequestPage() {
           <CardHeader>
             <CardTitle>New Request</CardTitle>
             <CardDescription>
-              To: {r.account.code}
-              {r.account.description ? ` - ${r.account.description}` : null}
+              To: {rr.account.code}
+              {rr.account.description ? ` - ${rr.account.description}` : null}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 items-start gap-2 text-sm">
               <dt className="font-semibold capitalize">Status</dt>
               <dd className="col-span-2">
-                <Badge>{r.status}</Badge>
+                <Badge>{rr.status}</Badge>
               </dd>
               <dt className="font-semibold capitalize">Submitted By</dt>
-              <dd className="col-span-2 text-muted-foreground">{r.user.username}</dd>
+              <dd className="col-span-2 text-muted-foreground">{rr.user.username}</dd>
 
               <dt className="font-semibold capitalize">Submitted On</dt>
-              <dd className="col-span-2 text-muted-foreground">{dayjs(r.date).format("M/D/YYYY h:mm a")}</dd>
+              <dd className="col-span-2 text-muted-foreground">{dayjs(rr.date).format("M/D/YYYY h:mm a")}</dd>
 
               <dt className="font-semibold capitalize">Amount</dt>
-              <dd className="col-span-2 text-muted-foreground">{formatCentsAsDollars(r.amountInCents)}</dd>
+              <dd className="col-span-2 text-muted-foreground">{formatCentsAsDollars(rr.amountInCents)}</dd>
 
               <dt className="font-semibold capitalize">Method</dt>
-              <dd className="col-span-2 text-muted-foreground">{r.method.name}</dd>
+              <dd className="col-span-2 text-muted-foreground">{rr.method.name}</dd>
 
-              {r.vendor ? (
+              {rr.vendor ? (
                 <>
                   <dt className="font-semibold capitalize">Notes</dt>
-                  <dd className="col-span-2 text-muted-foreground">{r.vendor}</dd>
+                  <dd className="col-span-2 text-muted-foreground">{rr.vendor}</dd>
                 </>
               ) : null}
 
-              {r.description ? (
+              {rr.description ? (
                 <>
                   <dt className="font-semibold capitalize">Notes</dt>
-                  <dd className="col-span-2 text-muted-foreground">{r.description}</dd>
+                  <dd className="col-span-2 text-muted-foreground">{rr.description}</dd>
                 </>
               ) : null}
 
               <dt className="font-semibold capitalize">Receipts</dt>
               <dd className="col-span-2 text-muted-foreground">
-                {r.receipts.length > 0 ? (
-                  r.receipts.map((receipt) => {
+                {rr.receipts.length > 0 ? (
+                  rr.receipts.map((receipt) => {
                     if (!receipt.s3Url) {
                       return (
                         <span key={receipt.id} className="text-muted-foreground">
@@ -259,8 +307,8 @@ export default function ReimbursementRequestPage() {
 
           <CardFooter>
             <ValidatedForm method="post" validator={validator} className="mt-8 flex w-full">
-              <input type="hidden" name="id" value={r.id} />
-              {r.status === ReimbursementRequestStatus.PENDING ? (
+              <input type="hidden" name="id" value={rr.id} />
+              {rr.status === ReimbursementRequestStatus.PENDING ? (
                 <fieldset>
                   <legend>
                     <Callout>
