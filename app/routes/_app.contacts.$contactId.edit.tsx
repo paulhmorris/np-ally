@@ -253,7 +253,7 @@ export default function EditContactPage() {
             <>
               <fieldset>
                 <legend className="mb-4 text-sm text-muted-foreground">
-                  Assign users to this contact. They will receive regular reminders to engage with this Contact.
+                  Assign users to this Contact. They will receive regular reminders to log an engagement.
                 </legend>
                 <div className="flex flex-col gap-2">
                   {usersWhoCanBeAssigned.map((user) => {
