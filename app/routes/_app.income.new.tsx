@@ -21,7 +21,7 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { notifySubscribersJob } from "~/jobs/notify-subscribers.server";
-import { ContactType } from "~/lib/constants";
+import { ContactType, TransactionItemType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
@@ -52,7 +52,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ContactService.getContactTypes({ where: { id: { notIn: [ContactType.Admin] } } }),
     prisma.account.findMany(),
     TransactionService.getItemMethods(),
-    TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.IN } }),
+    TransactionService.getItemTypes({
+      where: {
+        OR: [{ direction: TransactionItemTypeDirection.IN }, { id: TransactionItemType.Fee }],
+      },
+    }),
   ]);
   return typedjson({
     contacts,

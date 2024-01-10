@@ -322,6 +322,7 @@ export default function ReimbursementRequestPage() {
                       name="accountId"
                       label="Account to reimburse from"
                       placeholder="Select account"
+                      description="Required for approvals"
                       options={accounts.map((a) => ({
                         value: a.id,
                         label: `${a.code} - ${a.description}`,

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, TransactionItemTypeDirection } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "~/integrations/prisma.server";
@@ -73,7 +73,17 @@ class Service implements ITransactionService {
     return withServiceErrorHandling<Model, T, "create">(async () => {
       const { transactionItems, data, ...rest } = args;
       const { accountId, contactId, ...restOfData } = data;
-      const total = transactionItems.reduce((acc, i) => acc + i.amountInCents, 0);
+
+      const trxItemTypes = await this.getItemTypes();
+      const total = transactionItems.reduce((acc, i) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+        const type = trxItemTypes.find((t) => t.id === i.typeId);
+        if (!type) {
+          return acc;
+        }
+        const modifier = type.direction === TransactionItemTypeDirection.IN ? 1 : -1;
+        return acc + i.amountInCents * modifier;
+      }, 0);
 
       const transaction = await prisma.transaction.create({
         ...rest,
