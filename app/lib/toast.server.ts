@@ -40,10 +40,6 @@ class ToastHandler {
     const session = await SessionService.getSession(request);
     const variant = toast.variant || "default";
 
-    if (variant === "warning" && toast.description) {
-      Sentry.captureMessage(`${toast.title} - ${toast.description}`, "warning");
-    }
-
     if (variant === "destructive" && toast.description) {
       Sentry.captureMessage(`${toast.title} - ${toast.description}`, "error");
     }
