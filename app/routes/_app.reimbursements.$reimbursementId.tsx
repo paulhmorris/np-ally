@@ -245,7 +245,19 @@ export default function ReimbursementRequestPage() {
             <div className="grid grid-cols-3 items-start gap-2 text-sm">
               <dt className="font-semibold capitalize">Status</dt>
               <dd className="col-span-2">
-                <Badge>{rr.status}</Badge>
+                <Badge
+                  variant={
+                    rr.status === "APPROVED"
+                      ? "success"
+                      : rr.status === "REJECTED"
+                        ? "destructive"
+                        : rr.status === "VOID"
+                          ? "outline"
+                          : "secondary"
+                  }
+                >
+                  {rr.status}
+                </Badge>
               </dd>
               <dt className="font-semibold capitalize">Submitted By</dt>
               <dd className="col-span-2 text-muted-foreground">{rr.user.username}</dd>
@@ -313,7 +325,7 @@ export default function ReimbursementRequestPage() {
                   <legend>
                     <Callout>
                       <span>
-                        Approving this will create a transaction on the requesting account for the amount specified.
+                        Approving this will create a transfer from the below account for the amount specified.
                       </span>
                     </Callout>
                   </legend>

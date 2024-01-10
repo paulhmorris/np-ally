@@ -16,11 +16,13 @@ export const notifySubscribersJob = trigger.defineJob({
     resend: triggerResend,
   },
   run: async (payload, io) => {
+    const url = new URL("/", process.env.SITE_URL ?? `https://${process.env.VERCEL_URL}`);
+
     await io.resend.emails.send("send-email", {
       from: "Alliance 436 <no-reply@alliance436.org>",
       to: payload.to,
       subject: "You have new income!",
-      html: `You have new income! Check it out on your <a href="http://localhost:3000">Dashboard</a>.`,
+      html: `You have new income! Check it out on your <a href="${url.toString()}">Dashboard</a>.`,
     });
   },
 });

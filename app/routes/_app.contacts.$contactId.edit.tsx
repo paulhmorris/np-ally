@@ -188,7 +188,7 @@ export default function EditContactPage() {
       <div className="mt-1">
         {user.contactId === contact.id ? (
           <div className="max-w-sm">
-            <Callout className="text-xs">
+            <Callout>
               This is your contact information. Changing this email will not affect your login credentials, but may have
               other unintended effects.
             </Callout>

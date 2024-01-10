@@ -12,6 +12,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { FileUploader } from "~/components/file-uploader";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
+import { Callout } from "~/components/ui/callout";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
@@ -161,9 +162,9 @@ export default function NewReimbursementPage() {
               }))}
             />
           </div>
-          <div className="rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
-            <span>High quality images of itemized receipts are required. Please allow two weeks for processing.</span>
-          </div>
+          <Callout variant="warning">
+            High quality images of itemized receipts are required. Please allow two weeks for processing.
+          </Callout>
           <SubmitButton>Submit</SubmitButton>
         </ValidatedForm>
       </PageContainer>
