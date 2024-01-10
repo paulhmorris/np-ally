@@ -40,12 +40,9 @@ export function FileUploader() {
       const { signedUrl, s3Key } = (await response.json()) as { signedUrl: string; s3Key: string };
 
       // Upload file to bucket
-      const formData = new FormData();
-      formData.append("file", file);
-
       const uploadResponse = await fetch(signedUrl, {
         method: "PUT",
-        body: formData,
+        body: file,
         headers: {
           "Content-Type": file.type,
         },
