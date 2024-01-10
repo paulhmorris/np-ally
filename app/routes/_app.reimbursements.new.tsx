@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
+import { zfd } from "zod-form-data";
 
 import { ErrorComponent } from "~/components/error-component";
 import { FileUploader } from "~/components/file-uploader";
@@ -29,7 +30,7 @@ const validator = withZod(
     description: z.string().optional(),
     amountInCents: CurrencySchema,
     accountId: z.string().cuid(),
-    receiptId: z.string().cuid().optional(),
+    receiptId: zfd.text(z.string().cuid().optional()),
     methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
   }),
 );
