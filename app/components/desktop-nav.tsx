@@ -29,10 +29,12 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
       <ul className="mt-12 space-x-0 space-y-1">
         <DesktopNavLink to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"} name="Home" />
         {globalNavLinks.map((link) => (
-          <DesktopNavLink key={link.href} to={link.href} name={link.name} />
+          <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
         ))}
         {user.role === UserRole.USER
-          ? userNavLinks.map((link) => <DesktopNavLink key={link.href} to={link.href} name={link.name} />)
+          ? userNavLinks.map((link) => (
+              <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
+            ))
           : null}
       </ul>
       {user.role === UserRole.ADMIN || user.role === UserRole.SUPERADMIN ? (
@@ -41,7 +43,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">ADMIN</p>
           <ul className="space-x-0 space-y-1">
             {adminNavLinks.map((link) => (
-              <DesktopNavLink key={link.href} to={link.href} name={link.name} />
+              <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
             ))}
           </ul>
         </>
@@ -52,7 +54,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">SUPER ADMIN</p>
           <ul className="space-x-0 space-y-1">
             {superAdminNavLinks.map((link) => (
-              <DesktopNavLink key={link.href} to={link.href} name={link.name} />
+              <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
             ))}
           </ul>
         </>
@@ -62,10 +64,11 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   );
 }
 
-function DesktopNavLink({ to, name }: { to: string; name: string }) {
+function DesktopNavLink({ to, name, end }: { to: string; name: string; end?: boolean }) {
   return (
     <li>
       <NavLink
+        end={end}
         to={to}
         className={({ isActive }) =>
           cn(

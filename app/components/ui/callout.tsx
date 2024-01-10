@@ -7,7 +7,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeo
   children: React.ReactNode;
 }
 
-const calloutVariants = cva("rounded-md border p-3 text-sm font-medium flex items-start gap-3", {
+const calloutVariants = cva("rounded-md border p-3 text-sm flex items-start gap-3", {
   variants: {
     variant: {
       info: "bg-primary/5 border-primary",

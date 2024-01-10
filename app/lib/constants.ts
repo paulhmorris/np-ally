@@ -112,25 +112,26 @@ export enum LinearLabelID {
 interface NavLink {
   name: string;
   href: string;
+  end: boolean;
 }
 
 export const globalNavLinks: ReadonlyArray<NavLink> = [
-  { name: "Transactions", href: "/transactions" },
-  { name: "Contacts", href: "/contacts" },
-  { name: "Engagements", href: "/engagements" },
-  { name: "Add Engagement", href: "/engagements/new" },
-  { name: "Request Reimbursement", href: "/reimbursements/new" },
+  { name: "Transactions", href: "/transactions", end: false },
+  { name: "Contacts", href: "/contacts", end: false },
+  { name: "Engagements", href: "/engagements", end: true },
+  { name: "Add Engagement", href: "/engagements/new", end: false },
+  { name: "Request Reimbursement", href: "/reimbursements/new", end: false },
 ] as const;
 
 export const userNavLinks: ReadonlyArray<NavLink> = [] as const;
 
 export const adminNavLinks: ReadonlyArray<NavLink> = [
-  { name: "Add Income", href: "/income/new" },
-  { name: "Add Expense", href: "/expense/new" },
-  { name: "Add Transfer", href: "/transfer/new" },
-  { name: "Accounts", href: "/accounts" },
-  { name: "Users", href: "/users" },
-  { name: "Reimbursement Requests", href: "/reimbursements" },
+  { name: "Add Income", href: "/income/new", end: false },
+  { name: "Add Expense", href: "/expense/new", end: false },
+  { name: "Add Transfer", href: "/transfer/new", end: false },
+  { name: "Accounts", href: "/accounts", end: false },
+  { name: "Users", href: "/users", end: false },
+  { name: "Reimbursement Requests", href: "/reimbursements", end: true },
 ] as const;
 
 export const superAdminNavLinks: ReadonlyArray<NavLink> = [] as const;
