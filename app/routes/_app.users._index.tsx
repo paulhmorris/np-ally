@@ -9,12 +9,12 @@ import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { UsersTable } from "~/components/users/users-table";
 import { prisma } from "~/integrations/prisma.server";
-import { requireUser } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Users • Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   const users = await prisma.user.findMany({
     include: { contact: true },
     orderBy: { createdAt: "desc" },

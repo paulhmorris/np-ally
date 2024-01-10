@@ -1,4 +1,4 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma, TransactionItemTypeDirection, UserRole } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -18,9 +18,9 @@ import { PageHeader } from "~/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { prisma } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars, useUser } from "~/lib/utils";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z.object({
@@ -30,7 +30,7 @@ const validator = withZod(
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.transactionId, "transactionId not found");
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
 
   const transaction = await prisma.transaction.findUnique({
     where: { id: params.transactionId },
@@ -63,7 +63,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction = () => [{ title: "Transaction Details • Alliance 436" }];
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
@@ -136,7 +136,10 @@ export default function TransactionDetailsPage() {
                     <TableCell>{item.type.name}</TableCell>
                     <TableCell>{item.method?.name}</TableCell>
                     <TableCell>{item.description}</TableCell>
-                    <TableCell className="text-right">{formatCentsAsDollars(item.amountInCents, 2)}</TableCell>
+                    <TableCell className="text-right">
+                      {item.type.direction === TransactionItemTypeDirection.OUT ? "- " : ""}
+                      {formatCentsAsDollars(item.amountInCents, 2)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

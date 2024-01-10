@@ -136,7 +136,7 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
         id={id}
         aria-invalid={error ? true : props["aria-invalid"]}
         aria-describedby={`${id}-error`}
-        className={cn(error && "border-destructive", className)}
+        className={cn(error && "border-destructive focus-visible:ring-destructive/50", className)}
         {...getInputProps()}
         {...props}
       />
@@ -187,7 +187,11 @@ export function FormSelect(props: FormSelectProps) {
         </span>
       </Label>
       <Select {...field} onValueChange={onChange}>
-        <SelectTrigger id={id} {...rest} className={cn(error && "focus:ring-destructive/50", rest.className)}>
+        <SelectTrigger
+          id={id}
+          {...rest}
+          className={cn(error && "border-destructive focus-visible:ring-destructive/50", rest.className)}
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

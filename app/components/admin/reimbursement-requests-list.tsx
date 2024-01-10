@@ -1,5 +1,5 @@
 import { Prisma, UserRole } from "@prisma/client";
-import { useFetcher } from "@remix-run/react";
+import { Link } from "@remix-run/react";
 import dayjs from "dayjs";
 
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -11,8 +11,6 @@ type ReimbursementRequest = Prisma.ReimbursementRequestGetPayload<{
 }>;
 export function ReimbursementRequestsList({ requests }: { requests: Array<ReimbursementRequest> }) {
   const user = useUser();
-  const fetcher = useFetcher();
-  // const [openConfirm, setOpenConfirm] = useState(false);
 
   return (
     <>
@@ -28,9 +26,9 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
                 {user.role !== UserRole.USER ? <TableHead>Submitted By</TableHead> : null}
                 <TableHead>Account</TableHead>
                 <TableHead>Amount</TableHead>
-                {/* <TableHead>
-                  <span className="sr-only">Delete</span>
-                </TableHead> */}
+                <TableHead>
+                  <span className="sr-only">Action</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -40,34 +38,11 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
                   {user.role !== UserRole.USER ? <TableCell>{req.user.contact.email}</TableCell> : null}
                   <TableCell>{req.account.code}</TableCell>
                   <TableCell>{formatCentsAsDollars(req.amountInCents)}</TableCell>
-                  {/* <TableCell>
-                    <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
-                      <DialogTrigger asChild>
-                        <button type="button" className="font-medium text-primary">
-                          Delete
-                        </button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Are you absolutely sure?</DialogTitle>
-                          <DialogDescription>
-                            This will cancel your request. Any receipts uploaded will become available to use in a new
-                            requeset.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter className="gap-2 sm:space-x-0">
-                          <Button variant="outline" type="submit" onClick={() => setOpenConfirm(false)}>
-                            Cancel
-                          </Button>
-                          <fetcher.Form method="DELETE" action="/resources/reimbursement-requests">
-                            <Button variant="destructive" type="submit">
-                              Confirm
-                            </Button>
-                          </fetcher.Form>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell> */}
+                  <TableCell>
+                    <Link to={`/reimbursements/${req.id}`} className="font-medium text-primary">
+                      View
+                    </Link>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

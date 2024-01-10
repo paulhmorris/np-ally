@@ -7,12 +7,12 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { TransactionsTable } from "~/components/transactions/transactions-table";
 import { prisma } from "~/integrations/prisma.server";
-import { requireUser } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Users • Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const transactions = await prisma.transaction.findMany({
     where:
       user.role === UserRole.USER

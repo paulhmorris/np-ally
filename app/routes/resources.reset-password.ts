@@ -7,9 +7,10 @@ import { z } from "zod";
 
 import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
-import { sendPasswordSetupEmail } from "~/models/mail.server";
-import { deletePasswordReset, generatePasswordReset, getCurrentPasswordReset } from "~/models/password_reset.server";
-import { getUserByEmail } from "~/models/user.server";
+import { deletePasswordReset } from "~/models/password_reset.server";
+import { MailService } from "~/services/MailService.server";
+import { PasswordService } from "~/services/PasswordService.server";
+import { UserService } from "~/services/UserService.server";
 
 const validator = withZod(z.object({ username: z.string().email() }));
 
@@ -23,7 +24,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return validationError(result.error);
   }
 
-  const user = await getUserByEmail(result.data.username);
+  const user = await UserService.getUserByUsername(result.data.username);
   if (!user) {
     return toast.json(
       request,
@@ -36,7 +37,7 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  const existingReset = await getCurrentPasswordReset({ userId: user.id });
+  const existingReset = await PasswordService.getPasswordResetByUserId(user.id);
   if (existingReset) {
     return toast.json(
       request,
@@ -51,8 +52,8 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  const reset = await generatePasswordReset({ username: user.username });
-  const { data, error } = await sendPasswordSetupEmail({ email: user.username, token: reset.token });
+  const reset = await PasswordService.generatePasswordReset(user.username);
+  const { data, error } = await MailService.sendPasswordSetupEmail({ email: user.username, token: reset.token });
 
   // Unknown Resend error
   if (error || !data) {
@@ -71,7 +72,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Email not sent
   if ("statusCode" in data && data.statusCode !== 200) {
-    await deletePasswordReset({ token: reset.token });
+    // Delete the reset if there was an error emailing the user
+    await PasswordService.deletePasswordReset(reset.id);
     return toast.json(
       request,
       { data },

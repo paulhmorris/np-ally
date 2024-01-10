@@ -7,9 +7,10 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Notifications } from "~/components/notifications";
-import { commitSession, getSession, getUser, themeSessionResolver } from "~/lib/session.server";
+import { themeSessionResolver } from "~/lib/session.server";
 import { getGlobalToast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
+import { SessionService } from "~/services/SessionService.server";
 import stylesheet from "~/tailwind.css";
 
 // prettier-ignore
@@ -19,12 +20,12 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const session = await getSession(request);
+  const session = await SessionService.getSession(request);
   const { getTheme } = await themeSessionResolver(request);
 
   return typedjson(
     {
-      user: await getUser(request),
+      user: await SessionService.getUser(request),
       theme: getTheme(),
       serverToast: getGlobalToast(session),
       ENV: {
@@ -34,7 +35,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
     {
       headers: {
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await SessionService.commitSession(session),
       },
     },
   );

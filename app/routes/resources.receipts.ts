@@ -4,10 +4,10 @@ import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 import { prisma } from "~/integrations/prisma.server";
-import { requireUserId } from "~/lib/session.server";
+import { SessionService } from "~/services/SessionService.server";
 
 export async function action({ request }: ActionFunctionArgs) {
-  const userId = await requireUserId(request);
+  const userId = await SessionService.requireUserId(request);
 
   switch (request.method) {
     case "POST": {

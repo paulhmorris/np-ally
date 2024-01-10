@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import type { MetaFunction } from "@remix-run/react";
+import { Link, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import { IconAddressBook, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
@@ -23,17 +24,18 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
 import { UpdateContactSchema } from "~/models/schemas";
+import { ContactService } from "~/services/ContactService.server";
+import { SessionService } from "~/services/SessionService.server";
 
 const UpdateContactValidator = withZod(UpdateContactSchema);
 
 export const meta: MetaFunction = () => [{ title: "Edit Contact • Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
 
   // Users can only edit their assigned contacts
@@ -52,9 +54,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   const [contactTypes, usersWhoCanBeAssigned] = await Promise.all([
-    prisma.contactType.findMany({ where: { id: { not: ContactType.Admin } } }),
+    ContactService.getContactTypes({ where: { id: { notIn: [ContactType.Admin] } } }),
     prisma.user.findMany({
-      where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
+      where: {
+        role: { in: [UserRole.USER, UserRole.ADMIN] },
+        contactId: { not: params.contactId },
+      },
       include: {
         contact: true,
       },
@@ -97,7 +102,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const result = await UpdateContactValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -109,38 +114,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError({
       fieldErrors: {
         organizationName: "Organization name is required for organization contacts.",
-      },
-    });
-  }
-
-  const existingContact = await prisma.contact.findUnique({
-    where: { id: formData.id },
-    include: {
-      _count: {
-        select: {
-          transactions: true,
-        },
-      },
-    },
-  });
-
-  if (!existingContact) {
-    return toast.json(
-      request,
-      { message: "Contact not found" },
-      {
-        variant: "destructive",
-        title: "Contact not found",
-        description: "The contact you were trying to edit was not found. Please contact support.",
-      },
-    );
-  }
-
-  // Verify email is unique
-  if (existingContact.id !== formData.id) {
-    return validationError({
-      fieldErrors: {
-        email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
       },
     });
   }
@@ -158,6 +131,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!assignment) {
       throw forbidden({ message: "You do not have permission to edit this contact." });
     }
+  }
+
+  // Verify email is unique
+  const existingContact = await prisma.contact.findUnique({
+    where: { email: formData.email },
+  });
+
+  if (existingContact && existingContact.id !== formData.id) {
+    return validationError({
+      fieldErrors: {
+        email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
+      },
+    });
   }
 
   const contact = await prisma.contact.update({
@@ -202,19 +188,27 @@ export default function EditContactPage() {
       <div className="mt-1">
         {user.contactId === contact.id ? (
           <div className="max-w-sm">
-            <Callout className="text-xs">
+            <Callout>
               This is your contact information. Changing this email will not affect your login credentials, but may have
               other unintended effects.
             </Callout>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-1">
             <Badge variant="outline" className="capitalize">
-              Type: {contact.type.name.toLowerCase()}
+              <div>
+                <IconAddressBook className="size-3" />
+              </div>
+              <span>{contact.type.name.toLowerCase()}</span>
             </Badge>
             {contact.user ? (
-              <Badge variant="outline" className="capitalize">
-                Role: {contact.user.role.toLowerCase()}
+              <Badge variant="secondary">
+                <Link to={`/users/${contact.user.id}`} className="flex items-center gap-1.5">
+                  <div>
+                    <IconUser className="size-3" />
+                  </div>
+                  <span>{contact.user.username}</span>
+                </Link>
               </Badge>
             ) : null}
           </div>
@@ -244,7 +238,12 @@ export default function EditContactPage() {
             <>
               <fieldset>
                 <legend className="mb-4 text-sm text-muted-foreground">
-                  Assign users to this contact. They will receive regular reminders to engage with this Contact.
+                  Assign users to this Contact. They will receive regular reminders to log an engagement.
+                  {contact.assignedUsers.some((a) => a.user.id === user.id) && user.role === UserRole.USER ? (
+                    <p className="mt-2 rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
+                      If you unassign yourself, you will no longer be able to view this contact.
+                    </p>
+                  ) : null}
                 </legend>
                 <div className="flex flex-col gap-2">
                   {usersWhoCanBeAssigned.map((user) => {

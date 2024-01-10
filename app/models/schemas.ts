@@ -2,7 +2,6 @@ import { z } from "zod";
 import { zfd } from "zod-form-data";
 
 import { ContactType, TransactionItemMethod, TransactionItemType } from "~/lib/constants";
-import { STATES } from "~/lib/data";
 
 export const CheckboxSchema = z
   .string()
@@ -20,16 +19,16 @@ export const TransactionItemSchema = z.object({
   typeId: z.coerce.number().pipe(z.nativeEnum(TransactionItemType, { invalid_type_error: "Invalid type" })),
   methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod, { invalid_type_error: "Invalid method" })),
   amountInCents: CurrencySchema,
-  description: z.string().max(2500).optional(),
+  description: z.string().optional(),
 });
 
 export const AddressSchema = z.object({
-  street: z.string().max(255),
+  street: z.string(),
   street2: z.string().optional(),
-  city: z.string().max(255),
-  state: z.string().refine((val) => STATES.includes(val), { message: "Invalid state" }),
-  zip: z.string().refine((val) => /^\d{5}$/.test(val), { message: "Invalid zip code" }),
-  country: z.string().max(3, { message: "Invalid country" }),
+  city: z.string(),
+  state: z.string(),
+  zip: z.string(),
+  country: z.string().max(5),
 });
 
 export const NewContactSchema = z.object({

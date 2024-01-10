@@ -11,10 +11,10 @@ import { FormField } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { Sentry } from "~/integrations/sentry";
-import { createUserSession, getUserId } from "~/lib/session.server";
 import { safeRedirect } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
 import { verifyLogin } from "~/models/user.server";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z.object({
@@ -26,7 +26,7 @@ const validator = withZod(
 );
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const userId = await getUserId(request);
+  const userId = await SessionService.getUserId(request);
   if (userId) return redirect("/");
   return json({});
 };
@@ -49,7 +49,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   Sentry.setUser({ id: user.id, email: user.username });
 
-  return createUserSession({
+  return SessionService.createUserSession({
     request,
     userId: user.id,
     redirectTo: safeRedirect(redirectTo, "/"),

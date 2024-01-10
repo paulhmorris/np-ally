@@ -158,9 +158,15 @@ model TransactionItemMethod {
 }
 
 model TransactionItemType {
-  id               Int               @id @default(autoincrement())
-  name             String            @unique
+  id               Int                           @id @default(autoincrement())
+  name             String                        @unique
+  direction        TransactionItemTypeDirection? @default(IN)
   transactionItems TransactionItem[]
+}
+
+enum TransactionItemTypeDirection {
+  IN
+  OUT
 }
 
 model ReimbursementRequest {
@@ -189,6 +195,8 @@ model ReimbursementRequest {
 model Receipt {
   id                    String                 @id @default(cuid())
   s3Key                 String
+  s3Url                 String?                @db.MediumText
+  s3UrlExpiry           DateTime?
   title                 String
   user                  User                   @relation(fields: [userId], references: [id])
   userId                String

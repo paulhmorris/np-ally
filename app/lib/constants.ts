@@ -32,7 +32,9 @@ export enum TransactionItemType {
   Tax = 6,
   Transfer_In = 7,
   Transfer_Out = 8,
-  Other = 9,
+  Other_Incoming = 9,
+  Other_Outgoing = 10,
+  Fee = 11,
 }
 
 export enum TransactionItemMethod {
@@ -54,6 +56,7 @@ export const transactionItemMethods: Array<{ id: TransactionItemMethod; name: st
   { id: 6, name: "Tithe.ly" },
   { id: 7, name: "Other" },
 ];
+
 export const transactionItemTypes: Array<{ id: TransactionItemType; name: string }> = [
   { id: 1, name: "Donation" },
   { id: 2, name: "Income" },
@@ -63,8 +66,11 @@ export const transactionItemTypes: Array<{ id: TransactionItemType; name: string
   { id: 6, name: "Tax" },
   { id: 7, name: "Transfer In" },
   { id: 8, name: "Transfer Out" },
-  { id: 9, name: "Other" },
+  { id: 9, name: "Other (Incoming)" },
+  { id: 10, name: "Other (Outgoing)" },
+  { id: 11, name: "Fee" },
 ];
+
 export const contactTypes: Array<{ id: ContactType; name: string }> = [
   { id: 1, name: "Donor" },
   { id: 2, name: "External" },
@@ -106,23 +112,26 @@ export enum LinearLabelID {
 interface NavLink {
   name: string;
   href: string;
+  end: boolean;
 }
 
 export const globalNavLinks: ReadonlyArray<NavLink> = [
-  { name: "Transactions", href: "/transactions" },
-  { name: "Contacts", href: "/contacts" },
-  { name: "Request Reimbursement", href: "/reimbursements/new" },
-  { name: "Add Engagement", href: "/engagements/new" },
+  { name: "Transactions", href: "/transactions", end: false },
+  { name: "Contacts", href: "/contacts", end: false },
+  { name: "Engagements", href: "/engagements", end: true },
+  { name: "Add Engagement", href: "/engagements/new", end: false },
+  { name: "Request Reimbursement", href: "/reimbursements/new", end: false },
 ] as const;
 
 export const userNavLinks: ReadonlyArray<NavLink> = [] as const;
 
 export const adminNavLinks: ReadonlyArray<NavLink> = [
-  { name: "Add Income", href: "/income/new" },
-  { name: "Add Expense", href: "/expense/new" },
-  { name: "Add Transfer", href: "/transfer/new" },
-  { name: "Accounts", href: "/accounts" },
-  { name: "Users", href: "/users" },
+  { name: "Add Income", href: "/income/new", end: false },
+  { name: "Add Expense", href: "/expense/new", end: false },
+  { name: "Add Transfer", href: "/transfer/new", end: false },
+  { name: "Accounts", href: "/accounts", end: false },
+  { name: "Users", href: "/users", end: false },
+  { name: "Reimbursement Requests", href: "/reimbursements", end: true },
 ] as const;
 
 export const superAdminNavLinks: ReadonlyArray<NavLink> = [] as const;

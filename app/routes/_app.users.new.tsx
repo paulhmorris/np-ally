@@ -17,12 +17,12 @@ import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
-import { sendPasswordSetupEmail } from "~/models/mail.server";
-import { generatePasswordReset } from "~/models/password_reset.server";
 import { CheckboxSchema } from "~/models/schemas";
+import { MailService } from "~/services/MailService.server";
+import { PasswordService } from "~/services/PasswordService.server";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z.object({
@@ -39,7 +39,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "New User • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUser(request, ["ADMIN"]);
+  await SessionService.requireAdmin(request);
   return typedjson({
     accounts: await prisma.account.findMany({
       where: {
@@ -51,7 +51,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const authorizedUser = await requireUser(request, ["ADMIN"]);
+  const authorizedUser = await SessionService.requireAdmin(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -89,8 +89,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   if (sendPasswordSetup) {
-    const { token } = await generatePasswordReset({ username: user.username });
-    await sendPasswordSetupEmail({ email: user.username, token });
+    const { token } = await PasswordService.generatePasswordReset(user.username);
+    await MailService.sendPasswordSetupEmail({ email: user.username, token });
   }
 
   return toast.redirect(request, `/users/${user.id}`, {

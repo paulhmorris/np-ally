@@ -21,9 +21,9 @@ import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "User • Alliance 436" }];
 
@@ -45,7 +45,7 @@ const passwordResetValidator = withZod(
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const authorizedUser = await requireUser(request);
+  const authorizedUser = await SessionService.requireUser(request);
   invariant(params.userId, "userId not found");
 
   if (authorizedUser.role === UserRole.USER && authorizedUser.id !== params.userId) {
@@ -106,7 +106,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const authorizedUser = await requireUser(request);
+  const authorizedUser = await SessionService.requireUser(request);
 
   const result = await validator.validate(await request.formData());
   if (result.error) {
@@ -269,6 +269,9 @@ export default function UserDetailsPage() {
                 >
                   <SelectItem value="USER">User</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
+                  {authorizedUser.role === UserRole.SUPERADMIN ? (
+                    <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+                  ) : null}
                 </FormSelect>
               </>
             ) : (

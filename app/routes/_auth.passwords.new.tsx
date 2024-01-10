@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useSearchParams } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import { typedjson } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
@@ -8,11 +9,13 @@ import { ErrorComponent } from "~/components/error-component";
 import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { unauthorized } from "~/lib/responses.server";
-import { getSession, sessionStorage } from "~/lib/session.server";
+import { sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
-import { expirePasswordReset, getPasswordResetByToken } from "~/models/password_reset.server";
-import { getUserById, resetOrSetupUserPassword, verifyLogin } from "~/models/user.server";
+import { verifyLogin } from "~/models/user.server";
+import { PasswordService } from "~/services/PasswordService.server";
+import { SessionService } from "~/services/SessionService.server";
+import { UserService } from "~/services/UserService.server";
 
 const validator = withZod(
   z
@@ -42,18 +45,18 @@ const validator = withZod(
 );
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const session = await getSession(request);
+  const session = await SessionService.getSession(request);
   const token = getSearchParam("token", request);
   if (!token) {
     throw unauthorized("No token provided");
   }
 
-  const reset = await getPasswordResetByToken({ token });
+  const reset = await PasswordService.getPasswordResetByToken(token);
   if (!reset || reset.expiresAt < new Date()) {
     throw unauthorized("Invalid token");
   }
 
-  return new Response(null, {
+  return typedjson(null, {
     headers: {
       "Set-Cookie": await sessionStorage.destroySession(session),
     },
@@ -72,7 +75,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Check token
   const { oldPassword, newPassword, token } = result.data;
-  const reset = await getPasswordResetByToken({ token });
+  const reset = await PasswordService.getPasswordResetByToken(token);
   if (!reset) {
     return toast.json(
       request,
@@ -100,7 +103,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Check user
-  const userFromToken = await getUserById(reset.userId);
+  const userFromToken = await UserService.getUserById(reset.userId, { include: { contact: true } });
   if (!userFromToken) {
     return toast.json(
       request,
@@ -122,14 +125,14 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Reset password
-    await resetOrSetupUserPassword({ userId: user.id, password: newPassword });
+    await UserService.resetOrSetupUserPassword({ userId: user.id, password: newPassword });
   } else {
     // Setup flow
-    await resetOrSetupUserPassword({ userId: userFromToken.id, password: newPassword });
+    await UserService.resetOrSetupUserPassword({ userId: userFromToken.id, password: newPassword });
   }
 
   // Use token
-  await expirePasswordReset({ token });
+  await PasswordService.expirePasswordReset(token);
 
   return toast.redirect(request, "/login", {
     variant: "default",

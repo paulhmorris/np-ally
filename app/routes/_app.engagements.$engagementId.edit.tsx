@@ -14,8 +14,8 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType, EngagementType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z.object({
@@ -28,7 +28,7 @@ const validator = withZod(
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request);
+  await SessionService.requireUser(request);
   invariant(params.engagementId, "engagementId not found");
 
   const [engagement, contacts, engagementTypes] = await Promise.all([
@@ -54,7 +54,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction = () => [{ title: "Edit Account • Alliance 436" }];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request);
+  await SessionService.requireUser(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);

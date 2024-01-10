@@ -6,21 +6,23 @@ import dayjs from "dayjs";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
+import { zfd } from "zod-form-data";
 
 import { ErrorComponent } from "~/components/error-component";
 import { FileUploader } from "~/components/file-uploader";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
+import { Callout } from "~/components/ui/callout";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getToday, useUser } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
+import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
   z.object({
@@ -29,7 +31,7 @@ const validator = withZod(
     description: z.string().optional(),
     amountInCents: CurrencySchema,
     accountId: z.string().cuid(),
-    receiptId: z.string().cuid().optional(),
+    receiptId: zfd.text(z.string().cuid().optional()),
     methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
   }),
 );
@@ -37,7 +39,7 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "Reimbursement Request • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const [receipts, methods, accounts] = await Promise.all([
     prisma.receipt.findMany({
       // Admins can see all receipts, users can only see their own
@@ -58,7 +60,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -85,7 +87,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     reimbursementRequestId: reimbursementRequest.id,
   });
 
-  return toast.redirect(request, "/dashboards/staff", {
+  return toast.redirect(request, `/dashboards/${user.role === UserRole.USER ? "staff" : "admin"}`, {
     variant: "default",
     title: "Reimbursement request submitted",
     description: "Your request will be processed as soon as possible.",
@@ -146,14 +148,13 @@ export default function NewReimbursementPage() {
               label="Receipt"
               placeholder="Select a receipt"
               className="max-w-[400px]"
-              disabled={receipts.length === 0}
               options={receipts.map((r) => ({
                 value: r.id,
                 label: (
                   <span className="inline-block">
                     {r.title}{" "}
                     <span className="inline-block text-xs text-muted-foreground">
-                      {dayjs(r.createdAt).format("MM/D h:mm A")}
+                      {dayjs(r.createdAt).format("M/D")}
                       {user.role !== "USER" ? ` by ${r.user.contact.email}` : null}
                     </span>
                   </span>
@@ -161,9 +162,9 @@ export default function NewReimbursementPage() {
               }))}
             />
           </div>
-          <div className="rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
-            <span>High quality images of itemized receipts are required. Please allow two weeks for processing.</span>
-          </div>
+          <Callout variant="warning">
+            High quality images of itemized receipts are required. Please allow two weeks for processing.
+          </Callout>
           <SubmitButton>Submit</SubmitButton>
         </ValidatedForm>
       </PageContainer>

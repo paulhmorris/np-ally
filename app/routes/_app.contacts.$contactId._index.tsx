@@ -7,6 +7,7 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
 
 import { ContactCard } from "~/components/contacts/contact-card";
+import { ContactEngagementsTable } from "~/components/contacts/contact-engagements-table";
 import { RecentTransactionsTable } from "~/components/contacts/recent-donations-table";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
@@ -15,14 +16,15 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { prisma } from "~/integrations/prisma.server";
+import { ContactType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
-import { requireUser } from "~/lib/session.server";
 import { cn } from "~/lib/utils";
+import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Contact • Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await requireUser(request);
+  await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
 
   const contact = await prisma.contact.findUnique({
@@ -32,6 +34,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       type: true,
       address: true,
       engagements: {
+        include: {
+          type: true,
+        },
         orderBy: { date: "desc" },
       },
       assignedUsers: {
@@ -44,6 +49,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         },
       },
       transactions: {
+        where: {
+          date: { gte: dayjs().subtract(90, "d").toDate() },
+        },
         include: {
           account: true,
         },
@@ -58,6 +66,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export default function ContactDetailsPage() {
   const { contact } = useTypedLoaderData<typeof loader>();
+  const { Donor, External, Organization } = ContactType;
+  const isExternal = [Donor, External, Organization].includes(contact.typeId);
 
   return (
     <>
@@ -82,20 +92,22 @@ export default function ContactDetailsPage() {
       </div>
       <PageContainer className="max-w-screen-md">
         <div className="space-y-5">
-          <div className="space-y-2">
-            <DaysSinceLastEngagement engagements={contact.engagements} />
-            <Button asChild variant="outline">
-              <Link
-                to={{
-                  pathname: "/engagements/new",
-                  search: `?contactId=${contact.id}`,
-                }}
-              >
-                <IconPlus className="mr-2 h-5 w-5" />
-                <span>New Engagement</span>
-              </Link>
-            </Button>
-          </div>
+          {isExternal ? (
+            <div className="space-y-2">
+              <DaysSinceLastEngagement engagements={contact.engagements} />
+              <Button asChild variant="outline">
+                <Link
+                  to={{
+                    pathname: "/engagements/new",
+                    search: `?contactId=${contact.id}`,
+                  }}
+                >
+                  <IconPlus className="mr-2 h-5 w-5" />
+                  <span>New Engagement</span>
+                </Link>
+              </Button>
+            </div>
+          ) : null}
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
@@ -120,6 +132,12 @@ export default function ContactDetailsPage() {
           </div>
           {contact.transactions.length > 0 ? <RecentTransactionsTable transactions={contact.transactions} /> : null}
         </div>
+        {isExternal && contact.engagements.length > 0 ? (
+          <div className="mt-12">
+            <h2 className="mb-4 text-2xl font-semibold">Engagements</h2>
+            <ContactEngagementsTable data={contact.engagements} />
+          </div>
+        ) : null}
       </PageContainer>
     </>
   );
@@ -131,7 +149,7 @@ function DaysSinceLastEngagement({ engagements }: { engagements: Array<Engagemen
 
   return (
     <p className="text-sm">
-      <span className={cn("font-bold", daysSinceLastEngagement > 30 ? "text-destructive" : "")}>
+      <span className={cn("font-bold", daysSinceLastEngagement > 30 ? "text-destructive" : "text-success")}>
         {daysSinceLastEngagement} day{daysSinceLastEngagement === 1 ? "" : "s"}{" "}
       </span>
       since last engagement.

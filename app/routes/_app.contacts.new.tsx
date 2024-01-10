@@ -18,16 +18,16 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
-import { requireUser } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { NewContactSchema } from "~/models/schemas";
+import { SessionService } from "~/services/SessionService.server";
 
 const NewContactValidator = withZod(NewContactSchema);
 
 export const meta: MetaFunction = () => [{ title: "New Contact • Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await requireUser(request);
+  const user = await SessionService.requireUser(request);
   const contactTypes = await prisma.contactType.findMany({
     where:
       user.role === UserRole.USER
@@ -59,7 +59,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireUser(request);
+  await SessionService.requireUser(request);
   const result = await NewContactValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
