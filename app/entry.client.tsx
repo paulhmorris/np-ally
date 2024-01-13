@@ -1,5 +1,6 @@
 /* eslint-disable import/namespace */
 import { RemixBrowser, useLocation, useMatches } from "@remix-run/react";
+import { CaptureConsole } from "@sentry/integrations";
 import { StrictMode, startTransition, useEffect } from "react";
 import { hydrateRoot } from "react-dom/client";
 
@@ -20,6 +21,7 @@ Sentry.init({
       routingInstrumentation: Sentry.remixRouterInstrumentation(useEffect, useLocation, useMatches),
     }),
     new Sentry.Replay(),
+    new CaptureConsole(),
   ],
 });
 
