@@ -40,6 +40,12 @@ export function ContactEngagementsTable<TData>({ data }: DataTableProps<TData>) 
     columns,
     filterFns: { fuzzy: fuzzyFilter },
     globalFilterFn: fuzzyFilter,
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 20,
+      },
+    },
     state: {
       sorting,
       columnVisibility,
@@ -105,7 +111,7 @@ const columns: Array<ColumnDef<Engagement>> = [
   {
     id: "action",
     cell: ({ row }) => (
-      <Link to={`/contacts/${row.original.id}`} className="font-medium text-primary">
+      <Link to={`/engagements/${row.original.id}`} className="font-medium text-primary">
         View
       </Link>
     ),

@@ -40,6 +40,12 @@ export function AccountTransactionsTable<TData>({ data }: DataTableProps<TData>)
     columns,
     filterFns: { fuzzy: fuzzyFilter },
     globalFilterFn: fuzzyFilter,
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 20,
+      },
+    },
     state: {
       sorting,
       columnVisibility,

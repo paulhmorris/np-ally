@@ -24,13 +24,13 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border-2 p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
-        default: "border border-border bg-white dark:bg-muted text-foreground",
-        warning: "bg-warning text-warning-foreground",
-        destructive: "destructive group border-destructive bg-destructive text-destructive-foreground",
+        default: "border-border/50 bg-white dark:bg-muted text-foreground",
+        warning: "bg-warning/5 text-foreground border-warning/50 group",
+        destructive: "destructive group border-destructive/50 bg-destructive/5 text-destructive",
       },
     },
     defaultVariants: {
@@ -120,8 +120,8 @@ export function Toaster() {
       {toasts.map(function ({ id, title, description, action, icon, ...props }) {
         const iconMap: Record<NonNullable<typeof props.variant>, JSX.Element> = {
           default: <IconCircleCheckFilled className="h-6 w-6 text-success" />,
-          warning: <IconAlertTriangleFilled className="h-6 w-6" />,
-          destructive: <IconAlertCircleFilled className="h-6 w-6" />,
+          warning: <IconAlertTriangleFilled className="h-6 w-6 text-warning" />,
+          destructive: <IconAlertCircleFilled className="h-6 w-6 text-destructive" />,
         };
         const iconToRender = icon ? icon : iconMap[props.variant ?? "default"];
 

@@ -1,4 +1,5 @@
 import { Form } from "@remix-run/react";
+import { IconAlertTriangleFilled } from "@tabler/icons-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -29,6 +30,7 @@ export function ConfirmDestructiveModal({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
+          <IconAlertTriangleFilled className="h-8 w-8 self-center text-destructive" />
           <DialogTitle>Are you absolutely sure?</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
