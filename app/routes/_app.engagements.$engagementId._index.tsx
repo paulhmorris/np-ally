@@ -1,15 +1,20 @@
-import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
+import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
+import { z } from "zod";
 
+import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
+import { toast } from "~/lib/toast.server";
 import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "View Engagement | Alliance 436" }];
@@ -30,13 +35,34 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw notFound("Engagement not found");
   }
 
-  return typedjson({
-    engagement,
+  return typedjson({ engagement });
+};
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  await SessionService.requireAdmin(request);
+  invariant(params.engagementId, "engagementId not found");
+
+  const validator = withZod(z.object({ _action: z.literal("delete") }));
+  const result = await validator.validate(await request.formData());
+  if (result.error) {
+    return toast.json(
+      request,
+      { success: false },
+      { variant: "destructive", title: "Error deleting engagement", description: "Invalid request" },
+    );
+  }
+
+  await prisma.engagement.delete({ where: { id: Number(params.engagementId) } });
+
+  return toast.redirect(request, "/engagements", {
+    title: "Engagement deleted",
+    description: "The engagement has been deleted",
   });
 };
 
 export default function EngagementPage() {
   const { engagement } = useTypedLoaderData<typeof loader>();
+  const [open, setOpen] = useState(false);
 
   return (
     <>
@@ -55,6 +81,13 @@ export default function EngagementPage() {
           </CardHeader>
           <CardContent>{engagement.description}</CardContent>
           <CardFooter>
+            <ConfirmDestructiveModal
+              open={open}
+              onOpenChange={setOpen}
+              description={`This action cannot be undone. This engagement with ${engagement.contact.firstName}${
+                engagement.contact.lastName ? " " + engagement.contact.lastName : ""
+              } will be permanently deleted. If there are no other engagements with this contact, users will no longer receive notifications to follow up.`}
+            />
             <Button asChild variant="outline" className="ml-auto">
               <Link to={`/engagements/${engagement.id}/edit`}>Edit</Link>
             </Button>
