@@ -26,7 +26,7 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "New Engagement • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Add Engagement | Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
@@ -77,7 +77,7 @@ export default function NewEngagementPage() {
 
   return (
     <>
-      <PageHeader title="New Engagement" />
+      <PageHeader title="Add Engagement" />
       <PageContainer>
         <ValidatedForm
           defaultValues={{ contactId: searchParams.get("contactId") ?? undefined }}

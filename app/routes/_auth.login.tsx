@@ -57,7 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "Login" }];
+export const meta: MetaFunction = () => [{ title: "Login | Alliance 436" }];
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();

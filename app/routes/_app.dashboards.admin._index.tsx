@@ -11,7 +11,7 @@ import { prisma } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { SessionService } from "~/services/SessionService.server";
 
-export const meta: MetaFunction = () => [{ title: "Home • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Home | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);

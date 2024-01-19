@@ -1,6 +1,6 @@
 import { ReimbursementRequestStatus } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { Link, MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { IconExternalLink } from "@tabler/icons-react";
 import dayjs from "dayjs";
@@ -22,8 +22,15 @@ import { prisma } from "~/integrations/prisma.server";
 import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { formatCentsAsDollars } from "~/lib/utils";
+import { capitalize, formatCentsAsDollars } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => [
+  {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    title: `${capitalize(String(data.reimbursementRequest.status))} Request | Alliance 436`,
+  },
+];
 
 const validator = withZod(
   z.object({

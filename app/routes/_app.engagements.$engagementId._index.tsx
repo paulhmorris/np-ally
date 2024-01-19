@@ -12,7 +12,7 @@ import { prisma } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
 import { SessionService } from "~/services/SessionService.server";
 
-export const meta: MetaFunction = () => [{ title: "View Engagement • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "View Engagement | Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireUser(request);
@@ -55,7 +55,7 @@ export default function EngagementPage() {
           </CardHeader>
           <CardContent>{engagement.description}</CardContent>
           <CardFooter>
-            <Button asChild variant="secondary" className="ml-auto">
+            <Button asChild variant="outline" className="ml-auto">
               <Link to={`/engagements/${engagement.id}/edit`}>Edit</Link>
             </Button>
           </CardFooter>

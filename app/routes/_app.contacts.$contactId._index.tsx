@@ -21,8 +21,6 @@ import { notFound } from "~/lib/responses.server";
 import { cn } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
 
-export const meta: MetaFunction = () => [{ title: "Contact • Alliance 436" }];
-
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
@@ -63,6 +61,16 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return typedjson({ contact });
 };
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => [
+  {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    title: `${data.contact.firstName}${
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      data.contact.lastName ? " " + data.contact.lastName : ""
+    } | Alliance 436`,
+  },
+];
 
 export default function ContactDetailsPage() {
   const { contact } = useTypedLoaderData<typeof loader>();

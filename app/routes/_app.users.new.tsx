@@ -36,7 +36,7 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "New User • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "New User | Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);

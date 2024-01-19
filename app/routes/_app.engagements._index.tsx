@@ -12,7 +12,7 @@ import { Button } from "~/components/ui/button";
 import { prisma } from "~/integrations/prisma.server";
 import { SessionService } from "~/services/SessionService.server";
 
-export const meta: MetaFunction = () => [{ title: "Contacts • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Engagements | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);

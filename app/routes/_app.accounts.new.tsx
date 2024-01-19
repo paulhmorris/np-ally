@@ -46,7 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "Edit Account • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Edit Account | Alliance 436" }];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);

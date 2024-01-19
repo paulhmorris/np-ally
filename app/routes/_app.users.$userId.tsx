@@ -25,8 +25,6 @@ import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
 
-export const meta: MetaFunction = () => [{ title: "User • Alliance 436" }];
-
 const validator = withZod(
   z.object({
     id: z.string().cuid(),
@@ -187,6 +185,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     { variant: "default", title: "User updated", description: "Great job." },
   );
 };
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => [
+  {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    title: `User ${data.user.contact.firstName}${
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      data.user.contact.lastName ? " " + data.user.contact.lastName : ""
+    } | Alliance 436`,
+  },
+];
 
 export default function UserDetailsPage() {
   const authorizedUser = useUser();

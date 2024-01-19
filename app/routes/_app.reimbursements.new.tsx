@@ -36,7 +36,7 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "Reimbursement Request • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "New Reimbursement Request | Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
@@ -100,7 +100,7 @@ export default function NewReimbursementPage() {
 
   return (
     <>
-      <PageHeader title="Reimbursement Request" />
+      <PageHeader title="New Reimbursement Request" />
       <PageContainer>
         <h2 id="receipts-label" className="mb-1 font-bold">
           Upload Receipt

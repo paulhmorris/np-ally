@@ -17,7 +17,12 @@ import { AccountType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { SessionService } from "~/services/SessionService.server";
 
-export const meta: MetaFunction = () => [{ title: "Account • Alliance 436" }];
+export const meta: MetaFunction<typeof loader> = ({ data }) => [
+  {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    title: `Account ${data.account.code} | Alliance 436`,
+  },
+];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);

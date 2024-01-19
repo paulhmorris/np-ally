@@ -9,6 +9,8 @@ import { z } from "zod";
 
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
+import { Button } from "~/components/ui/button";
+import { ButtonGroup } from "~/components/ui/button-group";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
@@ -47,11 +49,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     engagementTypes,
     contacts,
     engagement,
-    ...setFormDefaults("engagement-form", { ...engagement }),
+    ...setFormDefaults("engagement-form", { ...engagement, typeId: engagement.typeId.toString() }),
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "Edit Account • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Edit Account | Alliance 436" }];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireUser(request);
@@ -65,14 +67,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: result.data,
   });
 
-  return toast.json(
-    request,
-    { engagement },
-    {
-      title: "Engagement updated",
-      description: "Thanks!",
-    },
-  );
+  return toast.redirect(request, `/engagements/${engagement.id}`, {
+    title: "Engagement updated",
+  });
 };
 
 export default function EditEngagementPage() {
@@ -113,8 +110,13 @@ export default function EditEngagementPage() {
               label: `${c.firstName} ${c.lastName}`,
             }))}
           />
-          <FormTextarea name="description" label="Description" />
-          <SubmitButton>Submit</SubmitButton>
+          <FormTextarea name="description" label="Description" rows={8} />
+          <ButtonGroup>
+            <SubmitButton>Save</SubmitButton>
+            <Button variant="outline" type="reset">
+              Reset
+            </Button>
+          </ButtonGroup>
         </ValidatedForm>
       </PageContainer>
     </>

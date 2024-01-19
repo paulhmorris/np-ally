@@ -147,3 +147,7 @@ export function getInitials(contact: Contact) {
 export function isArray(value: unknown): value is Array<unknown> {
   return Array.isArray(value);
 }
+
+export function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+}

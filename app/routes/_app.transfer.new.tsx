@@ -28,7 +28,7 @@ const validator = withZod(
     .merge(TransactionItemSchema.pick({ amountInCents: true })),
 );
 
-export const meta: MetaFunction = () => [{ title: "New Transfer • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Add Transfer | Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);

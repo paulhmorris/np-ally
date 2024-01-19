@@ -11,7 +11,7 @@ import { UsersTable } from "~/components/users/users-table";
 import { prisma } from "~/integrations/prisma.server";
 import { SessionService } from "~/services/SessionService.server";
 
-export const meta: MetaFunction = () => [{ title: "Users • Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Users | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);

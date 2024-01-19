@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { ActionFunctionArgs } from "@remix-run/node";
+import { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { useState } from "react";
 import { ValidatedForm, validationError } from "remix-validated-form";
@@ -57,6 +58,8 @@ export async function action({ request }: ActionFunctionArgs) {
     description: "An issue has been created on our board.",
   });
 }
+
+export const meta: MetaFunction = () => [{ title: `Feature Request | Alliance 436` }];
 
 export default function FeatureRequestPage() {
   const [fileUrl, setFileUrl] = useState<string>("");

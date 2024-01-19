@@ -32,8 +32,6 @@ import { SessionService } from "~/services/SessionService.server";
 
 const UpdateContactValidator = withZod(UpdateContactSchema);
 
-export const meta: MetaFunction = () => [{ title: "Edit Contact • Alliance 436" }];
-
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
@@ -100,6 +98,16 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ...setFormDefaults("contact-form", { ...contact, typeId: contact.typeId.toString() }),
   });
 };
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => [
+  {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    title: `Edit ${data.contact.firstName}${
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      data.contact.lastName ? " " + data.contact.lastName : ""
+    } | Alliance 436`,
+  },
+];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
