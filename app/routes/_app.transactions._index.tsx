@@ -28,7 +28,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       contact: true,
       account: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ date: "desc" }, { account: { code: "asc" } }],
   });
   return typedjson({ transactions });
 }

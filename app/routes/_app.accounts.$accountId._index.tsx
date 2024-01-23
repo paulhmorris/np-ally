@@ -40,7 +40,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         include: {
           contact: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { date: "desc" },
       },
     },
   });

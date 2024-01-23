@@ -81,7 +81,9 @@ export default function LoginPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Checkbox id="remember" name="remember" />
-            <Label htmlFor="remember">Remember me</Label>
+            <Label htmlFor="remember" className="cursor-pointer">
+              Remember me
+            </Label>
           </div>
         </div>
         <SubmitButton className="w-full">Log in</SubmitButton>
