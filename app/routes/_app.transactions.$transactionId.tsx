@@ -1,4 +1,4 @@
-import { Prisma, TransactionItemTypeDirection, UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -136,10 +136,7 @@ export default function TransactionDetailsPage() {
                     <TableCell>{item.type.name}</TableCell>
                     <TableCell>{item.method?.name}</TableCell>
                     <TableCell>{item.description}</TableCell>
-                    <TableCell className="text-right">
-                      {item.type.direction === TransactionItemTypeDirection.OUT ? "- " : ""}
-                      {formatCentsAsDollars(item.amountInCents, 2)}
-                    </TableCell>
+                    <TableCell className="text-right">{formatCentsAsDollars(item.amountInCents, 2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
