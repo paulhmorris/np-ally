@@ -65,14 +65,18 @@ export const meta: MetaFunction = () => [{ title: "Transaction Details | Allianc
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
   const result = await validator.validate(await request.formData());
-  if (result.error) return validationError(result.error);
+  if (result.error) {
+    return validationError(result.error);
+  }
 
   const { transactionId } = params;
 
-  await prisma.transaction.delete({ where: { id: transactionId } });
+  const trx = await prisma.transaction.delete({ where: { id: transactionId }, include: { account: true } });
   return toast.redirect(request, "/transactions", {
     title: "Transaction deleted",
-    description: "",
+    description: `The transaction of ${formatCentsAsDollars(trx.amountInCents, 2)} on account ${
+      trx.account.code
+    } has been deleted.`,
   });
 };
 
@@ -96,7 +100,7 @@ export default function TransactionDetailsPage() {
         </div>
       </PageHeader>
 
-      <PageContainer className="max-w-xl">
+      <PageContainer className="max-w-3xl">
         <div className="space-y-8">
           <div>
             <h2 className="sr-only">Details</h2>

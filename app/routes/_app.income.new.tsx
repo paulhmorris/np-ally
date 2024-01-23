@@ -78,6 +78,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   const { transactionItems, shouldNotifyUser, ...rest } = result.data;
 
+  const transaction = await TransactionService.createTransaction({
+    transactionItems,
+    data: { ...rest },
+    include: { account: true },
+  });
+
   if (shouldNotifyUser) {
     const account = await prisma.account.findUnique({
       where: { id: result.data.accountId },
@@ -112,11 +118,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await notifySubscribersJob.invoke({ to: account.user.contact.email }, { idempotencyKey: key });
     }
   }
-  const transaction = await TransactionService.createTransaction({
-    transactionItems,
-    data: { ...rest },
-    include: { account: true },
-  });
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
     title: "Success",

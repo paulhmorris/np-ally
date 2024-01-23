@@ -92,7 +92,18 @@ class Service implements ITransactionService {
           amountInCents: total,
           transactionItems: {
             createMany: {
-              data: transactionItems.map((i) => i),
+              data: transactionItems.map((i) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+                const type = trxItemTypes.find((t) => t.id === i.typeId);
+                if (!type) {
+                  return i;
+                }
+                const modifier = type.direction === TransactionItemTypeDirection.IN ? 1 : -1;
+                return {
+                  ...i,
+                  amountInCents: i.amountInCents * modifier,
+                };
+              }),
             },
           },
           account: { connect: { id: accountId } },
