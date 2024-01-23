@@ -40,7 +40,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
               },
             }
           : undefined,
-      typeId: { in: [ContactType.External, ContactType.Donor, ContactType.Organization] },
+      typeId: { in: [ContactType.External, ContactType.Donor, ContactType.Organization, ContactType.Missionary] },
     },
   });
   const engagementTypes = await prisma.engagementType.findMany();
