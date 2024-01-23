@@ -97,9 +97,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
   {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    title: `Edit ${data.contact.firstName}${
+    title: `Edit ${data?.contact.firstName}${
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      data.contact.lastName ? " " + data.contact.lastName : ""
+      data?.contact.lastName ? " " + data?.contact.lastName : ""
     } | Alliance 436`,
   },
 ];

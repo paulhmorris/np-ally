@@ -60,7 +60,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
   {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    title: `Edit Account ${data.account.code} | Alliance 436`,
+    title: `Edit Account ${data?.account.code} | Alliance 436`,
   },
 ];
 

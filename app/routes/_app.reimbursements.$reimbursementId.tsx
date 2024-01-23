@@ -27,8 +27,10 @@ import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
   {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    title: `${capitalize(String(data.reimbursementRequest.status))} Request | Alliance 436`,
+    title: data
+      ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `${capitalize(String(data.reimbursementRequest.status))} Request | Alliance 436`
+      : "Reimbursement Request | Alliance 436",
   },
 ];
 

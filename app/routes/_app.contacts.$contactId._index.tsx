@@ -147,9 +147,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
   {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    title: `${data.contact.firstName}${
+    title: `${data?.contact.firstName}${
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      data.contact.lastName ? " " + data.contact.lastName : ""
+      data?.contact.lastName ? " " + data?.contact.lastName : ""
     } | Alliance 436`,
   },
 ];
