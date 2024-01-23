@@ -142,16 +142,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Verify email is unique
-  const existingContact = await prisma.contact.findUnique({
-    where: { email: formData.email },
-  });
-
-  if (existingContact && existingContact.id !== formData.id) {
-    return validationError({
-      fieldErrors: {
-        email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
-      },
+  if (formData.email) {
+    const existingContact = await prisma.contact.findUnique({
+      where: { email: formData.email },
     });
+
+    if (existingContact && existingContact.id !== formData.id) {
+      return validationError({
+        fieldErrors: {
+          email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
+        },
+      });
+    }
   }
 
   const contact = await prisma.contact.update({

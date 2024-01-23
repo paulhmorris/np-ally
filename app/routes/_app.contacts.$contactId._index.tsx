@@ -1,25 +1,33 @@
-import { Engagement } from "@prisma/client";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { Engagement, UserRole } from "@prisma/client";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
+import { withZod } from "@remix-validated-form/with-zod";
 import { IconAddressBook, IconPlus, IconUser } from "@tabler/icons-react";
 import dayjs from "dayjs";
+import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
+import { z } from "zod";
 
 import { ContactCard } from "~/components/contacts/contact-card";
 import { ContactEngagementsTable } from "~/components/contacts/contact-engagements-table";
 import { RecentTransactionsTable } from "~/components/contacts/recent-donations-table";
 import { ErrorComponent } from "~/components/error-component";
+import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { prisma } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
-import { notFound } from "~/lib/responses.server";
-import { cn } from "~/lib/utils";
+import { forbidden, notFound } from "~/lib/responses.server";
+import { toast } from "~/lib/toast.server";
+import { cn, useUser } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
+
+const deleteAbleContactTypes = [ContactType.Donor, ContactType.External, ContactType.Organization];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireUser(request);
@@ -62,6 +70,81 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   return typedjson({ contact });
 };
 
+export async function action({ request, params }: ActionFunctionArgs) {
+  await SessionService.requireAdmin(request);
+  invariant(params.contactId, "contactId not found");
+
+  const validator = withZod(z.object({ _action: z.enum(["delete"]) }));
+  const result = await validator.validate(await request.formData());
+  if (result.error) {
+    return toast.json(
+      request,
+      { success: false },
+      { variant: "destructive", title: "Error deleting contact", description: "Invalid request" },
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (result.data._action === "delete" && request.method === "DELETE") {
+    const contact = await prisma.contact.findUnique({
+      where: { id: params.contactId },
+      include: {
+        transactions: true,
+      },
+    });
+    if (!contact) {
+      return toast.json(
+        request,
+        { success: false },
+        { variant: "destructive", title: "Error deleting contact", description: "Contact not found" },
+        { status: 404 },
+      );
+    }
+    if (!deleteAbleContactTypes.includes(contact.typeId)) {
+      throw forbidden({ message: "You do not have permission to delete this contact." });
+    }
+
+    if (contact.transactions.length > 0) {
+      return toast.json(
+        request,
+        { success: false },
+        {
+          variant: "destructive",
+          title: "Error deleting contact",
+          description: "This contact has transactions and cannot be deleted. Check the transactions page.",
+        },
+        { status: 400 },
+      );
+    }
+
+    try {
+      await prisma.$transaction([
+        prisma.contactAssigment.deleteMany({ where: { contactId: contact.id } }),
+        prisma.engagement.deleteMany({ where: { contactId: contact.id } }),
+        prisma.address.deleteMany({ where: { contactId: contact.id } }),
+        prisma.contact.delete({ where: { id: contact.id } }),
+      ]);
+      return toast.redirect(request, "/contacts", {
+        title: "Contact deleted",
+        description: `${contact.firstName} ${contact.lastName} was deleted successfully.`,
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error(error);
+      return toast.json(
+        request,
+        { success: false },
+        {
+          variant: "destructive",
+          title: "Error deleting contact",
+          description: "An error occurred while deleting the contact.",
+        },
+        { status: 500 },
+      );
+    }
+  }
+}
+
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
   {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -73,13 +156,30 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function ContactDetailsPage() {
+  const user = useUser();
   const { contact } = useTypedLoaderData<typeof loader>();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const { Donor, External, Organization } = ContactType;
   const isExternal = [Donor, External, Organization].includes(contact.typeId);
+  const canDelete =
+    !contact.user &&
+    contact.transactions.length === 0 &&
+    user.role !== UserRole.USER &&
+    deleteAbleContactTypes.includes(contact.typeId);
 
   return (
     <>
-      <PageHeader title="View Contact" />
+      <PageHeader title="View Contact">
+        {canDelete ? (
+          <ConfirmDestructiveModal
+            open={deleteModalOpen}
+            onOpenChange={setDeleteModalOpen}
+            description={`This action cannot be undone. This will delete ${contact.firstName} ${
+              contact.lastName ? contact.lastName : ""
+            } and all associated engagements. Assigned users will be unassigned.`}
+          />
+        ) : null}
+      </PageHeader>
       <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-1">
         <Badge variant="outline" className="capitalize">
           <div>

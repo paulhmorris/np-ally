@@ -1,3 +1,4 @@
+import { useNavigation } from "@remix-run/react";
 import { IconLoader } from "@tabler/icons-react";
 import { useIsSubmitting } from "remix-validated-form";
 
@@ -6,8 +7,9 @@ import { Button } from "~/components/ui/button";
 
 export function SubmitButton(props: ButtonProps & { formId?: string }) {
   const { formId, ...rest } = props;
+  const navigation = useNavigation();
   const isSubmitting = useIsSubmitting(formId);
-  const isDisabled = props.disabled || isSubmitting;
+  const isDisabled = props.disabled || isSubmitting || navigation.state === "submitting";
 
   return (
     <Button {...rest} type="submit" disabled={isDisabled}>

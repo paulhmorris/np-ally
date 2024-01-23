@@ -1,5 +1,6 @@
-import { Form } from "@remix-run/react";
-import { IconAlertTriangleFilled } from "@tabler/icons-react";
+import { useFetcher } from "@remix-run/react";
+import { IconAlertTriangleFilled, IconLoader } from "@tabler/icons-react";
+import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -21,10 +22,25 @@ export function ConfirmDestructiveModal({
   onOpenChange: (open: boolean) => void;
   description: string;
 }) {
+  const fetcher = useFetcher();
+  const isSubmitting = fetcher.state !== "idle";
+
+  useEffect(() => {
+    if (fetcher.data && !isSubmitting) {
+      onOpenChange(false);
+    }
+  }, [fetcher.data, isSubmitting, onOpenChange]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="destructive" type="submit" name="_action" value="delete" className="w-min">
+        <Button
+          variant="outline"
+          type="submit"
+          name="_action"
+          value="delete"
+          className="w-min hover:border-destructive hover:bg-destructive hover:text-destructive-foreground"
+        >
           Delete
         </Button>
       </DialogTrigger>
@@ -35,14 +51,15 @@ export function ConfirmDestructiveModal({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
-          <Button variant="outline" type="submit" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" type="submit" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Form method="post">
-            <Button variant="destructive" name="_action" value="delete" type="submit">
-              Confirm
+          <fetcher.Form method="delete">
+            <Button variant="destructive" name="_action" value="delete" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? <IconLoader className="size-4 animate-spin" /> : null}
+              <span>Confirm</span>
             </Button>
-          </Form>
+          </fetcher.Form>
         </DialogFooter>
       </DialogContent>
     </Dialog>
