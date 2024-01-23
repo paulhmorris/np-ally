@@ -29,6 +29,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       contact: true,
       user: { include: { contact: true } },
     },
+    orderBy: { date: "desc" },
   });
   return typedjson({ engagements });
 }
