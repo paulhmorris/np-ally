@@ -11,8 +11,9 @@ export enum ContactType {
   External = 2,
   Missionary = 3,
   Staff = 4,
-  Admin = 5,
+  Outreach = 5,
   Organization = 6,
+  Donor_and_Missionary = 7,
 }
 
 export enum EngagementType {
@@ -76,9 +77,11 @@ export const contactTypes: Array<{ id: ContactType; name: string }> = [
   { id: 2, name: "External" },
   { id: 3, name: "Missionary" },
   { id: 4, name: "Staff" },
-  { id: 5, name: "Admin" },
+  { id: 5, name: "Outreach" },
   { id: 6, name: "Organization" },
+  { id: 7, name: "Donor and Missionary" },
 ];
+
 export const accountTypes: Array<{ id: AccountType; name: string }> = [
   { id: 1, name: "Operating" },
   { id: 2, name: "Benevolence" },

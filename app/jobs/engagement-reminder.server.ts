@@ -23,7 +23,7 @@ export const engagementReminderJob = trigger.defineJob({
       return prisma.contact.findMany({
         where: {
           typeId: {
-            in: [ContactType.External, ContactType.Donor, ContactType.Organization],
+            notIn: [ContactType.Staff],
           },
           engagements: {
             some: {},

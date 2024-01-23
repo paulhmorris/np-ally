@@ -8,17 +8,16 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { ContactDropdown } from "~/components/contacts/contact-dropdown";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { FormField, FormSelect } from "~/components/ui/form";
-import { SelectGroup, SelectItem, SelectLabel } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
-import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { TransactionItemSchema } from "~/models/schemas";
@@ -39,15 +38,12 @@ export const meta: MetaFunction = () => [{ title: "Add Expense | Alliance 436" }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
-  const [contacts, accounts, transactionItemMethods, transactionItemTypes, contactTypes] = await Promise.all([
-    prisma.contact.findMany({
-      where: { typeId: { not: ContactType.Admin } },
-      include: { type: true },
-    }),
+  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
+    prisma.contact.findMany({ include: { type: true } }),
+    prisma.contactType.findMany(),
     prisma.account.findMany(),
     TransactionService.getItemMethods(),
     TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.OUT } }),
-    prisma.contactType.findMany({ where: { id: { notIn: [ContactType.Admin] } } }),
   ]);
 
   return typedjson({
@@ -113,7 +109,11 @@ export default function AddExpensePage() {
                 <div className="w-auto">
                   <FormField required name="date" label="Date" type="date" defaultValue={getToday()} />
                 </div>
-                <FormField name="description" label="Description" />
+                <FormField
+                  name="description"
+                  label="Description"
+                  description="Will be shown on transaction tables and reports"
+                />
               </div>
               <FormSelect
                 required
@@ -125,28 +125,7 @@ export default function AddExpensePage() {
                   label: `${a.code} - ${a.description}`,
                 }))}
               />
-              <FormSelect name="contactId" label="Payable To" placeholder="Select contact">
-                {contactTypes.map((type) => {
-                  if (!contacts.some((c) => c.typeId === type.id)) {
-                    return null;
-                  }
-                  return (
-                    <SelectGroup key={type.name}>
-                      <SelectLabel>{type.name}</SelectLabel>
-                      {contacts
-                        .filter((c) => c.typeId === type.id)
-                        .map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
-                            {c.typeId === ContactType.Organization
-                              ? `${c.organizationName}`
-                              : `${c.firstName} ${c.lastName}`}
-                          </SelectItem>
-                        ))}
-                    </SelectGroup>
-                  );
-                })}
-              </FormSelect>
+              <ContactDropdown types={contactTypes} contacts={contacts} name="contactId" label="Payable To" />
             </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {
@@ -187,7 +166,11 @@ export default function AddExpensePage() {
                               }))}
                             />
                           </div>
-                          <FormField name={`${fieldPrefix}.description`} label="Description" />
+                          <FormField
+                            name={`${fieldPrefix}.description`}
+                            label="Description"
+                            description="Will only be shown in transaction details and reports"
+                          />
                         </fieldset>
                       </CardContent>
                       <CardFooter>

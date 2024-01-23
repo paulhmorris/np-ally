@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -7,6 +8,7 @@ import { ValidatedForm, setFormDefaults, validationError } from "remix-validated
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
+import { ContactDropdown } from "~/components/contacts/contact-dropdown";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
@@ -17,6 +19,7 @@ import { prisma } from "~/integrations/prisma.server";
 import { ContactType, EngagementType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
+import { ContactService } from "~/services/ContactService.server";
 import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
@@ -30,13 +33,26 @@ const validator = withZod(
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await SessionService.requireUser(request);
+  const user = await SessionService.requireUser(request);
   invariant(params.engagementId, "engagementId not found");
 
-  const [engagement, contacts, engagementTypes] = await Promise.all([
-    prisma.engagement.findUnique({ where: { id: Number(params.engagementId) } }),
+  const [contacts, contactTypes, engagement, engagementTypes] = await Promise.all([
     prisma.contact.findMany({
-      where: { typeId: { in: [ContactType.External, ContactType.Donor, ContactType.Organization] } },
+      where: {
+        assignedUsers:
+          user.role === UserRole.USER
+            ? {
+                some: {
+                  userId: user.id,
+                },
+              }
+            : undefined,
+        typeId: { notIn: [ContactType.Staff] },
+      },
+    }),
+    ContactService.getContactTypes(),
+    prisma.engagement.findUnique({
+      where: { id: Number(params.engagementId) },
     }),
     prisma.engagementType.findMany(),
   ]);
@@ -46,9 +62,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   return typedjson({
+    engagement,
     engagementTypes,
     contacts,
-    engagement,
+    contactTypes,
     ...setFormDefaults("engagement-form", { ...engagement, typeId: engagement.typeId.toString() }),
   });
 };
@@ -73,7 +90,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function EditEngagementPage() {
-  const { engagement, engagementTypes, contacts } = useTypedLoaderData<typeof loader>();
+  const { engagement, engagementTypes, contacts, contactTypes } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -100,16 +117,7 @@ export default function EditEngagementPage() {
               }))}
             />
           </div>
-          <FormSelect
-            required
-            name="contactId"
-            label="Contact"
-            placeholder="Select contact"
-            options={contacts.map((c) => ({
-              value: c.id,
-              label: `${c.firstName} ${c.lastName}`,
-            }))}
-          />
+          <ContactDropdown types={contactTypes} contacts={contacts} name="contactId" label="Contact" required />
           <FormTextarea name="description" label="Description" rows={8} />
           <ButtonGroup>
             <SubmitButton>Save</SubmitButton>

@@ -33,7 +33,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       user.role === UserRole.USER
         ? {
             id: {
-              notIn: [ContactType.Admin, ContactType.Staff],
+              notIn: [ContactType.Staff],
             },
           }
         : {},
@@ -119,12 +119,17 @@ export default function NewContactPage() {
               Add Address
             </Button>
           ) : (
-            <AddressForm />
+            <>
+              <Button type="button" variant="outline" onClick={() => setAddressEnabled(false)}>
+                Remove Address
+              </Button>
+              <AddressForm />
+            </>
           )}
           <Separator className="my-4" />
           <fieldset>
             <legend className="mb-4 text-sm text-muted-foreground">
-              Assign users to this contact. They will receive regular reminders to engage with this Contact.
+              Assigned users will receive regular reminders to engage with this Contact.
             </legend>
             <div className="flex flex-col gap-2">
               {usersWhoCanBeAssigned.map((user) => {

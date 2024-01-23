@@ -27,8 +27,6 @@ import { toast } from "~/lib/toast.server";
 import { cn, useUser } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
 
-const deleteAbleContactTypes = [ContactType.Donor, ContactType.External, ContactType.Organization];
-
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
@@ -100,7 +98,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
         { status: 404 },
       );
     }
-    if (!deleteAbleContactTypes.includes(contact.typeId)) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (contact.typeId === ContactType.Staff) {
       throw forbidden({ message: "You do not have permission to delete this contact." });
     }
 
@@ -165,7 +164,8 @@ export default function ContactDetailsPage() {
     !contact.user &&
     contact.transactions.length === 0 &&
     user.role !== UserRole.USER &&
-    deleteAbleContactTypes.includes(contact.typeId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    contact.typeId !== ContactType.Staff;
 
   return (
     <>

@@ -114,7 +114,7 @@ export default function AddTransferPage() {
     <>
       <PageHeader title="Add Transfer" />
       <PageContainer>
-        <ValidatedForm id="transfer-form" method="post" validator={validator} className="space-y-4 sm:max-w-md">
+        <ValidatedForm id="transfer-form" method="post" validator={validator} className="space-y-2 sm:max-w-md">
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <div className="w-auto">
               <FormField required name="date" label="Date" type="date" defaultValue={getToday()} />

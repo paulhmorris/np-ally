@@ -8,6 +8,7 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { ContactDropdown } from "~/components/contacts/contact-dropdown";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
@@ -16,12 +17,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/componen
 import { Checkbox } from "~/components/ui/checkbox";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
-import { SelectGroup, SelectItem, SelectLabel } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { notifySubscribersJob } from "~/jobs/notify-subscribers.server";
-import { ContactType, TransactionItemType } from "~/lib/constants";
+import { TransactionItemType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
@@ -45,11 +45,8 @@ export const meta: MetaFunction = () => [{ title: "Add Income | Alliance 436" }]
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
-    ContactService.getContacts({
-      where: { typeId: { not: ContactType.Admin } },
-      include: { type: true },
-    }),
-    ContactService.getContactTypes({ where: { id: { notIn: [ContactType.Admin] } } }),
+    ContactService.getContacts({ include: { type: true } }),
+    ContactService.getContactTypes(),
     prisma.account.findMany(),
     TransactionService.getItemMethods(),
     TransactionService.getItemTypes({
@@ -143,7 +140,11 @@ export default function AddIncomePage() {
                 <div className="w-auto">
                   <FormField required name="date" label="Date" type="date" defaultValue={getToday()} />
                 </div>
-                <FormField name="description" label="Description" />
+                <FormField
+                  name="description"
+                  label="Description"
+                  description="Will be shown on transaction tables and reports"
+                />
               </div>
               <FormSelect
                 required
@@ -155,28 +156,7 @@ export default function AddIncomePage() {
                   label: `${a.code} - ${a.description}`,
                 }))}
               />
-              <FormSelect name="contactId" label="Contact" placeholder="Select contact">
-                {contactTypes.map((t) => {
-                  if (!contacts.some((c) => c.typeId === t.id)) {
-                    return null;
-                  }
-                  return (
-                    <SelectGroup key={t.name}>
-                      <SelectLabel>{t.name}</SelectLabel>
-                      {contacts
-                        .filter((c) => c.typeId === t.id)
-                        .map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
-                            {c.typeId === ContactType.Organization
-                              ? `${c.organizationName}`
-                              : `${c.firstName} ${c.lastName}`}
-                          </SelectItem>
-                        ))}
-                    </SelectGroup>
-                  );
-                })}
-              </FormSelect>
+              <ContactDropdown types={contactTypes} contacts={contacts} name="contactId" label="Contact" />
             </div>
             <ul className="flex flex-col gap-4">
               {items.map(({ key }, index) => {
@@ -217,7 +197,11 @@ export default function AddIncomePage() {
                               }))}
                             />
                           </div>
-                          <FormField name={`${fieldPrefix}.description`} label="Description" />
+                          <FormField
+                            name={`${fieldPrefix}.description`}
+                            label="Description"
+                            description="Will only be shown in transaction details and reports"
+                          />
                         </fieldset>
                       </CardContent>
                       <CardFooter>

@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -39,7 +40,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  await SessionService.requireAdmin(request);
+  const user = await SessionService.requireUser(request);
   invariant(params.engagementId, "engagementId not found");
 
   const validator = withZod(z.object({ _action: z.literal("delete") }));
@@ -49,15 +50,45 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       request,
       { success: false },
       { variant: "destructive", title: "Error deleting engagement", description: "Invalid request" },
+      { status: 400 },
     );
   }
 
-  await prisma.engagement.delete({ where: { id: Number(params.engagementId) } });
+  try {
+    const engagement = await prisma.engagement.findUniqueOrThrow({
+      where: { id: Number(params.engagementId) },
+      select: { userId: true },
+    });
 
-  return toast.redirect(request, "/engagements", {
-    title: "Engagement deleted",
-    description: "The engagement has been deleted",
-  });
+    // Users can only delete their own engagements
+    if (user.role === UserRole.USER) {
+      if (engagement.userId !== user.id) {
+        return toast.json(
+          request,
+          { success: false },
+          {
+            variant: "destructive",
+            title: "Error deleting engagement",
+            description: "You do not have permission to delete this engagement.",
+          },
+          { status: 403 },
+        );
+      }
+    }
+
+    await prisma.engagement.delete({ where: { id: Number(params.engagementId) } });
+    return toast.redirect(request, "/engagements", {
+      title: "Engagement deleted",
+      description: "The engagement has been deleted",
+    });
+  } catch (error) {
+    return toast.json(
+      request,
+      { success: false },
+      { variant: "destructive", title: "Error deleting engagement", description: "An error occurred" },
+      { status: 500 },
+    );
+  }
 };
 
 export default function EngagementPage() {
@@ -76,7 +107,7 @@ export default function EngagementPage() {
               </Link>
             </CardTitle>
             <CardDescription>
-              {engagement.type.name} on {dayjs(engagement.date).format("MM/DD/YYYY")}
+              via {engagement.type.name} on {dayjs(engagement.date).format("MM/DD/YYYY")}
             </CardDescription>
           </CardHeader>
           <CardContent>{engagement.description}</CardContent>

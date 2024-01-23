@@ -52,10 +52,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   const [contactTypes, usersWhoCanBeAssigned] = await Promise.all([
-    ContactService.getContactTypes({ where: { id: { notIn: [ContactType.Admin] } } }),
+    ContactService.getContactTypes(),
     prisma.user.findMany({
       where: {
-        role: { in: [UserRole.USER, UserRole.ADMIN] },
+        role: { notIn: [UserRole.SUPERADMIN] },
         contactId: { not: params.contactId },
       },
       include: {
@@ -67,11 +67,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const contact = await prisma.contact.findUnique({
     where: { id: params.contactId },
     include: {
-      _count: {
-        select: {
-          transactions: true,
-        },
-      },
       user: true,
       assignedUsers: {
         include: {
@@ -119,11 +114,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { address, assignedUserIds, ...formData } = result.data;
 
   if (formData.typeId === ContactType.Organization && !formData.organizationName) {
-    return validationError({
-      fieldErrors: {
-        organizationName: "Organization name is required for organization contacts.",
+    return validationError(
+      {
+        fieldErrors: {
+          organizationName: "Organization name is required for organization contacts.",
+        },
       },
-    });
+      result.data,
+    );
   }
 
   // Users can only edit their assigned contacts
@@ -242,9 +240,7 @@ export default function EditContactPage() {
             <AddressForm />
           )}
           <Separator className="my-4" />
-          {contact.typeId === ContactType.Donor ||
-          contact.typeId === ContactType.External ||
-          contact.typeId === ContactType.Organization ? (
+          {contact.typeId !== ContactType.Staff ? (
             <>
               <fieldset>
                 <legend className="mb-4 text-sm text-muted-foreground">
@@ -276,7 +272,7 @@ export default function EditContactPage() {
             </>
           ) : null}
           <div className="flex items-center gap-2">
-            <SubmitButton>Update Contact</SubmitButton>
+            <SubmitButton>Save</SubmitButton>
             <Button type="reset" variant="outline">
               Reset
             </Button>

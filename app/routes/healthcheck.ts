@@ -17,6 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ]);
     return new Response("OK");
   } catch (error: unknown) {
+    // eslint-disable-next-line no-console
     console.log("healthcheck ❌", { error });
     return new Response("ERROR", { status: 500 });
   }
