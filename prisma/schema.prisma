@@ -15,7 +15,7 @@ model User {
   password              Password?
   passwordResets        PasswordReset[]
   role                  UserRole               @default(USER)
-  contact               Contact                @relation(fields: [contactId], references: [id])
+  contact               Contact                @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId             String                 @unique
   account               Account?               @relation(fields: [accountId], references: [id])
   accountId             String?                @unique
@@ -268,7 +268,7 @@ model Address {
   state     String
   zip       String
   country   String
-  contact   Contact @relation(fields: [contactId], references: [id])
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId String  @unique
   isActive  Boolean @default(true)
 

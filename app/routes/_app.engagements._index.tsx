@@ -24,7 +24,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
             userId: user.id,
           }
         : undefined,
-    include: { type: true, contact: true },
+    include: {
+      type: true,
+      contact: true,
+      user: { include: { contact: true } },
+    },
   });
   return typedjson({ engagements });
 }

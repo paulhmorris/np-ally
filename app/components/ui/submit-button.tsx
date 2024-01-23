@@ -11,7 +11,7 @@ export function SubmitButton(props: ButtonProps & { formId?: string }) {
 
   return (
     <Button {...rest} type="submit" disabled={isDisabled}>
-      {isSubmitting ? <IconLoader className="mr-2 h-4 w-4 animate-spin" /> : null}
+      {isSubmitting ? <IconLoader className="h-4 w-4 animate-spin" /> : null}
       {props.children}
     </Button>
   );

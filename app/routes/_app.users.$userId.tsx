@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { Link, useFetcher } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { IconAddressBook, IconBuildingBank, IconKey, IconUserCircle } from "@tabler/icons-react";
+import { IconAddressBook, IconBuildingBank, IconKey, IconLockPlus, IconUserCircle } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
@@ -216,7 +216,8 @@ export default function UserDetailsPage() {
           >
             <input type="hidden" name="username" value={user.username} />
             <SubmitButton variant="outline" type="submit" formId="reset-password-form">
-              Send Password {hasPassword ? "Reset" : "Setup"}
+              <span>Send Password {hasPassword ? "Reset" : "Setup"}</span>
+              {!hasPassword ? <IconLockPlus className="size-4" /> : null}
             </SubmitButton>
           </ValidatedForm>
         </div>

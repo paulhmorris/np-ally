@@ -3,6 +3,9 @@
 import { TypeOf, z } from "zod";
 
 const serverEnvValidation = z.object({
+  // CI
+  CI: z.string().optional(),
+
   // Remix
   NODE_ENV: z.enum(["development", "production", "test"]),
   SESSION_SECRET: z.string().min(16),

@@ -76,7 +76,13 @@ export function EngagementsTable<TData>({ data }: DataTableProps<TData>) {
   );
 }
 
-type Engagement = Prisma.EngagementGetPayload<{ include: { type: true; contact: true } }>;
+type Engagement = Prisma.EngagementGetPayload<{
+  include: {
+    type: true;
+    contact: true;
+    user: { include: { contact: true } };
+  };
+}>;
 const columns: Array<ColumnDef<Engagement>> = [
   {
     accessorKey: "contact",
@@ -90,6 +96,22 @@ const columns: Array<ColumnDef<Engagement>> = [
       );
     },
     enableColumnFilter: false,
+  },
+  {
+    accessorKey: "user",
+    accessorFn: (row) => `${row.user.contact.firstName} ${row.user.contact.lastName}`,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Staff" />,
+    cell: ({ row }) => {
+      return (
+        <div className="max-w-[100px]">
+          <span className="max-w-[500px] truncate font-medium">{row.getValue("user")}</span>
+        </div>
+      );
+    },
+    filterFn: (row, id, value) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "type",
