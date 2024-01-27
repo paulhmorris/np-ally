@@ -3,6 +3,7 @@ import { Link, NavLink } from "@remix-run/react";
 import { IconWorld } from "@tabler/icons-react";
 import type { ComponentPropsWithoutRef } from "react";
 
+import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { GlobalLoader } from "~/components/ui/global-loader";
 import { Separator } from "~/components/ui/separator";
 import { UserMenu } from "~/components/user-menu";
@@ -59,7 +60,10 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           </ul>
         </>
       ) : null}
-      <UserMenu />
+      <div className="mt-auto flex items-center gap-2">
+        <UserMenu />
+        <ThemeModeToggle />
+      </div>
     </nav>
   );
 }

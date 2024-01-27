@@ -1,7 +1,5 @@
 import { UserRole } from "@prisma/client";
 import { Form, Link } from "@remix-run/react";
-import { IconMoon, IconSun } from "@tabler/icons-react";
-import { Theme, useTheme } from "remix-themes";
 
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -18,12 +16,12 @@ import { useUser } from "~/lib/utils";
 
 export function UserMenu() {
   const user = useUser();
-  const [_, setTheme] = useTheme();
+  // const [_, setTheme] = useTheme();
 
-  function handleToggleTheme(e: Event) {
-    e.preventDefault();
-    setTheme((theme) => (theme === Theme.DARK ? Theme.LIGHT : Theme.DARK));
-  }
+  // function handleToggleTheme(e: Event) {
+  //   e.preventDefault();
+  //   setTheme((theme) => (theme === Theme.DARK ? Theme.LIGHT : Theme.DARK));
+  // }
 
   return (
     <DropdownMenu>
@@ -68,11 +66,11 @@ export function UserMenu() {
               Feature Request
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer" onSelect={handleToggleTheme}>
+          {/* <DropdownMenuItem className="cursor-pointer" onSelect={handleToggleTheme}>
             <span>Toggle theme</span>
             <IconSun className="absolute right-2 h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <IconMoon className="absolute right-2 h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="px-0 py-0">

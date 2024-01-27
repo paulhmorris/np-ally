@@ -17,7 +17,6 @@ test.describe("User menu", () => {
     await page.getByRole("button", { name: /open user menu/i }).click();
     await expect(page.getByRole("menuitem", { name: /profile/i })).toBeVisible();
     await expect(page.getByRole("menuitem", { name: /feature request/i })).toBeVisible();
-    await expect(page.getByRole("menuitem", { name: /toggle theme/i })).toBeVisible();
     await expect(page.getByRole("menuitem", { name: /log out/i })).toBeVisible();
   });
 
@@ -40,10 +39,9 @@ test.describe("User menu", () => {
   test("should toggle theme", async ({ page }) => {
     await page.goto("/dashboards/admin");
     await expect(page).toHaveURL("/dashboards/admin");
-    await page.getByRole("button", { name: /open user menu/i }).click();
-    await page.getByRole("menuitem", { name: /toggle theme/i }).click();
+    await page.getByRole("button", { name: /toggle theme/i }).click();
     await expect(page.locator("html")).toHaveClass("dark");
-    await page.getByRole("menuitem", { name: /toggle theme/i }).click();
+    await page.getByRole("button", { name: /toggle theme/i }).click();
     await expect(page.locator("html")).toHaveClass("light");
     await expect(page).toHaveURL("/dashboards/admin");
   });
