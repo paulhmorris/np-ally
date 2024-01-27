@@ -29,8 +29,9 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative mt-auto h-10 w-10 rounded-full">
-          <Avatar>
-            <AvatarFallback className="bg-primary text-white">
+          <span className="sr-only">Open User Menu</span>
+          <Avatar aria-hidden="true">
+            <AvatarFallback className="bg-primary text-white" aria-hidden="true">
               {user.contact.firstName?.charAt(0).toUpperCase()}
               {user.contact.lastName?.charAt(0).toUpperCase()}
             </AvatarFallback>

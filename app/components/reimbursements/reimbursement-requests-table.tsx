@@ -169,6 +169,7 @@ const columns: Array<ColumnDef<ReimbRequest>> = [
   },
   {
     id: "action",
+    header: () => <span className="sr-only">Action</span>,
     cell: ({ row }) => (
       <Link to={`/reimbursements/${row.original.id}`} className="font-medium text-primary">
         View

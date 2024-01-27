@@ -48,7 +48,7 @@ async function seed() {
           firstName: "Paul",
           lastName: "Morris",
           email: "paulh.morris@gmail.com",
-          typeId: ContactType.Admin,
+          typeId: ContactType.Outreach,
         },
       },
       password: {

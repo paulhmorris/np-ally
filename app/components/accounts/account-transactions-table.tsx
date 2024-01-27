@@ -140,6 +140,7 @@ const columns: Array<ColumnDef<Account>> = [
   },
   {
     id: "view",
+    header: () => <span className="sr-only">Action</span>,
     cell: ({ row }) => (
       <Link to={`/transactions/${row.original.id}`} className="font-medium text-primary">
         View

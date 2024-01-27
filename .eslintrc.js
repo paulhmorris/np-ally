@@ -60,6 +60,7 @@ module.exports = {
       plugins: ["@typescript-eslint", "import"],
       rules: {
         "no-console": ["warn", { allow: ["warn", "error", "info"] }],
+        "@typescript-eslint/consistent-type-definitions": ["off"],
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/array-type": ["error", { default: "generic" }],
         "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
@@ -101,27 +102,15 @@ module.exports = {
 
     // Jest/Vitest
     {
-      env: {
-        "jest/globals": true,
-      },
-      extends: ["plugin:jest/recommended", "plugin:jest-dom/recommended", "plugin:testing-library/react", "prettier"],
-      files: ["**/*.test.{js,jsx,ts,tsx}"],
-      plugins: ["jest", "jest-dom", "testing-library"],
-      settings: {
-        jest: {
-          // we're using vitest which has a very similar API to jest
-          // (so the linting plugins work nicely), but it means we have to explicitly
-          // set the jest version.
-          version: 28,
-        },
-      },
+      extends: ["plugin:vitest/recommended", "plugin:testing-library/react", "prettier"],
+      files: ["test/**/*.test.{js,jsx,ts,tsx}"],
+      excludedFiles: ["test/e2e/*"],
     },
 
-    // Cypress
+    // Playwright
     {
-      extends: ["plugin:cypress/recommended", "prettier"],
-      files: ["cypress/**/*.ts"],
-      plugins: ["cypress"],
+      files: ["test/e2e/*.ts"],
+      extends: ["plugin:playwright/recommended"],
     },
 
     // Node

@@ -227,7 +227,7 @@ export default function AddIncomePage() {
             <div>
               <div>
                 <Label className="mb-2 inline-flex cursor-pointer items-center gap-2">
-                  <Checkbox name="shouldNotifyUser" />
+                  <Checkbox name="shouldNotifyUser" aria-label="Notify User" />
                   <span>Notify User</span>
                 </Label>
               </div>

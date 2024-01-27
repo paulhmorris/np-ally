@@ -13,7 +13,9 @@ export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ inc
           <TableHead>Username</TableHead>
           <TableHead>Role</TableHead>
           <TableHead>Created</TableHead>
-          <TableHead />
+          <TableHead>
+            <span className="sr-only">Action</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
