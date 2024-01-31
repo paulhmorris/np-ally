@@ -141,6 +141,7 @@ const columns: Array<ColumnDef<Contact>> = [
   },
   {
     id: "action",
+    header: () => <span className="sr-only">Action</span>,
     cell: ({ row }) => (
       <Link to={`/contacts/${row.original.id}`} className="font-medium text-primary">
         View

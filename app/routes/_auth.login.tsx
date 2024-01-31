@@ -34,7 +34,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const result = await validator.validate(await request.formData());
 
-  if (result.error) return validationError(result.error);
+  if (result.error) {
+    return validationError(result.error);
+  }
 
   const { email, password, remember, redirectTo } = result.data;
   const user = await verifyLogin(email, password);
@@ -80,9 +82,9 @@ export default function LoginPage() {
         <input type="hidden" name="redirectTo" value={redirectTo} />
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Checkbox id="remember" name="remember" />
+            <Checkbox id="remember" name="remember" aria-label="Remember this device for 7 days" />
             <Label htmlFor="remember" className="cursor-pointer">
-              Remember me
+              Remember this device for 7 days
             </Label>
           </div>
         </div>

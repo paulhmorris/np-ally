@@ -135,7 +135,11 @@ export default function NewContactPage() {
               {usersWhoCanBeAssigned.map((user) => {
                 return (
                   <Label key={user.id} className="inline-flex cursor-pointer items-center gap-2">
-                    <Checkbox name="assignedUserIds" value={user.id} />
+                    <Checkbox
+                      name="assignedUserIds"
+                      value={user.id}
+                      aria-label={`${user.contact.firstName} ${user.contact.lastName}`}
+                    />
                     <span>
                       {user.contact.firstName} {user.contact.lastName}
                     </span>

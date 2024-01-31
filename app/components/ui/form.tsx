@@ -62,7 +62,7 @@ export function FormField({
         <span
           className={cn(
             "ml-1 inline-block font-normal",
-            props.required || error ? "text-destructive" : "text-muted-foreground/60",
+            props.required || error ? "text-destructive" : "text-muted-foreground",
             !props.required && "text-xs",
           )}
         >
@@ -126,7 +126,7 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
         <span
           className={cn(
             "ml-1 inline-block font-normal",
-            props.required ? "text-destructive" : "text-xs text-muted-foreground/60",
+            props.required ? "text-destructive" : "text-xs text-muted-foreground",
           )}
         >
           {props.required ? "*" : "(optional)"}
@@ -180,7 +180,7 @@ export function FormSelect(props: FormSelectProps) {
         <span
           className={cn(
             "ml-1 inline-block font-normal",
-            props.required ? "text-destructive" : "text-xs text-muted-foreground/60",
+            props.required ? "text-destructive" : "text-xs text-muted-foreground",
           )}
         >
           {props.required ? "*" : "(optional)"}
@@ -190,6 +190,7 @@ export function FormSelect(props: FormSelectProps) {
         <SelectTrigger
           id={id}
           {...rest}
+          aria-label={placeholder}
           className={cn(error && "border-destructive focus-visible:ring-destructive/50", rest.className)}
         >
           <SelectValue placeholder={placeholder} />

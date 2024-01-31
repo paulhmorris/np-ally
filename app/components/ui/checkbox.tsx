@@ -6,7 +6,7 @@ import { cn } from "~/lib/utils";
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
@@ -16,6 +16,7 @@ const Checkbox = React.forwardRef<
     )}
     {...props}
   >
+    {children}
     <CheckboxPrimitive.Indicator className={cn("flex items-center justify-center text-current")}>
       <svg
         viewBox="0 0 16 16"

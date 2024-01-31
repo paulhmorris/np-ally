@@ -140,7 +140,7 @@ export default function NewUserPage() {
           <div>
             <div className="mb-1">
               <Label className="inline-flex cursor-pointer items-center gap-2">
-                <Checkbox name="sendPasswordSetup" defaultChecked={false} />
+                <Checkbox name="sendPasswordSetup" defaultChecked={false} aria-label="Send Password Setup" />
                 <span>Send Password Setup</span>
               </Label>
             </div>

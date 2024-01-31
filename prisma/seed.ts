@@ -52,7 +52,7 @@ async function seed() {
           firstName: "Paul",
           lastName: "Morris",
           email,
-          typeId: ContactType.Admin,
+          typeId: ContactType.Outreach,
         },
       },
       password: {
