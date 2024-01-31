@@ -158,8 +158,8 @@ export default function ContactDetailsPage() {
   const user = useUser();
   const { contact } = useTypedLoaderData<typeof loader>();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const { Donor, External, Organization, Missionary } = ContactType;
-  const isExternal = [Donor, External, Organization, Missionary].includes(contact.typeId);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+  const isExternal = contact.typeId !== ContactType.Staff;
   const canDelete =
     !contact.user &&
     contact.transactions.length === 0 &&
