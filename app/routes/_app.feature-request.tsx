@@ -72,6 +72,7 @@ export default function FeatureRequestPage() {
         <ValidatedForm validator={validator} method="post" className="grid gap-4">
           <FormField name="title" label="Title" placeholder="I'd like to see..." required />
           <FormSelect name="labelId" label="Type" placeholder="Select issue type" required>
+            <SelectItem value={LinearLabelID.Bug}>Bug</SelectItem>
             <SelectItem value={LinearLabelID.Feature}>Feature</SelectItem>
             <SelectItem value={LinearLabelID.Improvement}>Improvement</SelectItem>
           </FormSelect>

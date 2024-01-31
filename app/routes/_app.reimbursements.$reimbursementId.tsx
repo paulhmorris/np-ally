@@ -1,4 +1,4 @@
-import { ReimbursementRequestStatus } from "@prisma/client";
+import { Prisma, ReimbursementRequestStatus } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -19,10 +19,12 @@ import { FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { Bucket } from "~/integrations/bucket.server";
 import { prisma } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
-import { notFound } from "~/lib/responses.server";
+import { getPrismaErrorText, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { capitalize, formatCentsAsDollars } from "~/lib/utils";
+import { MailService } from "~/services/MailService.server";
 import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -79,13 +81,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     await Promise.all(updatePromises);
   }
 
-  const accounts = await prisma.account.findMany({
-    where: {
-      id: {
-        not: rr.accountId,
-      },
-    },
-  });
+  const accounts = await prisma.account.findMany();
 
   return typedjson({ reimbursementRequest: rr, accounts });
 }
@@ -122,106 +118,108 @@ export async function action({ request }: ActionFunctionArgs) {
         },
       });
     }
-    const rr = await prisma.reimbursementRequest.findUnique({
-      where: { id },
-      include: { account: true },
-    });
 
-    if (!rr) {
+    try {
+      const rr = await prisma.reimbursementRequest.findUniqueOrThrow({
+        where: { id },
+        include: { account: true, user: true },
+      });
+
+      const total = rr.amountInCents;
+
+      // Verify the account has enough funds
+      const account = await prisma.account.findUnique({ where: { id: accountId }, include: { transactions: true } });
+      if (!account) {
+        return validationError({
+          fieldErrors: {
+            accountId: "Account not found.",
+          },
+        });
+      }
+
+      const balance = account.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
+      if (balance < total) {
+        return toast.json(
+          request,
+          { message: "Insufficient Funds" },
+          {
+            variant: "warning",
+            title: "Insufficient Funds",
+            description: `The reimbursement request couldn't be completed because account ${
+              account.code
+            } has a balance of ${formatCentsAsDollars(balance)}.`,
+          },
+        );
+      }
+
+      await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            accountId: rr.accountId,
+            amountInCents: total * -1,
+            description: note || "Approved reimbursement request",
+            date: new Date(),
+            transactionItems: {
+              create: {
+                amountInCents: total * -1,
+                methodId: TransactionItemMethod.Other,
+                typeId: TransactionItemType.Other_Outgoing,
+              },
+            },
+          },
+        }),
+        prisma.reimbursementRequest.update({
+          where: { id },
+          data: { status: _action },
+          include: { account: true },
+        }),
+      ]);
+
+      await MailService.sendReimbursementRequestUpdateEmail({
+        email: rr.user.username,
+        status: ReimbursementRequestStatus.APPROVED,
+        note,
+      });
+
       return toast.json(
         request,
-        { message: "Error" },
+        { reimbursementRequest: rr },
+        {
+          title: "Reimbursement Request Approved",
+          description: `The reimbursement request has been approved and account ${account.code} has been adjusted.`,
+        },
+      );
+    } catch (error) {
+      Sentry.captureException(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        return toast.json(
+          request,
+          { message: getPrismaErrorText(error) },
+          { variant: "destructive", title: "Database Error", description: getPrismaErrorText(error) },
+        );
+      }
+      return toast.json(
+        request,
+        { message: "An unknown error occurred" },
         {
           variant: "destructive",
-          title: "Reimbursement request not found",
-          description: `The reimbursement request you were trying to approve wasn't found. Support has been notified.`,
+          title: "An unknown error occurred",
+          description: error instanceof Error ? error.message : "",
         },
       );
     }
-
-    const total = rr.amountInCents;
-
-    // Verify the account has enough funds
-    const account = await prisma.account.findUnique({ where: { id: accountId }, include: { transactions: true } });
-    if (!account) {
-      return validationError({
-        fieldErrors: {
-          accountId: "Account not found.",
-        },
-      });
-    }
-    const balance = account.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
-    if (balance < total) {
-      return toast.json(
-        request,
-        { message: "Insufficient Funds" },
-        {
-          variant: "warning",
-          title: "Insufficient Funds",
-          description: `The reimbursement request couldn't be completed because account ${
-            account.code
-          } has a balance of ${formatCentsAsDollars(balance)}.`,
-        },
-      );
-    }
-
-    await prisma.reimbursementRequest.update({
-      where: { id },
-      data: { status: _action },
-      include: { account: true },
-    });
-
-    await prisma.$transaction([
-      // Incoming transaction
-      prisma.transaction.create({
-        data: {
-          accountId: rr.accountId,
-          amountInCents: total,
-          description: note,
-          date: new Date(),
-          transactionItems: {
-            create: {
-              amountInCents: total,
-              methodId: TransactionItemMethod.Other,
-              typeId: TransactionItemType.Other_Incoming,
-            },
-          },
-        },
-      }),
-      // Outgoing transaction
-      prisma.transaction.create({
-        data: {
-          account: {
-            connect: { id: accountId },
-          },
-          amountInCents: -1 * total,
-          description: `Reimbursement to account ${rr.account.code}`,
-          date: new Date(),
-          transactionItems: {
-            create: {
-              amountInCents: -1 * total,
-              methodId: TransactionItemMethod.Other,
-              typeId: TransactionItemType.Other_Outgoing,
-            },
-          },
-        },
-      }),
-    ]);
-
-    return toast.json(
-      request,
-      { reimbursementRequest: rr },
-      {
-        title: "Reimbursement Request Approved",
-        description: "The reimbursement request has been approved and transactions have been created.",
-      },
-    );
   }
 
   // Rejected or Voided
   const rr = await prisma.reimbursementRequest.update({
     where: { id },
     data: { status: _action },
+    include: { user: true },
+  });
+  await MailService.sendReimbursementRequestUpdateEmail({
+    email: rr.user.username,
+    status: _action,
+    note,
   });
   const normalizedAction = _action === ReimbursementRequestStatus.REJECTED ? "Rejected" : "Voided";
   return toast.json(
@@ -241,17 +239,17 @@ export default function ReimbursementRequestPage() {
   return (
     <>
       <PageHeader title="Reimbursement Request" />
-      <PageContainer className="sm:max-w-lg">
+      <PageContainer className="sm:max-w-xl">
         <Card>
           <CardHeader>
             <CardTitle>New Request</CardTitle>
             <CardDescription>
-              To: {rr.account.code}
+              {rr.account.code}
               {rr.account.description ? ` - ${rr.account.description}` : null}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 items-start gap-2 text-sm">
+            <div className="grid grid-cols-3 items-center gap-2 text-sm">
               <dt className="font-semibold capitalize">Status</dt>
               <dd className="col-span-2">
                 <Badge
@@ -282,7 +280,7 @@ export default function ReimbursementRequestPage() {
 
               {rr.vendor ? (
                 <>
-                  <dt className="font-semibold capitalize">Notes</dt>
+                  <dt className="font-semibold capitalize">Vendor</dt>
                   <dd className="col-span-2 text-muted-foreground">{rr.vendor}</dd>
                 </>
               ) : null}
@@ -327,21 +325,24 @@ export default function ReimbursementRequestPage() {
           </CardContent>
 
           <CardFooter>
-            <ValidatedForm method="post" validator={validator} className="mt-8 flex w-full">
+            <ValidatedForm
+              method="post"
+              validator={validator}
+              className="mt-8 flex w-full"
+              defaultValues={{ accountId: rr.accountId }}
+            >
               <input type="hidden" name="id" value={rr.id} />
               {rr.status === ReimbursementRequestStatus.PENDING ? (
                 <fieldset>
                   <legend>
                     <Callout>
-                      <span>
-                        Approving this will create a transfer from the below account for the amount specified.
-                      </span>
+                      <span>Approving this will deduct from the below account for the amount specified.</span>
                     </Callout>
                   </legend>
                   <div className="mt-4 space-y-4">
                     <FormSelect
                       name="accountId"
-                      label="Account to reimburse from"
+                      label="Account to deduct from"
                       placeholder="Select account"
                       description="Required for approvals"
                       options={accounts.map((a) => ({
@@ -350,10 +351,10 @@ export default function ReimbursementRequestPage() {
                       }))}
                     />
                     <FormTextarea
-                      label="Note"
+                      label="Public Note"
                       name="note"
                       maxLength={2000}
-                      description="If approved, this note will appear on the transaction. If rejected, it will be sent to the requester."
+                      description="This note will appear on the the transaction and/or be sent to the requester."
                     />
                     <Separator />
                     <div className="flex w-full flex-col gap-2 sm:flex-row-reverse sm:items-center">

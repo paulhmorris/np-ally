@@ -50,7 +50,7 @@ export const reimbursementRequestJob = trigger.defineJob({
       from: "Alliance 436 <no-reply@alliance436.org>",
       to: "payments@alliance436.org",
       subject: "New Reimbursement Request",
-      text: `There's a new reimbursement request for ${formatCentsAsDollars(request.amountInCents)} from ${
+      html: `There's a new reimbursement request for ${formatCentsAsDollars(request.amountInCents)} from ${
         contact.firstName
       } ${contact.lastName}, View it on the <a href="${url.toString()}">Dashboard</a>.`,
     });

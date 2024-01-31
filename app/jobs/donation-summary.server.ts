@@ -1,6 +1,7 @@
 import { cronTrigger } from "@trigger.dev/sdk";
 
 import { prisma } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
 import { formatCentsAsDollars } from "~/lib/utils";
 
@@ -58,6 +59,10 @@ export const donationSummaryJob = trigger.defineJob({
 
     if (accounts.length === 0) {
       await io.logger.info("No emails to send. Exiting.");
+      return {
+        count: 0,
+        success: true,
+      };
     }
 
     const emails = accounts.map((a) => {
@@ -68,7 +73,7 @@ export const donationSummaryJob = trigger.defineJob({
         from: "Alliance 436 <no-reply@alliance436.org>",
         to,
         subject: "Weekly Donation summary",
-        text: `Account ${a.code} has received ${formatCentsAsDollars(
+        html: `Account ${a.code} has received ${formatCentsAsDollars(
           totalInCents,
         )} this week. Log in to see more details.`,
       };
@@ -80,7 +85,15 @@ export const donationSummaryJob = trigger.defineJob({
       );
     }
 
-    await io.resend.batch.send("send-emails", [...emails]);
+    try {
+      await io.resend.batch.send("send-emails", [...emails]);
+    } catch (error) {
+      Sentry.captureException(error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : `Unknown error occurred. ${JSON.stringify(error)}`,
+      };
+    }
 
     return {
       success: true,

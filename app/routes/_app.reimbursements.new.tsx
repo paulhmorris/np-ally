@@ -138,6 +138,7 @@ export default function NewReimbursementPage() {
               name="accountId"
               label="Account"
               placeholder="Select account"
+              description="The account that will be deducted."
               options={accounts.map((t) => ({
                 value: t.id,
                 label: `${t.code} - ${t.type.name}`,
