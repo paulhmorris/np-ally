@@ -9,9 +9,7 @@ import prisma from "test/e2e/helpers/prisma";
 export * from "@playwright/test";
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const test = baseTest.extend<{}, { workerStorageState: string }>({
-  // Use the same storage state for all tests in this worker.
   storageState: ({ workerStorageState }, use) => use(workerStorageState),
-  // Authenticate once per worker with a worker-scoped fixture.
   workerStorageState: [
     async ({ browser }, use) => {
       const id = test.info().parallelIndex;

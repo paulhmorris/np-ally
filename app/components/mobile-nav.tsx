@@ -3,6 +3,7 @@ import { NavLink } from "@remix-run/react";
 import { IconMenuDeep } from "@tabler/icons-react";
 import { useState, type ComponentPropsWithoutRef } from "react";
 
+import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Separator } from "~/components/ui/separator";
 import { UserMenu } from "~/components/user-menu";
@@ -15,10 +16,13 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
 
   return (
     <nav className={cn("flex items-center justify-between border-b px-6 py-4 md:hidden", props.className)}>
-      <UserMenu />
+      <div className="flex items-center gap-4">
+        <UserMenu />
+        <ThemeModeToggle />
+      </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger>
-          <span className="sr-only">Open Menu</span>
+          <span className="sr-only">Open Navigation Menu</span>
           <IconMenuDeep className="h-8 w-8" />
         </DialogTrigger>
         <DialogContent className="top-0 max-w-full translate-y-0">
