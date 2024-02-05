@@ -66,6 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   return toast.redirect(request, `/accounts/${account.id}`, {
+    type: "success",
     title: "Account created",
     description: "Well done.",
   });

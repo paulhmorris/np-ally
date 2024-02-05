@@ -72,6 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   return toast.redirect(request, `/engagements/${engagement.id}`, {
+    type: "success",
     title: "Success",
     description: `Engagement recorded.`,
   });

@@ -27,9 +27,11 @@ export function UserMenu() {
           <Button variant="ghost" className="relative mt-auto h-10 w-10 rounded-full">
             <span className="sr-only">Open User Menu</span>
             <Avatar aria-hidden="true">
-              <AvatarFallback className="bg-primary text-white" aria-hidden="true">
-                {user.contact.firstName?.charAt(0).toUpperCase()}
-                {user.contact.lastName?.charAt(0).toUpperCase()}
+              <AvatarFallback className="bg-primary text-white dark:text-black" aria-hidden="true">
+                <span>
+                  {user.contact.firstName?.charAt(0).toUpperCase()}
+                  {user.contact.lastName?.charAt(0).toUpperCase()}
+                </span>
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -37,11 +39,11 @@ export function UserMenu() {
         <DropdownMenuContent className="mb-2 w-48" align="start" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-2 sm:space-y-1">
-              <p className="text-sm font-medium leading-none">
+              <p className="text-base font-medium leading-none sm:text-sm">
                 {user.contact.firstName}
                 {user.contact.lastName ? ` ${user.contact.lastName}` : null}
               </p>
-              <p className="text-xs leading-none text-muted-foreground">{user.contact.email}</p>
+              <p className="text-sm leading-none text-muted-foreground sm:text-xs">{user.contact.email}</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

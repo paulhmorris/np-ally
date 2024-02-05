@@ -4,14 +4,8 @@ import { useEffect } from "react";
 import { ValidatedForm } from "remix-validated-form";
 
 import { Button } from "~/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
+import { DialogFooter } from "~/components/ui/dialog";
+import { DrawerDialog } from "~/components/ui/drawer-dialog";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SelectItem } from "~/components/ui/select";
 import { useUser } from "~/lib/utils";
@@ -29,49 +23,48 @@ export function NewInquiryModal({ open, onOpenChange }: { open: boolean; onOpenC
   }, [fetcher.data, isSubmitting, onOpenChange]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Ask a question</DialogTitle>
-          <DialogDescription>Your message will be sent to an administrator.</DialogDescription>
-        </DialogHeader>
-        <ValidatedForm
-          id="inquiry-form"
-          method="post"
-          action="/api/inquiries"
-          fetcher={fetcher}
-          validator={validator}
-          defaultValues={{
-            name: `${user.contact.firstName} ${user.contact.lastName}`,
-            email: user.username,
-            method: "Email",
-          }}
-        >
-          <div className="space-y-4">
-            <FormField name="name" label="Name" required />
-            <FormSelect name="method" label="Contact Method" placeholder="Select method" required>
-              <SelectItem value="Phone">Phone</SelectItem>
-              <SelectItem value="Email">Email</SelectItem>
-              <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-              <SelectItem value="Signal">Signal</SelectItem>
-              <SelectItem value="Other">Other (please specify)</SelectItem>
-            </FormSelect>
-            <FormField name="otherMethod" label="Other Method" />
-            <FormField name="email" label="Email" />
-            <FormField name="phone" label="Phone" />
-            <FormTextarea name="message" label="Message" maxLength={1000} rows={5} required />
-          </div>
-          <DialogFooter className="mt-4 gap-2 sm:space-x-0">
-            <Button variant="outline" type="submit" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <IconLoader className="size-4 animate-spin" /> : null}
-              <span>Submit</span>
-            </Button>
-          </DialogFooter>
-        </ValidatedForm>
-      </DialogContent>
-    </Dialog>
+    <DrawerDialog
+      title="Ask a question"
+      description="Your message will be sent to an administrator"
+      open={open}
+      setOpen={onOpenChange}
+    >
+      <ValidatedForm
+        id="inquiry-form"
+        method="post"
+        action="/api/inquiries"
+        fetcher={fetcher}
+        validator={validator}
+        defaultValues={{
+          name: `${user.contact.firstName} ${user.contact.lastName}`,
+          email: user.username,
+          method: "Email",
+        }}
+      >
+        <div className="space-y-4">
+          <FormField name="name" label="Name" required />
+          <FormSelect name="method" label="Contact Method" placeholder="Select method" required>
+            <SelectItem value="Phone">Phone</SelectItem>
+            <SelectItem value="Email">Email</SelectItem>
+            <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+            <SelectItem value="Signal">Signal</SelectItem>
+            <SelectItem value="Other">Other (please specify)</SelectItem>
+          </FormSelect>
+          <FormField name="otherMethod" label="Other Method" />
+          <FormField name="email" label="Email" />
+          <FormField name="phone" label="Phone" />
+          <FormTextarea name="message" label="Message" maxLength={1000} rows={5} required />
+        </div>
+        <DialogFooter className="mt-4 gap-2 sm:space-x-0">
+          <Button variant="outline" type="submit" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <IconLoader className="size-4 animate-spin" /> : null}
+            <span>Submit</span>
+          </Button>
+        </DialogFooter>
+      </ValidatedForm>
+    </DrawerDialog>
   );
 }

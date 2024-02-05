@@ -99,6 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   return toast.redirect(request, `/contacts/${contact.id}`, {
+    type: "success",
     title: "Contact created",
     description: `${contact.firstName} ${contact.lastName} was created successfully.`,
   });

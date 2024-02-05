@@ -4,7 +4,6 @@ import { Link, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { IconAddressBook, IconPlus, IconUser } from "@tabler/icons-react";
 import dayjs from "dayjs";
-import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { z } from "zod";
@@ -78,7 +77,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return toast.json(
       request,
       { success: false },
-      { variant: "destructive", title: "Error deleting contact", description: "Invalid request" },
+      { type: "error", title: "Error deleting contact", description: "Invalid request" },
     );
   }
 
@@ -94,7 +93,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       return toast.json(
         request,
         { success: false },
-        { variant: "destructive", title: "Error deleting contact", description: "Contact not found" },
+        { type: "error", title: "Error deleting contact", description: "Contact not found" },
         { status: 404 },
       );
     }
@@ -108,7 +107,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         request,
         { success: false },
         {
-          variant: "destructive",
+          type: "error",
           title: "Error deleting contact",
           description: "This contact has transactions and cannot be deleted. Check the transactions page.",
         },
@@ -124,6 +123,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         prisma.contact.delete({ where: { id: contact.id } }),
       ]);
       return toast.redirect(request, "/contacts", {
+        type: "success",
         title: "Contact deleted",
         description: `${contact.firstName} ${contact.lastName} was deleted successfully.`,
       });
@@ -134,7 +134,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         request,
         { success: false },
         {
-          variant: "destructive",
+          type: "error",
           title: "Error deleting contact",
           description: "An error occurred while deleting the contact.",
         },
@@ -157,7 +157,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 export default function ContactDetailsPage() {
   const user = useUser();
   const { contact } = useTypedLoaderData<typeof loader>();
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
   const isExternal = contact.typeId !== ContactType.Staff;
   const canDelete =
@@ -172,8 +171,6 @@ export default function ContactDetailsPage() {
       <PageHeader title="View Contact">
         {canDelete ? (
           <ConfirmDestructiveModal
-            open={deleteModalOpen}
-            onOpenChange={setDeleteModalOpen}
             description={`This action cannot be undone. This will delete ${contact.firstName} ${
               contact.lastName ? contact.lastName : ""
             } and all associated engagements. Assigned users will be unassigned.`}

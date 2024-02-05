@@ -55,11 +55,13 @@ function App() {
   const [theme] = useTheme();
 
   return (
-    <html lang="en" className={cn(theme)}>
+    <html lang="en" className={cn("h-full", theme)}>
       <head>
         <meta charSet="utf-8" />
         <meta name="robots" content="noindex" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1a1a" />
         <link
           rel="icon"
           href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>"
@@ -68,9 +70,9 @@ function App() {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
-      <body className="h-full min-h-full font-sans">
+      <body className="h-full min-h-full bg-background font-sans">
         <Outlet />
-        <Notifications serverToast={data.serverToast} />
+        <Notifications />
         <ScrollRestoration />
         <script
           dangerouslySetInnerHTML={{
@@ -86,7 +88,7 @@ function App() {
 
 export function ErrorBoundary() {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <head>
         <title>Oh no!</title>
         <link

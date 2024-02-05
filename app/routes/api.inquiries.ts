@@ -68,7 +68,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return toast.json(
       request,
       { success: false, message: JSON.stringify(error) },
-      { title: "Error sending email", description: "Please try again" },
+      { type: "error", title: "Error sending email", description: "Please try again" },
       { status: 500 },
     );
   }
@@ -76,6 +76,6 @@ export async function action({ request }: ActionFunctionArgs) {
   return toast.json(
     request,
     { success: true, emailId: data?.data?.id },
-    { title: "Inquiry sent", description: "We'll be in touch soon!" },
+    { type: "success", title: "Inquiry sent", description: "We'll be in touch soon!" },
   );
 }

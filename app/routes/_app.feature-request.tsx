@@ -54,6 +54,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   return toast.redirect(request, user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin", {
+    type: "success",
     title: "Request Sent",
     description: "An issue has been created on our board.",
   });

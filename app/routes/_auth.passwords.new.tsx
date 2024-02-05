@@ -77,20 +77,12 @@ export async function action({ request }: ActionFunctionArgs) {
   const { oldPassword, newPassword, token } = result.data;
   const reset = await PasswordService.getPasswordResetByToken(token);
   if (!reset) {
-    return toast.json(
-      request,
-      {},
-      { variant: "destructive", title: "Token not found", description: "Please try again." },
-    );
+    return toast.json(request, {}, { type: "error", title: "Token not found", description: "Please try again." });
   }
 
   // Check expiration
   if (reset.expiresAt < new Date()) {
-    return toast.json(
-      request,
-      {},
-      { variant: "destructive", title: "Token expired", description: "Please try again." },
-    );
+    return toast.json(request, {}, { type: "error", title: "Token expired", description: "Please try again." });
   }
 
   // Check token against param
@@ -98,7 +90,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return toast.json(
       request,
       { success: false },
-      { variant: "destructive", title: "Invalid token", description: "Please try again." },
+      { type: "error", title: "Invalid token", description: "Please try again." },
     );
   }
 
@@ -108,7 +100,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return toast.json(
       request,
       { success: false },
-      { variant: "destructive", title: "User not found", description: "Please try again." },
+      { type: "error", title: "User not found", description: "Please try again." },
     );
   }
 
@@ -135,7 +127,7 @@ export async function action({ request }: ActionFunctionArgs) {
   await PasswordService.expirePasswordReset(token);
 
   return toast.redirect(request, "/login", {
-    variant: "default",
+    type: "success",
     title: `Password ${isReset ? "reset" : "set up"}`,
     description: `Your password has been ${isReset ? "reset" : "set up"}. Login with your new password.`,
   });

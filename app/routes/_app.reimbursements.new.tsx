@@ -88,7 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   return toast.redirect(request, `/dashboards/${user.role === UserRole.USER ? "staff" : "admin"}`, {
-    variant: "default",
+    type: "success",
     title: "Reimbursement request submitted",
     description: "Your request will be processed as soon as possible.",
   });

@@ -102,7 +102,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         request,
         { message: "Error notifying subscribers" },
         {
-          variant: "destructive",
+          type: "error",
           title: "Error notifying subscribers",
           description: "We couldn't find the account for this transaction. Please contact support.",
         },
@@ -117,6 +117,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
+    type: "success",
     title: "Success",
     description: `Income of ${formatCentsAsDollars(transaction.amountInCents)} added to account ${
       transaction.account.code
