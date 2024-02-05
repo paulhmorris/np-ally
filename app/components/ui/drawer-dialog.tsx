@@ -53,7 +53,7 @@ export function DrawerDialog(props: Props) {
           <DrawerTitle>{props.title}</DrawerTitle>
           <DrawerDescription>{props.description}</DrawerDescription>
         </DrawerHeader>
-        <div className="p-4">{props.children}</div>
+        <div className="px-4 pb-4">{props.children}</div>
       </DrawerContent>
     </Drawer>
   );

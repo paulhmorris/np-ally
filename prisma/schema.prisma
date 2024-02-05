@@ -300,3 +300,13 @@ model EngagementType {
   name        String       @unique
   engagements Engagement[]
 }
+
+model Announcement {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String    @db.LongText
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
