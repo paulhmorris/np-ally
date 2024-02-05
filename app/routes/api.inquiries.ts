@@ -39,7 +39,6 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const { name, email, phone, message, method, otherMethod } = result.data;
-  console.log(result.data);
 
   if (method === "Other" && (!otherMethod || otherMethod === "")) {
     return validationError({
@@ -52,8 +51,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const { data, error } = await MailService.sendEmail({
     from: "Alliance 436 <no-reply@alliance436.org>",
-    // to: "accounts@alliance436.org",
-    to: "paulh.morris@gmail.com",
+    to: "accounts@alliance436.org",
     subject: "New Inquiry",
     html: `
       <p>Hi there, there's a new inquiry from ${user.username}:</p>
