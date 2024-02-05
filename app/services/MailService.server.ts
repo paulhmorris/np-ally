@@ -1,10 +1,24 @@
 import type { Contact, PasswordReset, ReimbursementRequestStatus } from "@prisma/client";
+import type {} from "resend";
 
 import { resend } from "~/integrations/resend.server";
 import { Sentry } from "~/integrations/sentry";
 import { capitalize } from "~/lib/utils";
 
+export type CreateEmailOptions = Parameters<typeof resend.emails.send>[0];
+export type CreateEmailRequestOptions = Parameters<typeof resend.emails.send>[1];
+
 export const MailService = {
+  sendEmail: async function (payload: CreateEmailOptions, options?: CreateEmailRequestOptions) {
+    try {
+      const data = await resend.emails.send(payload, options);
+      return { data };
+    } catch (error) {
+      Sentry.captureException(error);
+      return { error };
+    }
+  },
+
   sendPasswordResetEmail: async function ({
     email,
     token,
