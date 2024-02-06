@@ -1,11 +1,14 @@
 import { ReimbursementRequestStatus, UserRole } from "@prisma/client";
 import { type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
+dayjs.extend(utc);
 
 import { AnnouncementCard } from "~/components/admin/announcement-card";
 import { ReimbursementRequestsList } from "~/components/admin/reimbursement-requests-list";
 import { ErrorComponent } from "~/components/error-component";
-import { NewAnnouncementModal } from "~/components/modals/new-announcement-modal";
+import { AnnouncementModal } from "~/components/modals/announcement-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
@@ -44,9 +47,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }),
     prisma.announcement.findFirst({
       where: {
-        expiresAt: {
-          gt: new Date(),
-        },
+        OR: [
+          {
+            expiresAt: { gt: dayjs().utc().toDate() },
+          },
+          { expiresAt: null },
+        ],
+      },
+      orderBy: {
+        id: "desc",
       },
     }),
   ]);
@@ -62,7 +71,7 @@ export default function Index() {
       <PageHeader title="Home" />
       <PageContainer className="max-w-4xl">
         <div className="mb-4">
-          {announcement ? <AnnouncementCard announcement={announcement} /> : <NewAnnouncementModal />}
+          {announcement ? <AnnouncementCard announcement={announcement} /> : <AnnouncementModal intent="create" />}
         </div>
         <div className="space-y-4">
           <div className="grid auto-rows-fr grid-cols-1 gap-4 lg:grid-cols-2">

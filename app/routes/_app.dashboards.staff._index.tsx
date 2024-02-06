@@ -1,6 +1,9 @@
 import { UserRole } from "@prisma/client";
 import { type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
+dayjs.extend(utc);
 
 import { AnnouncementCard } from "~/components/admin/announcement-card";
 import { ReimbursementRequestsList } from "~/components/admin/reimbursement-requests-list";
@@ -60,9 +63,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }),
     prisma.announcement.findFirst({
       where: {
-        expiresAt: {
-          gt: new Date(),
-        },
+        OR: [
+          {
+            expiresAt: { gt: dayjs().utc().toDate() },
+          },
+          { expiresAt: null },
+        ],
+      },
+      orderBy: {
+        id: "desc",
       },
     }),
   ]);

@@ -20,7 +20,7 @@ function FieldError({ id, error }: { id: string; error?: string }) {
 function FieldDescription({ id, description }: { id: string; description?: string }) {
   if (!description) return null;
   return (
-    <p id={`${id}-description`} className="mt-1 text-xs text-muted-foreground">
+    <p id={`${id}-description`} className="ml-1 mt-1 text-xs text-muted-foreground">
       {description}
     </p>
   );
