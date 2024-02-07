@@ -1,67 +1,59 @@
 import { useFetcher } from "@remix-run/react";
 import { IconAlertTriangleFilled, IconLoader } from "@tabler/icons-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "~/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
+import { DrawerDialog, DrawerDialogFooter } from "~/components/ui/drawer-dialog";
 
-export function ConfirmDestructiveModal({
-  open,
-  onOpenChange,
-  description,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  description: string;
-}) {
+export function ConfirmDestructiveModal({ description }: { description: string }) {
+  const [open, setOpen] = useState(false);
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state !== "idle";
 
   useEffect(() => {
     if (fetcher.data && !isSubmitting) {
-      onOpenChange(false);
+      setOpen(false);
     }
-  }, [fetcher.data, isSubmitting, onOpenChange]);
+  }, [fetcher.data, isSubmitting]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          type="submit"
-          name="_action"
-          value="delete"
-          className="w-min hover:border-destructive hover:bg-destructive hover:text-destructive-foreground"
-        >
-          Delete
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <IconAlertTriangleFilled className="mb-2 h-8 w-8 self-center text-destructive" />
-          <DialogTitle>Are you absolutely sure?</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:space-x-0">
-          <Button variant="outline" type="submit" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+    <>
+      <Button
+        variant="outline"
+        type="submit"
+        name="_action"
+        value="delete"
+        className="w-min hover:border-destructive hover:bg-destructive hover:text-destructive-foreground"
+        onClick={() => setOpen(true)}
+      >
+        Delete
+      </Button>
+      <DrawerDialog
+        open={open}
+        setOpen={setOpen}
+        title="Are you absolutely sure?"
+        description={description}
+        icon={<IconAlertTriangleFilled className="mb-2 h-8 w-8 self-center text-destructive" />}
+      >
+        <DrawerDialogFooter className="gap-2 sm:space-x-0">
+          <Button variant="outline" type="submit" onClick={() => setOpen(false)} disabled={isSubmitting}>
             Cancel
           </Button>
           <fetcher.Form method="delete">
-            <Button variant="destructive" name="_action" value="delete" type="submit" disabled={isSubmitting}>
+            <Button
+              className="w-full sm:w-auto"
+              variant="destructive"
+              name="_action"
+              value="delete"
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? <IconLoader className="size-4 animate-spin" /> : null}
               <span>Confirm</span>
             </Button>
           </fetcher.Form>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DrawerDialogFooter>
+      </DrawerDialog>
+    </>
   );
 }

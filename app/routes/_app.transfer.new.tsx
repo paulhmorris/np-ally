@@ -63,7 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       request,
       { message: "Insufficient funds in from account." },
       {
-        variant: "warning",
+        type: "warning",
         title: "Error transferring funds",
         description: "Insufficient funds in from account.",
       },
@@ -102,6 +102,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   ]);
 
   return toast.redirect(request, `/accounts/`, {
+    type: "success",
     title: "Success",
     description: `Transfer completed successfully.`,
   });

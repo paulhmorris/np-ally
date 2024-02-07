@@ -88,6 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   return toast.redirect(request, `/accounts/${transaction.accountId}`, {
+    type: "success",
     title: "Success",
     description: `Expense of ${formatCentsAsDollars(total)} charged to account ${transaction.account.code}`,
   });

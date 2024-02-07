@@ -4,7 +4,6 @@ import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
@@ -73,6 +72,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   const trx = await prisma.transaction.delete({ where: { id: transactionId }, include: { account: true } });
   return toast.redirect(request, "/transactions", {
+    type: "success",
     title: "Transaction deleted",
     description: `The transaction of ${formatCentsAsDollars(trx.amountInCents, 2)} on account ${
       trx.account.code
@@ -83,16 +83,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function TransactionDetailsPage() {
   const authorizedUser = useUser();
   const { transaction } = useTypedLoaderData<typeof loader>();
-  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <>
-      <PageHeader title="Transaction Details" description={transaction.id}>
+      <PageHeader title="Transaction Details">
         <div className="flex items-center gap-2">
           {["SUPERADMIN", "ADMIN"].includes(authorizedUser.role) ? (
             <ConfirmDestructiveModal
-              open={modalOpen}
-              onOpenChange={setModalOpen}
               description={`This action cannot be undone. This will permanently delete the
                   transaction and its items, and change the balance of account ${transaction.account.code}.`}
             />
@@ -105,6 +102,7 @@ export default function TransactionDetailsPage() {
           <div>
             <h2 className="sr-only">Details</h2>
             <dl className="divide-y divide-muted">
+              <DetailItem label="Id" value={transaction.id} />
               <DetailItem label="Account">
                 <Link to={`/accounts/${transaction.accountId}`} className="font-medium text-primary">
                   {`${transaction.account.code}`} - {transaction.account.description}

@@ -125,7 +125,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         request,
         { message: "You do not have permission to edit this user." },
         {
-          variant: "warning",
+          type: "warning",
           title: "Permission denied",
           description: "You do not have permission to edit this user.",
         },
@@ -143,7 +143,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         request,
         { message: "You do not have permission to edit this field." },
         {
-          variant: "warning",
+          type: "warning",
           title: "Permission denied",
           description: "You do not have permission to edit this field.",
         },
@@ -157,7 +157,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       request,
       { message: "You do not have permission to create a Super Admin." },
       {
-        variant: "warning",
+        type: "warning",
         title: "Permission denied",
         description: "You do not have permission to create a Super Admin.",
       },
@@ -182,7 +182,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return toast.json(
     request,
     { user: updatedUser },
-    { variant: "default", title: "User updated", description: "Great job." },
+    { type: "default", title: "User updated", description: "Great job." },
   );
 };
 

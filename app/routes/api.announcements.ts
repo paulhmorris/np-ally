@@ -1,0 +1,145 @@
+import { Prisma } from "@prisma/client";
+import { ActionFunctionArgs } from "@remix-run/node";
+import { withZod } from "@remix-validated-form/with-zod";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import { validationError } from "remix-validated-form";
+import { z } from "zod";
+import { zfd } from "zod-form-data";
+dayjs.extend(utc);
+
+import { prisma } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
+import { getPrismaErrorText } from "~/lib/responses.server";
+import { toast } from "~/lib/toast.server";
+import { SessionService } from "~/services/SessionService.server";
+
+export const validator = withZod(
+  z.discriminatedUnion("intent", [
+    z.object({
+      intent: z.literal("create"),
+      title: z.string(),
+      content: z.string(),
+      expiresAt: zfd.text(z.coerce.date().optional()),
+    }),
+    z.object({
+      intent: z.literal("update"),
+      id: z.coerce.number(),
+      title: z.string(),
+      content: z.string(),
+      expiresAt: zfd.text(z.coerce.date().optional()),
+    }),
+    z.object({
+      intent: z.literal("expire"),
+      id: z.coerce.number(),
+    }),
+  ]),
+);
+
+export async function action({ request }: ActionFunctionArgs) {
+  await SessionService.requireAdmin(request);
+
+  const result = await validator.validate(await request.formData());
+  if (result.error) {
+    return validationError(result.error);
+  }
+
+  try {
+    if (result.data.intent === "create") {
+      const { title, content, expiresAt } = result.data;
+      const expiry = expiresAt ? dayjs(expiresAt).utc().endOf("day") : undefined;
+      const endOfToday = dayjs().utc().endOf("day");
+
+      if (expiry && expiry.isBefore(endOfToday)) {
+        return validationError({
+          fieldErrors: {
+            expiresAt: "The expiration date must be in the future.",
+          },
+        });
+      }
+
+      const announcement = await prisma.announcement.create({
+        data: {
+          title,
+          content,
+          expiresAt: expiry?.toDate(),
+        },
+      });
+      return toast.json(
+        request,
+        { success: true },
+        {
+          type: "success",
+          title: "Announcement Created",
+          description: `The announcement is now visible to all users and admins${announcement.expiresAt ? " and will expire at " + dayjs(announcement.expiresAt).utc().format("M/D/YY h:mm a") : "."}`,
+        },
+      );
+    }
+
+    if (result.data.intent === "update") {
+      const { id, title, content, expiresAt } = result.data;
+      const expiry = expiresAt ? dayjs(expiresAt).utc().endOf("day") : undefined;
+      const endOfToday = dayjs().utc().endOf("day");
+
+      if (expiry && expiry.isBefore(endOfToday)) {
+        return validationError({
+          fieldErrors: {
+            expiresAt: "The expiration date must be in the future.",
+          },
+        });
+      }
+
+      const announcement = await prisma.announcement.update({
+        where: { id },
+        data: {
+          title,
+          content,
+          expiresAt: expiry ? expiry.toDate() : null,
+        },
+      });
+      return toast.json(
+        request,
+        { success: true },
+        {
+          type: "success",
+          title: "Announcement Updated",
+          description: `The announcement is now visible to all users and admins${announcement.expiresAt ? " and will expire at " + dayjs(announcement.expiresAt).utc().format("M/D/YY h:mm a") : "."}`,
+        },
+      );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (result.data.intent === "expire") {
+      const { id } = result.data;
+      await prisma.announcement.update({
+        where: { id },
+        data: {
+          expiresAt: dayjs().subtract(7, "day").toDate(),
+        },
+      });
+      return toast.json(
+        request,
+        { success: true },
+        {
+          type: "info",
+          title: "Announcement Expired",
+          description: "The announcement is no longer visible to users or admins.",
+        },
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return toast.json(
+        request,
+        { success: false },
+        {
+          type: "error",
+          title: "Error",
+          description: getPrismaErrorText(error),
+        },
+      );
+    }
+  }
+}

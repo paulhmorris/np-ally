@@ -105,7 +105,11 @@ export async function action({ request }: ActionFunctionArgs) {
     return toast.json(
       request,
       { reimbursementRequest: rr },
-      { title: "Reimbursement Request reopened", description: "" },
+      {
+        type: "info",
+        title: "Reimbursement Request reopened",
+        description: "",
+      },
     );
   }
 
@@ -143,7 +147,7 @@ export async function action({ request }: ActionFunctionArgs) {
           request,
           { message: "Insufficient Funds" },
           {
-            variant: "warning",
+            type: "warning",
             title: "Insufficient Funds",
             description: `The reimbursement request couldn't be completed because account ${
               account.code
@@ -185,6 +189,7 @@ export async function action({ request }: ActionFunctionArgs) {
         request,
         { reimbursementRequest: rr },
         {
+          type: "success",
           title: "Reimbursement Request Approved",
           description: `The reimbursement request has been approved and account ${account.code} has been adjusted.`,
         },
@@ -195,14 +200,14 @@ export async function action({ request }: ActionFunctionArgs) {
         return toast.json(
           request,
           { message: getPrismaErrorText(error) },
-          { variant: "destructive", title: "Database Error", description: getPrismaErrorText(error) },
+          { type: "error", title: "Database Error", description: getPrismaErrorText(error) },
         );
       }
       return toast.json(
         request,
         { message: "An unknown error occurred" },
         {
-          variant: "destructive",
+          type: "error",
           title: "An unknown error occurred",
           description: error instanceof Error ? error.message : "",
         },
@@ -226,6 +231,7 @@ export async function action({ request }: ActionFunctionArgs) {
     request,
     { reimbursementRequest: rr },
     {
+      type: "success",
       title: `Reimbursement Request ${normalizedAction}`,
       description: `The reimbursement request has been ${normalizedAction} and the requester will be notified.`,
     },

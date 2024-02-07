@@ -178,6 +178,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   return toast.redirect(request, `/contacts/${contact.id}`, {
+    type: "success",
     title: "Contact updated",
     description: `${contact.firstName} ${contact.lastName} was updated successfully.`,
   });

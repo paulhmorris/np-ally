@@ -30,7 +30,7 @@ export async function action({ request }: ActionFunctionArgs) {
       request,
       { message: "User not found" },
       {
-        variant: "destructive",
+        type: "error",
         title: "User not found",
         description: `There is no user with username ${result.data.username}.`,
       },
@@ -43,7 +43,7 @@ export async function action({ request }: ActionFunctionArgs) {
       request,
       { message: "User not found" },
       {
-        variant: "warning",
+        type: "warning",
         title: "Existing request found",
         description: `A password reset request has already been sent. It expires in ${dayjs(
           existingReset.expiresAt,
@@ -63,7 +63,7 @@ export async function action({ request }: ActionFunctionArgs) {
       request,
       { error },
       {
-        variant: "destructive",
+        type: "error",
         title: "Something went wrong",
         description: "There was an error sending the password reset email.",
       },
@@ -78,7 +78,7 @@ export async function action({ request }: ActionFunctionArgs) {
       request,
       { data },
       {
-        variant: "destructive",
+        type: "error",
         title: "Something went wrong",
         description: "There was an error sending the password reset email.",
       },
@@ -90,7 +90,7 @@ export async function action({ request }: ActionFunctionArgs) {
     request,
     { data },
     {
-      variant: "default",
+      type: "success",
       title: "Email sent",
       description: "Check the email for a link to reset the password.",
     },

@@ -28,6 +28,7 @@ export async function action({ request }: ActionFunctionArgs) {
         request,
         { receipt },
         {
+          type: "success",
           title: "Reimbursement request deleted",
           description: "Your request was deleted successfully.",
         },

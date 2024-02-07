@@ -64,7 +64,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       request,
       { message: "You do not have permission to create a Super Admin" },
       {
-        variant: "warning",
+        type: "warning",
         title: "Permission denied",
         description: "You do not have permission to create a Super Admin",
       },
@@ -94,6 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   return toast.redirect(request, `/users/${user.id}`, {
+    type: "success",
     title: "User created",
     description: sendPasswordSetup
       ? "They will receive an email with instructions to set their password."
