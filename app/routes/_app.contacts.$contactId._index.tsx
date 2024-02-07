@@ -177,7 +177,7 @@ export default function ContactDetailsPage() {
           />
         ) : null}
       </PageHeader>
-      <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-1">
+      <div className="flex flex-wrap items-center gap-2 sm:mt-1">
         <Badge variant="outline" className="capitalize">
           <div>
             <IconAddressBook className="size-3" />

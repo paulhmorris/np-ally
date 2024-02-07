@@ -86,7 +86,7 @@ export default function TransactionDetailsPage() {
 
   return (
     <>
-      <PageHeader title="Transaction Details" description={transaction.id}>
+      <PageHeader title="Transaction Details">
         <div className="flex items-center gap-2">
           {["SUPERADMIN", "ADMIN"].includes(authorizedUser.role) ? (
             <ConfirmDestructiveModal
@@ -102,6 +102,7 @@ export default function TransactionDetailsPage() {
           <div>
             <h2 className="sr-only">Details</h2>
             <dl className="divide-y divide-muted">
+              <DetailItem label="Id" value={transaction.id} />
               <DetailItem label="Account">
                 <Link to={`/accounts/${transaction.accountId}`} className="font-medium text-primary">
                   {`${transaction.account.code}`} - {transaction.account.description}

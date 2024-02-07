@@ -14,6 +14,7 @@ import {
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
+  DrawerGrabBar,
   DrawerHeader,
   DrawerTitle,
 } from "~/components/ui/drawer";
@@ -49,7 +50,8 @@ export function DrawerDialog(props: Props) {
     <Drawer open={props.open} onOpenChange={props.setOpen}>
       <DrawerContent>
         <DrawerHeader>
-          <div className="flex items-center justify-center">{props.icon}</div>
+          <DrawerGrabBar />
+          {props.icon ? <div className="flex items-center justify-center">{props.icon}</div> : null}
           <DrawerTitle>{props.title}</DrawerTitle>
           <DrawerDescription>{props.description}</DrawerDescription>
         </DrawerHeader>

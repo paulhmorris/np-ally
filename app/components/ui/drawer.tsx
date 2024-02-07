@@ -31,17 +31,20 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col gap-4 rounded-t-[10px] border bg-background",
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[95dvh] flex-col gap-4 rounded-t-[10px] border bg-background",
         className,
       )}
       {...props}
     >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
-      <div className="max-h-[95dvh] overflow-y-scroll">{children}</div>
+      <div className="overflow-auto">{children}</div>
     </DrawerPrimitive.Content>
   </DrawerPortal>
 ));
 DrawerContent.displayName = "DrawerContent";
+
+const DrawerGrabBar = ({ className, ...props }: React.HtmlHTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("z-50 mx-auto my-4 h-2 w-[100px] rounded-full bg-muted", className)} {...props} />
+);
 
 const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("grid gap-3.5 p-4 text-center sm:text-left", className)} {...props} />
@@ -83,6 +86,7 @@ export {
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
+  DrawerGrabBar,
   DrawerHeader,
   DrawerOverlay,
   DrawerPortal,
