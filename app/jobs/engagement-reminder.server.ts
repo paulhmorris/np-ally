@@ -39,7 +39,11 @@ export const engagementReminderJob = trigger.defineJob({
           lastName: true,
           assignedUsers: {
             select: {
-              contact: true,
+              user: {
+                select: {
+                  contact: true,
+                },
+              },
             },
           },
         },
@@ -56,7 +60,7 @@ export const engagementReminderJob = trigger.defineJob({
 
     const usersToRemind = contacts.flatMap((c) =>
       c.assignedUsers.map((u) => ({
-        ...u.contact,
+        ...u.user.contact,
         assignedContact: `${c.firstName} ${c.lastName}`,
       })),
     );
