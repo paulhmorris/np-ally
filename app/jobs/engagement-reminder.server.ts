@@ -10,9 +10,10 @@ export const engagementReminderJob = trigger.defineJob({
   id: "engagement-reminder",
   name: "Engagement Reminder",
   version: "0.0.1",
+  enabled: process.env.VERCEL_ENV === "production",
   trigger: cronTrigger({
     // Every day at 3pm UTC / 9am CST
-    cron: "0 15 * * *",
+    cron: "0 15 * * 1-5",
   }),
   integrations: {
     resend: triggerResend,
