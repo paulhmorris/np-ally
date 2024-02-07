@@ -10,9 +10,10 @@ export const engagementReminderJob = trigger.defineJob({
   id: "engagement-reminder",
   name: "Engagement Reminder",
   version: "0.0.1",
+  enabled: process.env.VERCEL_ENV === "production",
   trigger: cronTrigger({
     // Every day at 3pm UTC / 9am CST
-    cron: "0 15 * * *",
+    cron: "0 15 * * 1-5",
   }),
   integrations: {
     resend: triggerResend,
@@ -39,7 +40,11 @@ export const engagementReminderJob = trigger.defineJob({
           lastName: true,
           assignedUsers: {
             select: {
-              contact: true,
+              user: {
+                select: {
+                  contact: true,
+                },
+              },
             },
           },
         },
@@ -56,7 +61,7 @@ export const engagementReminderJob = trigger.defineJob({
 
     const usersToRemind = contacts.flatMap((c) =>
       c.assignedUsers.map((u) => ({
-        ...u.contact,
+        ...u.user.contact,
         assignedContact: `${c.firstName} ${c.lastName}`,
       })),
     );
