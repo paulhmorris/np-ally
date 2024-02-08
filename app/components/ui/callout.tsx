@@ -1,4 +1,4 @@
-import { IconAlertTriangleFilled, IconExclamationCircle, IconInfoCircleFilled } from "@tabler/icons-react";
+import { IconAlertTriangleFilled, IconExclamationCircle, IconInfoCircleFilled, IconNotes } from "@tabler/icons-react";
 import { VariantProps, cva } from "class-variance-authority";
 
 import { cn } from "~/lib/utils";
@@ -11,8 +11,8 @@ const calloutVariants = cva("rounded-md border p-3 text-sm flex items-start gap-
   variants: {
     variant: {
       info: "bg-primary/5 border-primary",
-      warning: "bg-warning/5 border-warning text-warning-foreground",
-      destructive: "bg-destructive/5 border-destructive text-destructive-foreground",
+      warning: "bg-warning/5 border-warning text-foreground",
+      destructive: "bg-destructive/5 border-destructive text-foreground",
       outline: "border border-input bg-card text-card-foreground",
     },
   },
@@ -22,19 +22,16 @@ const calloutVariants = cva("rounded-md border p-3 text-sm flex items-start gap-
 });
 
 export function Callout({ children, className, variant = "info", ...props }: Props) {
+  const iconMap = {
+    info: <IconInfoCircleFilled className="size-4 text-primary" />,
+    warning: <IconAlertTriangleFilled className="size-4 text-warning" />,
+    destructive: <IconExclamationCircle className="size-4 text-destructive" />,
+    outline: <IconNotes className="size-4 text-muted-foreground" />,
+  };
+
   return (
     <div className={cn(calloutVariants({ variant, className }))} {...props}>
-      {variant !== "outline" ? (
-        <div className="pt-[1px]">
-          {variant === "info" ? (
-            <IconInfoCircleFilled className="size-4 text-primary" />
-          ) : variant === "warning" ? (
-            <IconAlertTriangleFilled className="size-4 text-warning" />
-          ) : variant === "destructive" ? (
-            <IconExclamationCircle className="size-4 text-destructive" />
-          ) : null}
-        </div>
-      ) : null}
+      <div className="pt-[1px]">{iconMap[variant ?? "info"]}</div>
       <p>{children}</p>
     </div>
   );

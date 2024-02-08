@@ -17,8 +17,10 @@ const Checkbox = React.forwardRef<
     {...props}
   >
     {children}
-    <CheckboxPrimitive.Indicator className={cn("flex items-center justify-center text-current")}>
+    <CheckboxPrimitive.Indicator className={cn("flex items-center justify-center text-current text-white")}>
       <svg
+        width={16}
+        height={16}
         viewBox="0 0 16 16"
         stroke="currentColor"
         fill="currentColor"

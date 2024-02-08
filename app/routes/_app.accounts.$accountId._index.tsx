@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
 import { IconCoins, IconExclamationCircle, IconUser } from "@tabler/icons-react";
@@ -14,7 +15,7 @@ import { Button } from "~/components/ui/button";
 import { AccountBalanceCard } from "~/components/users/balance-card";
 import { prisma } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
-import { notFound } from "~/lib/responses.server";
+import { notFound, unauthorized } from "~/lib/responses.server";
 import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -25,8 +26,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await SessionService.requireAdmin(request);
+  const user = await SessionService.requireUser(request);
   invariant(params.accountId, "accountId not found");
+  if (user.role === UserRole.USER && user.accountId !== params.accountId) {
+    throw unauthorized("You are not authorized to view this account.");
+  }
 
   const account = await prisma.account.findUnique({
     where: { id: params.accountId },
