@@ -19,6 +19,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
+import { useUser } from "~/lib/utils";
 import { NewContactSchema } from "~/models/schemas";
 import { SessionService } from "~/services/SessionService.server";
 
@@ -106,6 +107,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function NewContactPage() {
+  const sessionUser = useUser();
   const { contactTypes, usersWhoCanBeAssigned } = useTypedLoaderData<typeof loader>();
   const [addressEnabled, setAddressEnabled] = useState(false);
 
@@ -140,6 +142,7 @@ export default function NewContactPage() {
                       name="assignedUserIds"
                       value={user.id}
                       aria-label={`${user.contact.firstName} ${user.contact.lastName}`}
+                      defaultChecked={sessionUser.role === UserRole.USER ? user.id === sessionUser.id : false}
                     />
                     <span>
                       {user.contact.firstName} {user.contact.lastName}

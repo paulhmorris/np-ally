@@ -1,8 +1,14 @@
-import { ContactType } from "@prisma/client";
+import { ContactType, UserRole } from "@prisma/client";
+import { useLocation } from "@remix-run/react";
 
 import { FormField, FormSelect } from "~/components/ui/form";
+import { useUser } from "~/lib/utils";
 
 export function ContactFields({ contactTypes }: { contactTypes: Array<ContactType> }) {
+  const user = useUser();
+  const location = useLocation();
+  const shouldDisableTypeSelection = user.role === UserRole.USER && location.pathname.includes(user.contactId);
+
   return (
     <>
       <div className="flex items-start gap-2">
@@ -13,6 +19,7 @@ export function ContactFields({ contactTypes }: { contactTypes: Array<ContactTyp
       <FormField label="Phone" id="phone" name="phone" placeholder="8885909724" inputMode="numeric" maxLength={10} />
       <FormSelect
         required
+        disabled={shouldDisableTypeSelection}
         label="Type"
         name="typeId"
         placeholder="Select type"

@@ -227,7 +227,6 @@ model Contact {
   type                 ContactType           @relation(fields: [typeId], references: [id])
   typeId               Int
   user                 User?
-  userId               String?               @unique
   transactions         Transaction[]
   engagements          Engagement[]
   accountSubscriptions AccountSubscription[]

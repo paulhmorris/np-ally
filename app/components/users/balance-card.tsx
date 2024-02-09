@@ -12,7 +12,7 @@ export function AccountBalanceCard({
   title = "Account Balance",
 }: {
   totalCents: number | null;
-  accountId: string | null;
+  accountId?: string;
   code?: string;
   title?: string;
 }) {

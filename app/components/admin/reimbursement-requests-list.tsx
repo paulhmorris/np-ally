@@ -26,9 +26,11 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
                 {user.role !== UserRole.USER ? <TableHead>Submitted By</TableHead> : null}
                 <TableHead>Account</TableHead>
                 <TableHead>Amount</TableHead>
-                <TableHead>
-                  <span className="sr-only">Action</span>
-                </TableHead>
+                {user.role !== UserRole.USER ? (
+                  <TableHead>
+                    <span className="sr-only">Action</span>
+                  </TableHead>
+                ) : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -38,11 +40,13 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
                   {user.role !== UserRole.USER ? <TableCell>{req.user.contact.email}</TableCell> : null}
                   <TableCell>{req.account.code}</TableCell>
                   <TableCell>{formatCentsAsDollars(req.amountInCents)}</TableCell>
-                  <TableCell>
-                    <Link to={`/reimbursements/${req.id}`} className="font-medium text-primary">
-                      View
-                    </Link>
-                  </TableCell>
+                  {user.role !== UserRole.USER ? (
+                    <TableCell>
+                      <Link to={`/reimbursements/${req.id}`} className="font-medium text-primary">
+                        View
+                      </Link>
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               ))}
             </TableBody>

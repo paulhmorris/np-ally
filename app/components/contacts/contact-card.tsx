@@ -76,11 +76,9 @@ export function ContactCard({ contact }: { contact: Contact }) {
         </dl>
       </CardContent>
       <CardFooter>
-        {!contact.userId ? (
-          <Button variant="outline" className="ml-auto" asChild>
-            <Link to={`/contacts/${contact.id}/edit`}>Edit</Link>
-          </Button>
-        ) : null}
+        <Button variant="outline" className="ml-auto" asChild>
+          <Link to={`/contacts/${contact.id}/edit`}>Edit</Link>
+        </Button>
       </CardFooter>
     </Card>
   );
