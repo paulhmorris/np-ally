@@ -21,11 +21,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (user.role === UserRole.USER) {
     const contacts = await prisma.contact.findMany({
       where: {
-        assignedUsers: {
-          some: {
-            userId: user.id,
+        OR: [
+          {
+            assignedUsers: {
+              some: {
+                userId: user.id,
+              },
+            },
           },
-        },
+          {
+            user: {
+              id: user.id,
+            },
+          },
+        ],
       },
       include: { type: true },
     });

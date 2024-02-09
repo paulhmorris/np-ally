@@ -37,7 +37,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.contactId, "contactId not found");
 
   // Users can only edit their assigned contacts
-  if (user.role === UserRole.USER) {
+  if (user.role === UserRole.USER && params.contactId !== user.contactId) {
     const assignment = await prisma.contactAssigment.findUnique({
       where: {
         contactId_userId: {
@@ -124,8 +124,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  // Users can only edit their assigned contacts
-  if (user.role === UserRole.USER) {
+  // Users can only edit their assigned contacts and themselves
+  if (user.role === UserRole.USER && formData.id !== user.contactId) {
     const assignment = await prisma.contactAssigment.findUnique({
       where: {
         contactId_userId: {
@@ -136,6 +136,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
     if (!assignment) {
       throw forbidden({ message: "You do not have permission to edit this contact." });
+    }
+  }
+
+  // Users can't change their contact type
+  if (user.role === UserRole.USER) {
+    if (formData.typeId !== user.contact.typeId) {
+      return forbidden({ message: "You do not have permission to change your contact type." });
     }
   }
 
@@ -197,7 +204,7 @@ export default function EditContactPage() {
       <div className="mt-1">
         {user.contactId === contact.id ? (
           <div className="max-w-sm">
-            <Callout>
+            <Callout variant="warning">
               This is your contact information. Changing this email will not affect your login credentials, but may have
               other unintended effects.
             </Callout>

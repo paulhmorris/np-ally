@@ -91,7 +91,7 @@ export default function Index() {
         {user.role === UserRole.USER ? (
           <div className="space-y-5">
             <div className="max-w-[320px]">
-              <AccountBalanceCard totalCents={total} accountId={user.accountId} />
+              <AccountBalanceCard totalCents={total} accountId={user.accountId ?? undefined} />
             </div>
             {reimbursementRequests.length > 0 ? (
               <div className="max-w-2xl">
