@@ -12,37 +12,44 @@ export const engagementReminderJob = trigger.defineJob({
   version: "0.0.1",
   enabled: process.env.VERCEL_ENV === "production",
   trigger: cronTrigger({
-    // At 9a CST on Monday and Thursday.
-    cron: "0 15 * * 1,4",
+    // At 9a CST on Monday.
+    cron: "0 15 * * 1",
   }),
   integrations: {
     resend: triggerResend,
   },
   run: async (_, io) => {
     const thirtyDaysAgo = new Date(Date.now() - DAYS_CUTOFF * 24 * 60 * 60 * 1000);
-    const contacts = await io.runTask("get-contacts", async () => {
-      return prisma.contact.findMany({
+    const assignments = await io.runTask("get-contact-assignments", async () => {
+      return prisma.contactAssigment.findMany({
         where: {
-          typeId: {
-            notIn: [ContactType.Staff],
-          },
-          engagements: {
-            some: {},
-            every: {
-              date: {
-                lte: thirtyDaysAgo,
+          contact: {
+            typeId: {
+              not: ContactType.Staff,
+            },
+            engagements: {
+              some: {},
+              every: {
+                date: {
+                  lte: thirtyDaysAgo,
+                },
               },
             },
           },
         },
         select: {
-          firstName: true,
-          lastName: true,
-          assignedUsers: {
+          contact: {
             select: {
-              user: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+          user: {
+            select: {
+              contact: {
                 select: {
-                  contact: true,
+                  firstName: true,
+                  email: true,
                 },
               },
             },
@@ -51,7 +58,7 @@ export const engagementReminderJob = trigger.defineJob({
       });
     });
 
-    if (contacts.length === 0) {
+    if (assignments.length === 0) {
       await io.logger.info("No contacts to remind. Exiting.");
       return {
         success: true,
@@ -59,26 +66,50 @@ export const engagementReminderJob = trigger.defineJob({
       };
     }
 
-    const usersToRemind = contacts.flatMap((c) =>
-      c.assignedUsers.map((u) => ({
-        ...u.user.contact,
-        assignedContact: `${c.firstName} ${c.lastName}`,
-      })),
-    );
-
-    const emails = usersToRemind
-      .map((u) => {
-        if (!u.email) {
-          return null;
+    type Accumulator = Record<
+      string,
+      { user: Record<string, string>; contacts: Array<{ firstName: string; lastName: string }> }
+    >;
+    // eslint-disable-next-line @typescript-eslint/require-await
+    const emails = await io.runTask("prepare-emails", async () => {
+      // Transform db data into a map of unique user emails with an array of their contacts.
+      const temp = assignments.reduce((acc: Accumulator, curr) => {
+        if (!curr.user.contact.email || (!curr.contact.firstName && !curr.contact.lastName)) {
+          return acc;
         }
+
+        const userEmail = curr.user.contact.email;
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!acc[userEmail]) {
+          acc[userEmail] = {
+            user: {
+              ...(curr.user.contact as { firstName: string; email: string }),
+            },
+            contacts: [],
+          };
+        }
+
+        acc[userEmail].contacts.push(curr.contact as { firstName: string; lastName: string });
+
+        return acc;
+      }, {});
+
+      // Convert the map into an array of emails.
+      const emails = Object.values(temp).map((u) => {
         return {
-          from: "Alliance 436 <no-reply@alliance436.org>",
-          to: u.email,
+          from: "Alliance 436 <no-reply@alliance436.org",
+          to: u.user.email,
           subject: "Contact Reminder",
-          html: `Hi ${u.firstName}, your contact <span style="font:bold;">${u.assignedContact}</span> has not been contacted in 30 days. This is a friendly reminder to reach out to them.`,
+          html: `Hi ${u.user.firstName}, your contacts <span style="font:bold;">${u.contacts
+            .map((c) => `${c.firstName} ${c.lastName}`)
+            .join(
+              "\n",
+            )}</span> have not been contacted in at least 30 days. This is a friendly reminder to reach out to them.`,
         };
-      })
-      .filter(Boolean);
+      });
+      return emails;
+    });
 
     if (emails.length > 90) {
       await io.logger.warn(
