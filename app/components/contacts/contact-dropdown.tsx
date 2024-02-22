@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { type Contact, type ContactType as PContactType } from "@prisma/client";
 
 import { FormSelect, FormSelectProps } from "~/components/ui/form";
@@ -22,6 +23,26 @@ export function ContactDropdown(
             <SelectLabel>{type.name}</SelectLabel>
             {contacts
               .filter((c) => c.typeId === type.id)
+              .sort((a, b) => {
+                if (
+                  a.typeId === ContactType.Organization &&
+                  b.typeId === ContactType.Organization &&
+                  a.organizationName &&
+                  b.organizationName
+                ) {
+                  return a.organizationName.localeCompare(b.organizationName);
+                }
+
+                if (a.lastName && b.lastName) {
+                  return a.lastName.localeCompare(b.lastName);
+                }
+
+                if (a.firstName && b.firstName) {
+                  return a.firstName.localeCompare(b.firstName);
+                }
+
+                return 0;
+              })
               .map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
