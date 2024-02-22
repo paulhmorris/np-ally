@@ -3,9 +3,11 @@ import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { z } from "zod";
+dayjs.extend(utc);
 
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
@@ -106,7 +108,7 @@ export default function EngagementPage() {
               </Link>
             </CardTitle>
             <CardDescription>
-              via {engagement.type.name} on {dayjs(engagement.date).format("MM/DD/YYYY")}
+              via {engagement.type.name} on {dayjs(engagement.date).utc().format("MM/DD/YYYY")}
             </CardDescription>
           </CardHeader>
           <CardContent>{engagement.description}</CardContent>
