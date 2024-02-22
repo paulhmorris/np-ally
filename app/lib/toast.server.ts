@@ -18,7 +18,7 @@ export function getGlobalToast(session: Session): Toast | null {
 class ToastHandler {
   async redirect(request: Request, url: string, toast: Toast, init: ResponseInit = {}) {
     const session = await SessionService.getSession(request);
-    const type: Toast["type"] = toast.type ?? "default";
+    const type: Toast["type"] = toast.type ?? "success";
 
     setGlobalToast(session, { ...toast, type });
     return redirect(url, {
@@ -37,7 +37,7 @@ class ToastHandler {
     init: ResponseInit = {},
   ): Promise<TypedJsonResponse<Data>> {
     const session = await SessionService.getSession(request);
-    const type: Toast["type"] = toast.type ?? "default";
+    const type: Toast["type"] = toast.type ?? "success";
 
     setGlobalToast(session, { ...toast, type });
     return typedjson<Data>(data, {

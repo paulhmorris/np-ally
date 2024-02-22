@@ -182,7 +182,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return toast.json(
     request,
     { user: updatedUser },
-    { type: "default", title: "User updated", description: "Great job." },
+    { type: "success", title: "User updated", description: "Great job." },
   );
 };
 

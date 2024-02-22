@@ -98,7 +98,7 @@ export const engagementReminderJob = trigger.defineJob({
       // Convert the map into an array of emails.
       const emails = Object.values(temp).map((u) => {
         return {
-          from: "Alliance 436 <no-reply@alliance436.org",
+          from: "Alliance 436 <no-reply@alliance436.org>",
           to: u.user.email,
           subject: "Contact Reminder",
           html: `Hi ${u.user.firstName}, your contacts <span style="font:bold;">${u.contacts
