@@ -60,6 +60,7 @@ module.exports = {
       plugins: ["@typescript-eslint", "import"],
       rules: {
         "no-console": ["warn", { allow: ["warn", "error", "info"] }],
+        "@typescript-eslint/no-unsafe-enum-comparison": "off",
         "@typescript-eslint/consistent-type-definitions": ["off"],
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/array-type": ["error", { default: "generic" }],

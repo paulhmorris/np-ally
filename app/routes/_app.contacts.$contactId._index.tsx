@@ -97,7 +97,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         { status: 404 },
       );
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+
     if (contact.typeId === ContactType.Staff) {
       throw forbidden({ message: "You do not have permission to delete this contact." });
     }
@@ -157,13 +157,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 export default function ContactDetailsPage() {
   const user = useUser();
   const { contact } = useTypedLoaderData<typeof loader>();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
   const isExternal = contact.typeId !== ContactType.Staff;
   const canDelete =
     !contact.user &&
     contact.transactions.length === 0 &&
     user.role !== UserRole.USER &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     contact.typeId !== ContactType.Staff;
 
   return (

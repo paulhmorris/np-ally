@@ -76,7 +76,6 @@ class Service implements ITransactionService {
 
       const trxItemTypes = await this.getItemTypes();
       const total = transactionItems.reduce((acc, i) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         const type = trxItemTypes.find((t) => t.id === i.typeId);
         if (!type) {
           return acc;
@@ -93,7 +92,6 @@ class Service implements ITransactionService {
           transactionItems: {
             createMany: {
               data: transactionItems.map((i) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
                 const type = trxItemTypes.find((t) => t.id === i.typeId);
                 if (!type) {
                   return i;
