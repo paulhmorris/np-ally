@@ -101,11 +101,11 @@ export const engagementReminderJob = trigger.defineJob({
           from: "Alliance 436 <no-reply@alliance436.org>",
           to: u.user.email,
           subject: "Contact Reminder",
-          html: `Hi ${u.user.firstName}, your contact${u.contacts.length === 1 ? "" : "s"} <br />${u.contacts
+          html: `Hi ${u.user.firstName}, your contact${u.contacts.length === 1 ? "" : "s"} <br /><br />${u.contacts
             .map((c) => `<span style="font-weight:bold;">${c.firstName} ${c.lastName}</span>`)
             .join(
               "<br />",
-            )} ${u.contacts.length === 1 ? "has" : "have"} not been contacted in at least 30 days. This is a friendly reminder to reach out to them.`,
+            )}<br /><br />${u.contacts.length === 1 ? "has" : "have"} not been contacted in at least 30 days. This is a friendly reminder to reach out to them.`,
         };
       });
       return emails;
