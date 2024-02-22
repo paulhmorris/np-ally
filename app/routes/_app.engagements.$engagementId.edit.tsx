@@ -3,10 +3,12 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
+dayjs.extend(utc);
 
 import { ContactDropdown } from "~/components/contacts/contact-dropdown";
 import { PageContainer } from "~/components/page-container";
@@ -105,7 +107,7 @@ export default function EditEngagementPage() {
               name="date"
               label="Date"
               type="date"
-              defaultValue={dayjs(engagement.date).format("YYYY-MM-DD")}
+              defaultValue={dayjs(engagement.date).utc().format("YYYY-MM-DD")}
             />
             <FormSelect
               required

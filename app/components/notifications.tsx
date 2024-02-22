@@ -60,6 +60,7 @@ export function Notifications() {
       expand
       richColors
       closeButton
+      duration={5000}
       theme={theme ?? undefined}
       toastOptions={{
         classNames: {
