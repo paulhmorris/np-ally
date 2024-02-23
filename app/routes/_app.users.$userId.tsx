@@ -23,6 +23,7 @@ import { prisma } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
+import { passwordResetValidator } from "~/routes/resources.reset-password";
 import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
@@ -33,12 +34,6 @@ const validator = withZod(
     username: z.string().email({ message: "Invalid email address" }).optional(),
     role: z.nativeEnum(UserRole),
     accountId: z.string().optional(),
-  }),
-);
-
-const passwordResetValidator = withZod(
-  z.object({
-    username: z.string().email({ message: "Invalid email address" }),
   }),
 );
 
@@ -215,7 +210,13 @@ export default function UserDetailsPage() {
             action="/resources/reset-password"
           >
             <input type="hidden" name="username" value={user.username} />
-            <SubmitButton variant="outline" type="submit" formId="reset-password-form">
+            <SubmitButton
+              variant="outline"
+              type="submit"
+              formId="reset-password-form"
+              name="_action"
+              value={hasPassword ? "reset" : "submit"}
+            >
               <span>Send Password {hasPassword ? "Reset" : "Setup"}</span>
               {!hasPassword ? <IconLockPlus className="size-4" /> : null}
             </SubmitButton>
