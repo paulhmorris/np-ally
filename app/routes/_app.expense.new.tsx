@@ -41,7 +41,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
     prisma.contact.findMany({ include: { type: true } }),
     prisma.contactType.findMany(),
-    prisma.account.findMany(),
+    prisma.account.findMany({ orderBy: { code: "asc" } }),
     TransactionService.getItemMethods(),
     TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.OUT } }),
   ]);

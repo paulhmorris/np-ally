@@ -49,6 +49,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     where: {
       OR: [{ user: null }, { user: { id: params.userId } }],
     },
+    orderBy: { code: "asc" },
   });
 
   const userWithPassword = await prisma.user.findUnique({

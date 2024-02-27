@@ -32,6 +32,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       include: {
         transactions: true,
       },
+      orderBy: { code: "asc" },
     }),
 
     prisma.reimbursementRequest.findMany({

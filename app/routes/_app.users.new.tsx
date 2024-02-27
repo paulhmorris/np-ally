@@ -45,6 +45,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       where: {
         user: null,
       },
+      orderBy: { code: "asc" },
     }),
     contactTypes: await prisma.contactType.findMany(),
   });

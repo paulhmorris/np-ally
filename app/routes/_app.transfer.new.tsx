@@ -33,7 +33,7 @@ export const meta: MetaFunction = () => [{ title: "Add Transfer | Alliance 436" 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
   const [accounts, transactionItemMethods] = await Promise.all([
-    prisma.account.findMany(),
+    prisma.account.findMany({ orderBy: { code: "asc" } }),
     prisma.transactionItemMethod.findMany(),
   ]);
 

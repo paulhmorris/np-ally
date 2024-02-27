@@ -17,7 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const accounts = await prisma.account.findMany({
     include: { transactions: true, type: true },
-    orderBy: { code: "desc" },
+    orderBy: { code: "asc" },
   });
   return typedjson({ accounts });
 }

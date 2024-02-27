@@ -54,6 +54,7 @@ export const donationSummaryJob = trigger.defineJob({
             },
           },
         },
+        orderBy: { code: "asc" },
       });
     });
 

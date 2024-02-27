@@ -12,6 +12,7 @@ export function ContactDropdown(
   } & Omit<FormSelectProps, "placeholder">,
 ) {
   const { types, contacts, name, label, ...rest } = props;
+  console.log("contacts", contacts);
   return (
     <FormSelect name={name} label={label} placeholder="Select contact" {...rest}>
       {types.map((type) => {
@@ -23,30 +24,10 @@ export function ContactDropdown(
             <SelectLabel>{type.name}</SelectLabel>
             {contacts
               .filter((c) => c.typeId === type.id)
-              .sort((a, b) => {
-                if (
-                  a.typeId === ContactType.Organization &&
-                  b.typeId === ContactType.Organization &&
-                  a.organizationName &&
-                  b.organizationName
-                ) {
-                  return a.organizationName.localeCompare(b.organizationName);
-                }
-
-                if (a.lastName && b.lastName) {
-                  return a.lastName.localeCompare(b.lastName);
-                }
-
-                if (a.firstName && b.firstName) {
-                  return a.firstName.localeCompare(b.firstName);
-                }
-
-                return 0;
-              })
               .map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
-                  {c.typeId === ContactType.Organization ? `${c.organizationName}` : `${c.firstName} ${c.lastName}`}
+                  {c.typeId === ContactType.Organization ? c.organizationName : c.fullName}
                 </SelectItem>
               ))}
           </SelectGroup>

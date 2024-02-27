@@ -54,6 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     prisma.account.findMany({
       where: user.role === UserRole.USER ? { user: { id: user.id } } : undefined,
       include: { type: true },
+      orderBy: { code: "asc" },
     }),
   ]);
   return typedjson({ receipts, methods, accounts });
