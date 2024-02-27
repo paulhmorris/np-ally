@@ -12,7 +12,6 @@ export function ContactDropdown(
   } & Omit<FormSelectProps, "placeholder">,
 ) {
   const { types, contacts, name, label, ...rest } = props;
-  console.log("contacts", contacts);
   return (
     <FormSelect name={name} label={label} placeholder="Select contact" {...rest}>
       {types.map((type) => {
@@ -27,7 +26,7 @@ export function ContactDropdown(
               .map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
-                  {c.typeId === ContactType.Organization ? c.organizationName : c.fullName}
+                  {c.typeId === ContactType.Organization ? `${c.organizationName}` : `${c.firstName} ${c.lastName}`}
                 </SelectItem>
               ))}
           </SelectGroup>
