@@ -16,10 +16,30 @@ export const meta: MetaFunction = () => [{ title: "Accounts | Alliance 436" }];
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const accounts = await prisma.account.findMany({
-    include: { transactions: true, type: true },
-    orderBy: { code: "desc" },
+    select: {
+      id: true,
+      code: true,
+      description: true,
+      transactions: {
+        select: {
+          amountInCents: true,
+        },
+      },
+      type: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    orderBy: { code: "asc" },
   });
-  return typedjson({ accounts });
+
+  const accountsWithBalance = accounts.map((account) => {
+    const balance = account.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
+    return { ...account, balance };
+  });
+
+  return typedjson({ accounts: accountsWithBalance });
 }
 
 export default function AccountsIndexPage() {

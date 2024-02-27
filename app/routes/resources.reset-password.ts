@@ -7,19 +7,23 @@ import { z } from "zod";
 
 import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
-import { deletePasswordReset } from "~/models/password_reset.server";
 import { MailService } from "~/services/MailService.server";
 import { PasswordService } from "~/services/PasswordService.server";
 import { UserService } from "~/services/UserService.server";
 
-const validator = withZod(z.object({ username: z.string().email() }));
+export const passwordResetValidator = withZod(
+  z.object({
+    username: z.string().email(),
+    _action: z.enum(["reset", "setup"]),
+  }),
+);
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
     return typedjson({ status: 405 });
   }
 
-  const result = await validator.validate(await request.formData());
+  const result = await passwordResetValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
@@ -41,7 +45,7 @@ export async function action({ request }: ActionFunctionArgs) {
   if (existingReset) {
     return toast.json(
       request,
-      { message: "User not found" },
+      { message: "Existing request found" },
       {
         type: "warning",
         title: "Existing request found",
@@ -53,12 +57,15 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const reset = await PasswordService.generatePasswordReset(user.username);
-  const { data, error } = await MailService.sendPasswordSetupEmail({ email: user.username, token: reset.token });
+  const { data, error } =
+    result.data._action === "setup"
+      ? await MailService.sendPasswordSetupEmail({ email: user.username, token: reset.token })
+      : await MailService.sendPasswordResetEmail({ email: user.username, token: reset.token });
 
   // Unknown Resend error
   if (error || !data) {
     Sentry.captureException(error);
-    await deletePasswordReset({ token: reset.token });
+    await PasswordService.deletePasswordReset(reset.id);
     return toast.json(
       request,
       { error },
@@ -92,7 +99,7 @@ export async function action({ request }: ActionFunctionArgs) {
     {
       type: "success",
       title: "Email sent",
-      description: "Check the email for a link to reset the password.",
+      description: "Check the email for a link to set the password.",
     },
   );
 }
