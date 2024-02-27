@@ -19,7 +19,7 @@ import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
 import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
 import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { fuzzyFilter } from "~/lib/utils";
+import { formatCentsAsDollars, fuzzyFilter } from "~/lib/utils";
 
 interface DataTableProps<TData> {
   data: Array<TData>;
@@ -76,7 +76,7 @@ export function AccountsTable<TData>({ data }: DataTableProps<TData>) {
 type Account = Prisma.AccountGetPayload<{
   include: { transactionItems: true; type: true };
 }>;
-const columns: Array<ColumnDef<Account>> = [
+const columns: Array<ColumnDef<Account & { balance: number }>> = [
   {
     accessorKey: "code",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Code" />,
@@ -84,6 +84,18 @@ const columns: Array<ColumnDef<Account>> = [
       return (
         <div>
           <span className="max-w-[500px] truncate font-medium">{row.getValue("code")}</span>
+        </div>
+      );
+    },
+    enableColumnFilter: false,
+  },
+  {
+    accessorKey: "balance",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Balance" />,
+    cell: ({ row }) => {
+      return (
+        <div className="max-w-[100px]">
+          <span className="truncate font-medium tabular-nums">{formatCentsAsDollars(row.getValue("balance"))}</span>
         </div>
       );
     },
