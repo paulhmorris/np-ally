@@ -17,6 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const accounts = await prisma.account.findMany({
     select: {
+      id: true,
       code: true,
       description: true,
       transactions: {
