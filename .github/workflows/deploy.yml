@@ -1,0 +1,72 @@
+name: Deploy Production
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+on: [push, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run E2E Tests Locally
+        run: npx playwright test
+
+      - name: Deploy Project Artifacts to Vercel
+        uses: actions/github-script@v7
+        id: "deploy-staging"
+        with:
+          result-encoding: string
+          script: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Refresh Trigger.dev Jobs
+        env:
+          TRIGGER_ENDPOINT_HOOK: ${{ secrets.TRIGGER_ENDPOINT_HOOK_STAGING }}
+        run: |
+          curl -X POST $TRIGGER_ENDPOINT_HOOK_STAGING
+
+      - name: Run E2E Tests Against Staging
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.deploy-staging.outputs.result }}
+
+      - name: Pull Vercel Environment Information
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Project Artifacts to Vercel
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Refresh Trigger.dev Jobs
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          TRIGGER_ENDPOINT_HOOK: ${{ secrets.TRIGGER_ENDPOINT_HOOK }}
+        run: |
+          curl -X POST $TRIGGER_ENDPOINT_HOOK

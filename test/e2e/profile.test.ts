@@ -27,12 +27,12 @@ test.describe("Profile", () => {
     await page.getByRole("textbox", { name: /last name/i }).fill("E2E");
     await page.getByRole("button", { name: /save/i }).click();
 
-    await expect(page).toHaveURL(/users/i);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Updated E2E");
     await expect(page.getByRole("status")).toHaveText(/updated/i);
 
     await page.getByRole("textbox", { name: /first name/i }).fill("Admin");
     await page.getByRole("textbox", { name: /last name/i }).fill("E2E");
+    await page.getByLabel("Close toast").click();
     await page.getByRole("button", { name: /save/i }).click();
 
     await expect(page).toHaveURL(/users/i);

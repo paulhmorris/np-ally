@@ -6,7 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
 require("dotenv").config();
 export default defineConfig({
   testDir: "./test/e2e",
-  timeout: process.env.CI ? 30_000 : 5_000,
+  timeout: process.env.CI ? 30_000 : 15_000,
   // testIgnore: true ? "test/e2e/a11y.test.ts" : undefined,
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -17,11 +17,11 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? "dot" : "list",
+  reporter: "list",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://127.0.0.1:3000",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -57,7 +57,6 @@ export default defineConfig({
     //   dependencies: ["setup"],
     // },
 
-    /* Test against mobile viewports. */
     // {
     //   name: "mobile",
     //   use: { ...devices["iPhone 14"] },

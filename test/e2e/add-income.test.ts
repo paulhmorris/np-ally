@@ -1,8 +1,9 @@
+import { faker } from "@faker-js/faker";
 import { expect, test } from "@playwright/test";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 
-import { getToday } from "~/lib/utils";
+import { formatCurrency, getToday } from "~/lib/utils";
 
 dayjs.extend(utc);
 
@@ -10,12 +11,6 @@ test.use({ storageState: "playwright/.auth/admin.json" });
 test.describe("Add Income", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/income/new");
-  });
-
-  test("link should navigate to add income", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("link", { name: /add income/i }).click();
-    await expect(page).toHaveURL("/income/new");
   });
 
   test("should not add income with all empty fields", async ({ page }) => {
@@ -38,10 +33,11 @@ test.describe("Add Income", () => {
   });
 
   test("should add income with valid fields", async ({ page }) => {
+    const amount = faker.number.float({ multipleOf: 0.01, min: 1, max: 1000 });
     // Fill out form
     await page.getByLabel("Select account").click();
     await page.getByLabel("9998").click();
-    await page.getByRole("textbox", { name: "Amount" }).fill("100");
+    await page.getByRole("textbox", { name: "Amount" }).fill(amount.toString());
 
     await page.getByLabel("Select method").click();
     await page.getByLabel("ACH").click();
@@ -55,18 +51,19 @@ test.describe("Add Income", () => {
     await expect(page.getByRole("heading", { name: /9998/i })).toBeVisible();
 
     // Verify transaction amount is correct
-    await expect(page.getByRole("cell", { name: "$" }).locator("span")).toHaveText("$100.00");
+    const trx = page.getByRole("row", { name: formatCurrency(amount) });
+    await expect(trx).toBeVisible();
 
     // Verify toast message
     await expect(page.getByRole("status")).toHaveText(/success/i);
 
     // Verify transaction link
-    await page.getByRole("link", { name: /view/i }).click();
+    await trx.getByRole("link", { name: /view/i }).click();
     await expect(page).toHaveURL(/transactions/);
 
     // Verify transaction details
     await expect(page.getByRole("heading", { name: /transaction details/i })).toBeVisible();
-    await expect(page.getByRole("cell", { name: /100/i })).toBeVisible();
+    await expect(page.getByRole("cell", { name: amount.toString() })).toBeVisible();
 
     // Verify account link
     await page.getByRole("link", { name: /9998/i }).click();

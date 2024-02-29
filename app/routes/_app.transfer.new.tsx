@@ -59,6 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         title: "Warning",
         description: "From and To accounts must be different.",
       },
+      { status: 400 },
     );
   }
 
@@ -78,6 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         title: "Warning",
         description: "Insufficient funds in from account.",
       },
+      { status: 400 },
     );
   }
 
