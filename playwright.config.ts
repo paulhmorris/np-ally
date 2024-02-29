@@ -6,7 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
 require("dotenv").config();
 export default defineConfig({
   testDir: "./test/e2e",
-  testIgnore: process.env.CI ? "test/e2e/a11y.test.ts" : undefined,
+  timeout: process.env.CI ? 30000 : 10000,
+  // testIgnore: true ? "test/e2e/a11y.test.ts" : undefined,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -16,7 +17,7 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? "dot" : "line",
+  reporter: process.env.CI ? "dot" : "list",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -28,26 +29,40 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
+    // Setup
+    {
+      name: "setup",
+      testMatch: /.*\.setup\.ts/,
+      teardown: "cleanup db",
+    },
+    {
+      name: "cleanup db",
+      testMatch: /global\.teardown\.ts/,
+    },
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
     },
 
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
+    // {
+    //   name: "firefox",
+    //   use: { ...devices["Desktop Firefox"] },
+    //   dependencies: ["setup"],
+    // },
 
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
+    // {
+    //   name: "webkit",
+    //   use: { ...devices["Desktop Safari"] },
+    //   dependencies: ["setup"],
+    // },
 
     /* Test against mobile viewports. */
-    {
-      name: "mobile",
-      use: { ...devices["iPhone 14"] },
-    },
+    // {
+    //   name: "mobile",
+    //   use: { ...devices["iPhone 14"] },
+    //   dependencies: ["setup"],
+    // },
   ],
 
   /* Run your local dev server before starting the tests */

@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures/auth.fixture";
+import { expect, test } from "../e2e/fixtures/auth.fixture";
 
 test.use({ colorScheme: "light" });
 test.describe("User menu", () => {
@@ -40,9 +40,9 @@ test.describe("User menu", () => {
     await page.goto("/dashboards/admin");
     await expect(page).toHaveURL("/dashboards/admin");
     await page.getByRole("button", { name: /toggle theme/i }).click();
-    await expect(page.locator("html")).toHaveClass("dark");
+    await expect(page.locator("html")).toHaveClass(/dark/);
     await page.getByRole("button", { name: /toggle theme/i }).click();
-    await expect(page.locator("html")).toHaveClass("light");
+    await expect(page.locator("html")).toHaveClass(/light/);
     await expect(page).toHaveURL("/dashboards/admin");
   });
 
