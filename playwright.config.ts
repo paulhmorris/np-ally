@@ -6,7 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
 require("dotenv").config();
 export default defineConfig({
   testDir: "./test/e2e",
-  timeout: process.env.CI ? 30000 : 10000,
+  timeout: process.env.CI ? 30_000 : 5_000,
   // testIgnore: true ? "test/e2e/a11y.test.ts" : undefined,
   /* Run tests in files in parallel */
   fullyParallel: true,

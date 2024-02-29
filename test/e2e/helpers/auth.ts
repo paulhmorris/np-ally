@@ -7,8 +7,8 @@ import { ContactType } from "~/lib/constants";
 
 export async function createAdmin() {
   const user = {
-    firstName: faker.person.firstName(),
-    lastName: faker.person.lastName(),
+    firstName: "Admin",
+    lastName: "E2E",
     username: `e2e-admin-${faker.internet.email().toLowerCase()}`,
     password: faker.internet.password(),
   };

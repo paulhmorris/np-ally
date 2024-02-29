@@ -21,13 +21,21 @@ teardown("delete test data", async ({}) => {
     where: {
       transaction: {
         account: {
-          code: "9999",
+          description: {
+            contains: "E2E",
+          },
         },
       },
     },
   });
   const transactions = await prisma.transaction.deleteMany({
-    where: { account: { code: "9999" } },
+    where: {
+      account: {
+        description: {
+          contains: "E2E",
+        },
+      },
+    },
   });
 
   console.info("Deleted test data:", {

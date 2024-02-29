@@ -1,6 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-
-import { test as base } from "../fixtures/auth.fixture";
+import { test as base } from "@playwright/test";
 
 type AxeFixture = {
   makeAxeBuilder: () => AxeBuilder;

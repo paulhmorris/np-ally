@@ -1,5 +1,6 @@
 import { expect, test } from "./helpers/axe-test";
 
+test.use({ storageState: "playwright/.auth/admin.json" });
 test.describe("[No auth] should have no a11y issues on", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
   test("login", async ({ page, makeAxeBuilder }) => {

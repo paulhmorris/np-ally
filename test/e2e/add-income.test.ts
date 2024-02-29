@@ -40,7 +40,7 @@ test.describe("Add Income", () => {
   test("should add income with valid fields", async ({ page }) => {
     // Fill out form
     await page.getByLabel("Select account").click();
-    await page.getByLabel(/E2E Account/).click();
+    await page.getByLabel("9998").click();
     await page.getByRole("textbox", { name: "Amount" }).fill("100");
 
     await page.getByLabel("Select method").click();
@@ -52,7 +52,7 @@ test.describe("Add Income", () => {
 
     // Verifiy transaction went through
     await expect(page).toHaveURL(/accounts/);
-    await expect(page.getByRole("heading", { name: /9999/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /9998/i })).toBeVisible();
 
     // Verify transaction amount is correct
     await expect(page.getByRole("cell", { name: "$" }).locator("span")).toHaveText("$100.00");
@@ -69,8 +69,8 @@ test.describe("Add Income", () => {
     await expect(page.getByRole("cell", { name: /100/i })).toBeVisible();
 
     // Verify account link
-    await page.getByRole("link", { name: /9999/i }).click();
+    await page.getByRole("link", { name: /9998/i }).click();
     await expect(page).toHaveURL(/accounts/);
-    await expect(page.getByRole("heading", { name: /9999/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /9998/i })).toBeVisible();
   });
 });
