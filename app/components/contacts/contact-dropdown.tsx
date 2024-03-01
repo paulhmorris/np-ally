@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { type Contact, type ContactType as PContactType } from "@prisma/client";
 
 import { FormSelect, FormSelectProps } from "~/components/ui/form";
@@ -25,7 +24,6 @@ export function ContactDropdown(
               .filter((c) => c.typeId === type.id)
               .map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {/* eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison */}
                   {c.typeId === ContactType.Organization ? `${c.organizationName}` : `${c.firstName} ${c.lastName}`}
                 </SelectItem>
               ))}

@@ -1,6 +1,5 @@
-import { UserRole } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { Form, Link, useSearchParams, useSubmit } from "@remix-run/react";
 import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
@@ -9,6 +8,8 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Label } from "~/components/ui/label";
 import { prisma } from "~/integrations/prisma.server";
 import { SessionService } from "~/services/SessionService.server";
 
@@ -16,9 +17,10 @@ export const meta: MetaFunction = () => [{ title: "Contacts | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const onlyMine = new URL(request.url).searchParams.get("mine") === "true";
 
   // Only show a user's assigned contacts
-  if (user.role === UserRole.USER) {
+  if (onlyMine) {
     const contacts = await prisma.contact.findMany({
       where: {
         OR: [
@@ -50,6 +52,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function ContactIndexPage() {
   const { contacts } = useTypedLoaderData<typeof loader>();
+  const submit = useSubmit();
+  const [searchParams] = useSearchParams();
 
   return (
     <>
@@ -63,6 +67,17 @@ export default function ContactIndexPage() {
       </PageHeader>
 
       <PageContainer>
+        <Form className="mb-4 flex items-center gap-2" onChange={(e) => submit(e.currentTarget)}>
+          <Label className="inline-flex cursor-pointer items-center gap-2">
+            <Checkbox
+              name="mine"
+              value="true"
+              aria-label="Only my contacts"
+              defaultChecked={searchParams.get("mine") === "true"}
+            />
+            <span>Only my contacts</span>
+          </Label>
+        </Form>
         <ContactsTable data={contacts} />
       </PageContainer>
     </>

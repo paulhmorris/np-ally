@@ -1,10 +1,13 @@
-import { Contact, Prisma } from "@prisma/client";
+import { Contact } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { FilterFn } from "@tanstack/react-table";
 import clsx, { ClassValue } from "clsx";
 import { useMemo } from "react";
+import { UseDataFunctionReturn } from "remix-typedjson";
 import { twMerge } from "tailwind-merge";
+
+import { loader } from "~/root";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -42,11 +45,11 @@ export function useMatchesData(id: string): Record<string, unknown> | undefined 
   return route?.data as Record<string, unknown>;
 }
 
-function isUser(user: unknown): user is Prisma.UserGetPayload<{ include: { contact: true } }> {
+function isUser(user: unknown): user is UseDataFunctionReturn<typeof loader>["user"] {
   return user != null && typeof user === "object" && "contactId" in user && typeof user.contactId === "string";
 }
 
-export function useOptionalUser(): Prisma.UserGetPayload<{ include: { contact: true } }> | undefined {
+export function useOptionalUser() {
   const data = useMatchesData("root");
   if (!data || !isUser(data.user)) {
     return undefined;
@@ -54,7 +57,7 @@ export function useOptionalUser(): Prisma.UserGetPayload<{ include: { contact: t
   return data.user;
 }
 
-export function useUser(): Prisma.UserGetPayload<{ include: { contact: true } }> {
+export function useUser() {
   const maybeUser = useOptionalUser();
   if (!maybeUser) {
     throw new Error(

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
@@ -255,7 +254,8 @@ export default function EditContactPage() {
                   Assign users to this Contact. They will receive regular reminders to log an engagement.
                   {contact.assignedUsers.some((a) => a.user.id === user.id) && user.role === UserRole.USER ? (
                     <p className="mt-2 rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
-                      If you unassign yourself, you will no longer be able to view this contact.
+                      If you unassign yourself, you will no longer be able to view this contact&apos;s transactions or
+                      make edits.
                     </p>
                   ) : null}
                 </legend>

@@ -27,7 +27,7 @@ import { cn, useUser } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await SessionService.requireUser(request);
+  const user = await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
 
   const contact = await prisma.contact.findUnique({
@@ -62,7 +62,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     },
   });
+
   if (!contact) throw notFound({ message: "Contact not found" });
+  const shouldHideTransactions =
+    user.role === UserRole.USER && !contact.assignedUsers.some((a) => a.userId === user.id);
+
+  if (shouldHideTransactions) {
+    return typedjson({ contact: { ...contact, transactions: [] } });
+  }
 
   return typedjson({ contact });
 };
@@ -97,7 +104,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
         { status: 404 },
       );
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     if (contact.typeId === ContactType.Staff) {
       throw forbidden({ message: "You do not have permission to delete this contact." });
     }
@@ -157,13 +163,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 export default function ContactDetailsPage() {
   const user = useUser();
   const { contact } = useTypedLoaderData<typeof loader>();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
   const isExternal = contact.typeId !== ContactType.Staff;
   const canDelete =
     !contact.user &&
     contact.transactions.length === 0 &&
     user.role !== UserRole.USER &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     contact.typeId !== ContactType.Staff;
 
   return (

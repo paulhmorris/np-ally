@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { Link } from "@remix-run/react";
 import { IconAddressBook, IconMail, IconPhone } from "@tabler/icons-react";
 
@@ -12,6 +12,7 @@ import { formatPhoneNumber, getInitials, useUser } from "~/lib/utils";
 type Contact = Prisma.ContactGetPayload<{ include: { address: true; type: true } }>;
 export function ContactCard({ contact }: { contact: Contact }) {
   const user = useUser();
+
   return (
     <Card>
       <CardHeader className="flex-row items-center gap-4 space-y-0">
@@ -75,11 +76,13 @@ export function ContactCard({ contact }: { contact: Contact }) {
           </div>
         </dl>
       </CardContent>
-      <CardFooter>
-        <Button variant="outline" className="ml-auto" asChild>
-          <Link to={`/contacts/${contact.id}/edit`}>Edit</Link>
-        </Button>
-      </CardFooter>
+      {user.role === UserRole.USER && user.contactAssignments.some((a) => a.contactId === contact.id) ? (
+        <CardFooter>
+          <Button variant="outline" className="ml-auto" asChild>
+            <Link to={`/contacts/${contact.id}/edit`}>Edit</Link>
+          </Button>
+        </CardFooter>
+      ) : null}
     </Card>
   );
 }
