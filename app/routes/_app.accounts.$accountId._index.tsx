@@ -89,8 +89,7 @@ export default function AccountDetailsPage() {
               {account.user.contact.firstName} {account.user.contact.lastName}
             </Badge>
           </Link>
-        ) : // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-        account.typeId === AccountType.Ministry ? (
+        ) : account.typeId === AccountType.Ministry ? (
           <Link to={`/accounts/${account.id}/edit`}>
             <Badge variant="secondary">
               <div>

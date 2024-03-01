@@ -58,7 +58,12 @@ class Session implements ISessionService {
     const userId = await this.getUserId(request);
     if (userId === undefined) return null;
 
-    const user = await UserService.getUserById(userId, { include: { contact: true } });
+    const user = await UserService.getUserById(userId, {
+      include: {
+        contact: true,
+        contactAssignments: true,
+      },
+    });
     if (user) return user;
 
     throw await this.logout(request);
