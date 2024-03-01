@@ -28,12 +28,6 @@ jobs:
       - name: Build Project Artifacts
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Install Playwright
-        run: npx playwright install --with-deps
-
-      - name: Run E2E Tests Locally
-        run: npx playwright test
-
       - name: Deploy Project Artifacts to Vercel
         uses: actions/github-script@v7
         id: "deploy-staging"
@@ -46,6 +40,9 @@ jobs:
           TRIGGER_ENDPOINT_HOOK: ${{ secrets.TRIGGER_ENDPOINT_HOOK_STAGING }}
         run: |
           curl -X POST $TRIGGER_ENDPOINT_HOOK_STAGING
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
 
       - name: Run E2E Tests Against Staging
         run: npx playwright test
