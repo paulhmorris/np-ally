@@ -206,7 +206,13 @@ export default function AddIncomePage() {
                         </fieldset>
                       </CardContent>
                       <CardFooter>
-                        <Button onClick={() => remove(index)} variant="destructive" type="button" className="ml-auto">
+                        <Button
+                          aria-label={`Remove item ${index + 1}`}
+                          onClick={() => remove(index)}
+                          variant="destructive"
+                          type="button"
+                          className="ml-auto"
+                        >
                           Remove
                         </Button>
                       </CardFooter>

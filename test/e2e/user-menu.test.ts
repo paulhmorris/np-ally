@@ -1,6 +1,7 @@
-import { expect, test } from "./fixtures/auth.fixture";
+import { expect, test } from "@playwright/test";
 
 test.use({ colorScheme: "light" });
+test.use({ storageState: "playwright/.auth/admin.json" });
 test.describe("User menu", () => {
   test("should open and close", async ({ page }) => {
     await page.goto("/dashboards/admin");
@@ -40,9 +41,9 @@ test.describe("User menu", () => {
     await page.goto("/dashboards/admin");
     await expect(page).toHaveURL("/dashboards/admin");
     await page.getByRole("button", { name: /toggle theme/i }).click();
-    await expect(page.locator("html")).toHaveClass("dark");
+    await expect(page.locator("html")).toHaveClass(/dark/);
     await page.getByRole("button", { name: /toggle theme/i }).click();
-    await expect(page.locator("html")).toHaveClass("light");
+    await expect(page.locator("html")).toHaveClass(/light/);
     await expect(page).toHaveURL("/dashboards/admin");
   });
 

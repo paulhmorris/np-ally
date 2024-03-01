@@ -32,6 +32,9 @@ const serverEnvValidation = z.object({
   // Trigger.dev
   TRIGGER_API_KEY: z.string().startsWith("tr_"),
   TRIGGER_API_URL: z.string().url(),
+
+  // Playwright
+  PLAYWRIGHT_TEST_BASE_URL: z.string().url().optional(),
 });
 
 const clientEnvValidation = z.object({

@@ -14,18 +14,17 @@ import { prisma } from "~/integrations/prisma.server";
 import { TransactionItemType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
-import { TransactionItemSchema } from "~/models/schemas";
+import { CurrencySchema } from "~/models/schemas";
 import { SessionService } from "~/services/SessionService.server";
 
 const validator = withZod(
-  z
-    .object({
-      date: z.coerce.date(),
-      description: z.string().optional(),
-      fromAccountId: z.string().cuid({ message: "From Account required" }),
-      toAccountId: z.string().cuid({ message: "To Account required" }),
-    })
-    .merge(TransactionItemSchema.pick({ amountInCents: true })),
+  z.object({
+    date: z.coerce.date(),
+    description: z.string().optional(),
+    fromAccountId: z.string().cuid({ message: "From Account required" }),
+    toAccountId: z.string().cuid({ message: "To Account required" }),
+    amountInCents: CurrencySchema.pipe(z.number().positive({ message: "Amount must be greater than $0.00" })),
+  }),
 );
 
 export const meta: MetaFunction = () => [{ title: "Add Transfer | Alliance 436" }];
@@ -49,7 +48,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (result.error) {
     return validationError(result.error);
   }
-  const { fromAccountId, toAccountId, amountInCents, ...rest } = result.data;
+  const { fromAccountId, toAccountId, amountInCents, description, ...rest } = result.data;
+
+  if (fromAccountId === toAccountId) {
+    return toast.json(
+      request,
+      { message: "From and To accounts must be different." },
+      {
+        type: "warning",
+        title: "Warning",
+        description: "From and To accounts must be different.",
+      },
+      { status: 400 },
+    );
+  }
 
   const fromAccountBalance = await prisma.transaction.aggregate({
     where: { accountId: result.data.fromAccountId },
@@ -64,9 +76,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       { message: "Insufficient funds in from account." },
       {
         type: "warning",
-        title: "Error transferring funds",
+        title: "Warning",
         description: "Insufficient funds in from account.",
       },
+      { status: 400 },
     );
   }
 
@@ -75,6 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     prisma.transaction.create({
       data: {
         ...rest,
+        description: description ? description : `Transfer to ${toAccountId}`,
         accountId: fromAccountId,
         amountInCents: -1 * amountInCents,
         transactionItems: {
@@ -89,6 +103,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     prisma.transaction.create({
       data: {
         ...rest,
+        description: description ? description : `Transfer from ${toAccountId}`,
         accountId: toAccountId,
         amountInCents: amountInCents,
         transactionItems: {
@@ -101,7 +116,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }),
   ]);
 
-  return toast.redirect(request, `/accounts/`, {
+  return toast.redirect(request, `/accounts`, {
     type: "success",
     title: "Success",
     description: `Transfer completed successfully.`,
@@ -126,7 +141,7 @@ export default function AddTransferPage() {
             required
             name="fromAccountId"
             label="From"
-            placeholder="Select account"
+            placeholder="Select from account"
             options={accounts.map((a) => ({
               value: a.id,
               label: `${a.code} - ${a.description}`,
@@ -136,7 +151,7 @@ export default function AddTransferPage() {
             required
             name="toAccountId"
             label="To"
-            placeholder="Select account"
+            placeholder="Select to account"
             options={accounts.map((a) => ({
               value: a.id,
               label: `${a.code} - ${a.description}`,

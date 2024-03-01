@@ -1,6 +1,7 @@
 import { expect, test } from "./helpers/axe-test";
 
-test.describe("[No auth] should have no a11y issues on", () => {
+test.use({ storageState: "playwright/.auth/admin.json" });
+test.describe("should have no a11y issues on", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
   test("login", async ({ page, makeAxeBuilder }) => {
     await page.goto("/login");
@@ -9,7 +10,7 @@ test.describe("[No auth] should have no a11y issues on", () => {
   });
 });
 
-test.describe("[Auth] should have no a11y issues on", () => {
+test.describe("should have no a11y issues on", () => {
   test("admin dashboard", async ({ page, makeAxeBuilder }) => {
     await page.goto("/dashboards/admin");
     const accessibilityScanResults = await makeAxeBuilder().analyze();

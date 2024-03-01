@@ -11,9 +11,9 @@ import { cn } from "~/lib/utils";
 function FieldError({ id, error }: { id: string; error?: string }) {
   if (!error) return null;
   return (
-    <p id={`${id}-error`} className="ml-1 mt-1 text-xs font-medium text-destructive">
-      {error}
-    </p>
+    <span aria-live="polite" id={`${id}-error`} className="ml-1 mt-1 text-xs font-medium text-destructive">
+      {error ? <span>{error}</span> : null}
+    </span>
   );
 }
 
@@ -41,6 +41,7 @@ export function FormField({
   label,
   formId,
   className,
+  description,
   ...props
 }: FieldProps) {
   const fallbackId = useId();
@@ -73,7 +74,8 @@ export function FormField({
         id={id}
         inputMode={isCurrency ? "decimal" : props.inputMode}
         aria-invalid={error ? true : props["aria-invalid"]}
-        aria-describedby={`${id}-error`}
+        aria-errormessage={error ? `${id}-error` : props["aria-errormessage"]}
+        aria-describedby={description ? `${id}-description` : props["aria-describedby"]}
         className={cn(error && "border-destructive focus-visible:ring-destructive/50", isCurrency && "pl-7", className)}
         {...getInputProps()}
         onBlur={(e) => {
@@ -94,7 +96,7 @@ export function FormField({
           <IconCurrencyDollar className="h-4 w-4 text-muted-foreground" strokeWidth={2.5} />
         </span>
       ) : null}
-      <FieldDescription id={id} description={props.description} />
+      <FieldDescription id={id} description={description} />
       <FieldError id={id} error={error} />
     </div>
   );
@@ -106,7 +108,15 @@ interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaEle
   formId?: string;
   hideLabel?: boolean;
 }
-export function FormTextarea({ hideLabel = false, name, label, formId, className, ...props }: FormTextareaProps) {
+export function FormTextarea({
+  hideLabel = false,
+  name,
+  label,
+  formId,
+  className,
+  description,
+  ...props
+}: FormTextareaProps) {
   const fallbackId = useId();
   const { error, getInputProps } = useField(name, { formId });
 
@@ -135,12 +145,13 @@ export function FormTextarea({ hideLabel = false, name, label, formId, className
       <Textarea
         id={id}
         aria-invalid={error ? true : props["aria-invalid"]}
-        aria-describedby={`${id}-error`}
+        aria-errormessage={error ? `${id}-error` : props["aria-errormessage"]}
+        aria-describedby={description ? `${id}-description` : props["aria-describedby"]}
         className={cn(error && "border-destructive focus-visible:ring-destructive/50", className)}
         {...getInputProps()}
         {...props}
       />
-      <FieldDescription id={id} description={props.description} />
+      <FieldDescription id={id} description={description} />
       <FieldError id={id} error={error} />
     </div>
   );
