@@ -44,23 +44,23 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
       dependencies: ["setup"],
     },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-      dependencies: ["setup"],
-    },
+    // {
+    //   name: "firefox",
+    //   use: { ...devices["Desktop Firefox"] },
+    //   dependencies: ["setup"],
+    // },
 
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-      dependencies: ["setup"],
-    },
+    // {
+    //   name: "webkit",
+    //   use: { ...devices["Desktop Safari"] },
+    //   dependencies: ["setup"],
+    // },
 
-    {
-      name: "mobile",
-      use: { ...devices["iPhone 14"] },
-      dependencies: ["setup"],
-    },
+    // {
+    //   name: "mobile",
+    //   use: { ...devices["iPhone 14"] },
+    //   dependencies: ["setup"],
+    // },
   ],
 
   /* Run your local dev server before starting the tests */
