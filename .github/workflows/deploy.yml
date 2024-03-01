@@ -6,7 +6,7 @@ env:
 on: [push, workflow_dispatch]
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -19,21 +19,13 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Project Artifacts
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy Project Artifacts to Vercel
-        uses: actions/github-script@v7
-        id: "deploy-staging"
+      - name: Deploy to Vercel Preview
+        id: "deploy-preview"
+        uses: amondnet/vercel-action@v25
         with:
-          result-encoding: string
-          script: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Refresh Trigger.dev Jobs
         env:
@@ -47,19 +39,16 @@ jobs:
       - name: Run E2E Tests Against Staging
         run: npx playwright test
         env:
-          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.deploy-staging.outputs.result }}
+          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.deploy-preview.outputs.preview-url }}
 
-      - name: Pull Vercel Environment Information
+      - name: Deploy to Vercel Production
+        uses: amondnet/vercel-action@v25
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Project Artifacts
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy Project Artifacts to Vercel
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
 
       - name: Refresh Trigger.dev Jobs
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
