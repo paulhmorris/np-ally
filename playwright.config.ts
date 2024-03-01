@@ -67,7 +67,7 @@ export default defineConfig({
   webServer: {
     command: "npm run build && npm run start",
     url: process.env.PLAYWRIGHT_TEST_BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     stdout: "ignore",
     stderr: "pipe",
   },
