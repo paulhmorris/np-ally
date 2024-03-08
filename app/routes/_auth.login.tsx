@@ -5,12 +5,14 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { AuthCard } from "~/components/auth-card";
 import { ErrorComponent } from "~/components/error-component";
 import { Checkbox } from "~/components/ui/checkbox";
 import { FormField } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { Sentry } from "~/integrations/sentry";
+import { toast } from "~/lib/toast.server";
 import { safeRedirect } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
 import { verifyLogin } from "~/models/user.server";
@@ -49,33 +51,73 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
+  if (user.orgMemberships.length === 0) {
+    return toast.json(
+      request,
+      { message: "You are not a member of any organizations. Please contact your administrator." },
+      {
+        title: "Login Error",
+        type: "error",
+        description: "You are not a member of any organizations. Please contact your administrator.",
+      },
+    );
+  }
+
   Sentry.setUser({ id: user.id, email: user.username });
 
+  // Most users are only in one organization, so we can just log them in to that org
+  if (user.orgMemberships.length === 1) {
+    return SessionService.createUserSession({
+      request,
+      userId: user.id,
+      orgId: user.orgMemberships[0].orgId,
+      redirectTo: safeRedirect(redirectTo, "/"),
+      remember: !!remember,
+    });
+  }
+
+  // Users who are in multiple organizations need to choose which one to log in to
+  const url = new URL(request.url);
+  const redirectUrl = new URL("/choose-org", url.origin);
+  if (redirectTo) {
+    redirectUrl.searchParams.set("redirectTo", redirectTo);
+  }
+
+  // Log the user in but require them to choose an organization
   return SessionService.createUserSession({
     request,
     userId: user.id,
-    redirectTo: safeRedirect(redirectTo, "/"),
+    redirectTo: redirectUrl.toString(),
     remember: !!remember,
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "Login | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Login" }];
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/";
 
   return (
-    <div className="min-w-[400px] px-8">
-      <h1 className="text-4xl font-extrabold">Alliance 436</h1>
+    <AuthCard>
+      <h1 className="text-4xl font-extrabold">Login</h1>
       <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
-        <FormField label="Email" id="email" name="email" type="email" autoComplete="email" required />
+        <FormField
+          label="Email"
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          defaultValue={process.env.NODE_ENV === "development" ? "paul@remix.run" : undefined}
+        />
         <FormField
           label="Password"
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
+          defaultValue={process.env.NODE_ENV === "development" ? "password" : undefined}
           required
         />
 
@@ -90,7 +132,7 @@ export default function LoginPage() {
         </div>
         <SubmitButton className="w-full">Log in</SubmitButton>
       </ValidatedForm>
-    </div>
+    </AuthCard>
   );
 }
 

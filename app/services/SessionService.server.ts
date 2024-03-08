@@ -1,6 +1,7 @@
-import { User, UserRole } from "@prisma/client";
+import { Organization, User, UserRole } from "@prisma/client";
 import { Session as RemixSession, SessionData, redirect } from "@remix-run/node";
 
+import { prisma } from "~/integrations/prisma.server";
 import { forbidden, unauthorized } from "~/lib/responses.server";
 import { sessionStorage } from "~/lib/session.server";
 import { UserService } from "~/services/UserService.server";
@@ -28,7 +29,8 @@ interface ISessionService {
 }
 
 class Session implements ISessionService {
-  private static USER_SESSION_KEY = "userId";
+  public USER_SESSION_KEY = "userId";
+  public ORGANIZATION_SESSION_KEY = "orgId";
 
   async logout(request: Request) {
     const session = await this.getSession(request);
@@ -50,7 +52,7 @@ class Session implements ISessionService {
 
   async getUserId(request: Request): Promise<User["id"] | undefined> {
     const session = await this.getSession(request);
-    const userId = session.get(Session.USER_SESSION_KEY) as User["id"] | undefined;
+    const userId = session.get(this.USER_SESSION_KEY) as User["id"] | undefined;
     return userId;
   }
 
@@ -77,6 +79,20 @@ class Session implements ISessionService {
     if (user) return user;
 
     throw await this.logout(request);
+  }
+
+  async getOrgId(request: Request): Promise<Organization["id"] | undefined> {
+    const session = await this.getSession(request);
+    const orgId = session.get(this.ORGANIZATION_SESSION_KEY) as Organization["id"] | undefined;
+    return orgId;
+  }
+
+  async getOrg(request: Request) {
+    const orgId = await this.getOrgId(request);
+    if (!orgId) {
+      return null;
+    }
+    return prisma.organization.findUnique({ where: { id: orgId } });
   }
 
   async requireUserId(request: Request, redirectTo: string = new URL(request.url).pathname) {
@@ -128,14 +144,19 @@ class Session implements ISessionService {
     userId,
     remember,
     redirectTo,
+    orgId,
   }: {
     request: Request;
     userId: string;
     remember: boolean;
     redirectTo: string;
+    orgId?: string;
   }) {
     const session = await this.getSession(request);
-    session.set(Session.USER_SESSION_KEY, userId);
+    session.set(this.USER_SESSION_KEY, userId);
+    if (orgId) {
+      session.set(this.ORGANIZATION_SESSION_KEY, orgId);
+    }
     return redirect(redirectTo, {
       headers: {
         "Set-Cookie": await sessionStorage.commitSession(session, {

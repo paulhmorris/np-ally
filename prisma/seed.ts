@@ -17,25 +17,28 @@ const prisma = new PrismaClient();
 
 async function seed() {
   // cleanup the existing database
-  await Promise.all([
-    await prisma.transactionItem.deleteMany(),
-    await prisma.transaction.deleteMany(),
-    await prisma.user.deleteMany(),
-    await prisma.account.deleteMany(),
-    await prisma.contact.deleteMany(),
-    await prisma.organization.deleteMany(),
-    await prisma.transactionItemType.deleteMany(),
-    await prisma.contactType.deleteMany(),
-    await prisma.accountType.deleteMany(),
-    await prisma.transactionItemMethod.deleteMany(),
+  await prisma.$transaction([
+    prisma.transactionItem.deleteMany(),
+    prisma.transaction.deleteMany(),
+    prisma.organizationMembership.deleteMany(),
+    prisma.user.deleteMany(),
+    prisma.accountSubscription.deleteMany(),
+    prisma.contact.deleteMany(),
+    prisma.account.deleteMany(),
+    prisma.organization.deleteMany(),
+    prisma.engagementType.deleteMany(),
+    prisma.transactionItemType.deleteMany(),
+    prisma.contactType.deleteMany(),
+    prisma.accountType.deleteMany(),
+    prisma.transactionItemMethod.deleteMany(),
   ]);
 
-  await Promise.all([
-    await prisma.transactionItemType.createMany({ data: transactionItemTypes }),
-    await prisma.transactionItemMethod.createMany({ data: transactionItemMethods }),
-    await prisma.contactType.createMany({ data: contactTypes }),
-    await prisma.accountType.createMany({ data: accountTypes }),
-    await prisma.engagementType.createMany({ data: engagementTypes }),
+  await prisma.$transaction([
+    prisma.transactionItemType.createMany({ data: transactionItemTypes }),
+    prisma.transactionItemMethod.createMany({ data: transactionItemMethods }),
+    prisma.contactType.createMany({ data: contactTypes }),
+    prisma.accountType.createMany({ data: accountTypes }),
+    prisma.engagementType.createMany({ data: engagementTypes }),
   ]);
 
   const email = "paul@remix.run";
@@ -113,7 +116,7 @@ async function seed() {
         },
       },
       description: "Jessica Caudle - Ministry Fund",
-      organizationId: org.id,
+      orgId: org.id,
       user: {
         connect: {
           id: user.id,
@@ -125,7 +128,7 @@ async function seed() {
   await prisma.account.createMany({
     data: defaultAccounts.map((a) => ({
       ...a,
-      organizationId: org.id,
+      orgId: org.id,
     })),
   });
 

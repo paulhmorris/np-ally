@@ -21,11 +21,23 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await SessionService.getSession(request);
+  const user = await SessionService.getUser(request);
+  const org = await SessionService.getOrg(request);
   const { getTheme } = await themeSessionResolver(request);
+
+  const userWithOrg = {
+    ...user,
+    org: org
+      ? {
+          id: org.id,
+          name: org.name,
+        }
+      : null,
+  };
 
   return typedjson(
     {
-      user: await SessionService.getUser(request),
+      user: userWithOrg,
       theme: getTheme(),
       serverToast: getGlobalToast(session),
       ENV: {

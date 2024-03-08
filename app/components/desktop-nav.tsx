@@ -23,7 +23,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
       <div className="flex h-10 items-center pl-3">
         <Link to="/" className="inline-flex items-center space-x-2 text-sm font-bold text-primary">
           <IconWorld className="h-6 w-6" />
-          <span>Alliance 436</span>
+          <span>{user.org?.name}</span>
           <GlobalLoader />
         </Link>
       </div>

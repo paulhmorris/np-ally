@@ -5,7 +5,10 @@ import { UserService } from "~/services/UserService.server";
 
 export async function verifyLogin(username: NonNullable<User["username"]>, password: Password["hash"]) {
   const userWithPassword = await UserService.getUserByUsername(username, {
-    include: { password: true },
+    include: {
+      password: true,
+      orgMemberships: true,
+    },
   });
 
   if (!userWithPassword || !userWithPassword.password) {
