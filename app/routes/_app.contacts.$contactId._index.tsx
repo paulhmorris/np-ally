@@ -27,7 +27,7 @@ import { cn, useUser } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await SessionService.requireUser(request);
+  const user = await SessionService.requireUser(request);
   invariant(params.contactId, "contactId not found");
 
   const contact = await prisma.contact.findUnique({
@@ -62,7 +62,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     },
   });
+
   if (!contact) throw notFound({ message: "Contact not found" });
+  const shouldHideTransactions =
+    user.role === UserRole.USER && !contact.assignedUsers.some((a) => a.userId === user.id);
+
+  if (shouldHideTransactions) {
+    return typedjson({ contact: { ...contact, transactions: [] } });
+  }
 
   return typedjson({ contact });
 };

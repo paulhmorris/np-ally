@@ -1,8 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { expect, test } from "@playwright/test";
-
-// Run tests unauthenticated
-test.use({ storageState: { cookies: [], origins: [] } });
+import { expect, test } from "@playwright/test"; // unauthenticated test
 
 test.describe("Login Page", () => {
   test("should not login with invalid credentials", async ({ page }) => {

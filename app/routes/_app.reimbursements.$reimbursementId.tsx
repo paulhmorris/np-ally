@@ -81,7 +81,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     await Promise.all(updatePromises);
   }
 
-  const accounts = await prisma.account.findMany();
+  const accounts = await prisma.account.findMany({ orderBy: { code: "asc" } });
 
   return typedjson({ reimbursementRequest: rr, accounts });
 }

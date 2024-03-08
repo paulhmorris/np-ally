@@ -47,7 +47,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
     ContactService.getContacts({ include: { type: true } }),
     ContactService.getContactTypes(),
-    prisma.account.findMany(),
+    prisma.account.findMany({ orderBy: { code: "asc" } }),
     TransactionService.getItemMethods(),
     TransactionService.getItemTypes({
       where: {
@@ -206,7 +206,13 @@ export default function AddIncomePage() {
                         </fieldset>
                       </CardContent>
                       <CardFooter>
-                        <Button onClick={() => remove(index)} variant="destructive" type="button" className="ml-auto">
+                        <Button
+                          aria-label={`Remove item ${index + 1}`}
+                          onClick={() => remove(index)}
+                          variant="destructive"
+                          type="button"
+                          className="ml-auto"
+                        >
                           Remove
                         </Button>
                       </CardFooter>
