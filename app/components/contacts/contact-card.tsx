@@ -76,7 +76,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
           </div>
         </dl>
       </CardContent>
-      {user.role === UserRole.USER && user.contactAssignments.some((a) => a.contactId === contact.id) ? (
+      {user.role !== UserRole.USER || user.contactAssignments.some((a) => a.contactId === contact.id) ? (
         <CardFooter>
           <Button variant="outline" className="ml-auto" asChild>
             <Link to={`/contacts/${contact.id}/edit`}>Edit</Link>
