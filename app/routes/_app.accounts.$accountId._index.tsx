@@ -39,7 +39,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       user: {
         include: { contact: true },
       },
-      organization: true,
+      org: true,
       transactions: {
         include: {
           contact: true,

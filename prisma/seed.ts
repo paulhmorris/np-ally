@@ -36,20 +36,22 @@ async function seed() {
     prisma.transactionItemMethod.deleteMany(),
   ]);
 
+  const org = await prisma.organization.create({ data: { name: "Alliance 436" } });
+  const org2 = await prisma.organization.create({ data: { name: "Moms of Courage" } });
+
   await prisma.$transaction([
-    prisma.transactionItemType.createMany({ data: transactionItemTypes }),
-    prisma.transactionItemMethod.createMany({ data: transactionItemMethods }),
-    prisma.contactType.createMany({ data: contactTypes }),
-    prisma.accountType.createMany({ data: accountTypes }),
-    prisma.engagementType.createMany({ data: engagementTypes }),
+    prisma.transactionItemType.createMany({ data: transactionItemTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    prisma.transactionItemMethod.createMany({ data: transactionItemMethods.map((t) => ({ ...t, orgId: org.id })) }),
+    prisma.contactType.createMany({ data: contactTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    prisma.accountType.createMany({ data: accountTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    prisma.engagementType.createMany({ data: engagementTypes.map((t) => ({ ...t, orgId: org.id })) }),
   ]);
 
   const email = "paul@remix.run";
-  const org = await prisma.organization.create({ data: { name: "Alliance 436" } });
 
   const hashedPassword = await bcrypt.hash("password", 10);
 
-  await prisma.user.create({
+  const superAdmin = await prisma.user.create({
     data: {
       username: email,
       role: "SUPERADMIN",
@@ -59,14 +61,31 @@ async function seed() {
           lastName: "Morris",
           email,
           typeId: ContactType.Outreach,
+          orgId: org.id,
         },
       },
       password: {
         create: {
           hash: hashedPassword,
+          orgId: org.id,
         },
       },
     },
+  });
+
+  await prisma.membership.createMany({
+    data: [
+      {
+        userId: superAdmin.id,
+        orgId: org.id,
+        role: "ADMIN",
+      },
+      {
+        userId: superAdmin.id,
+        orgId: org2.id,
+        role: "ADMIN",
+      },
+    ],
   });
 
   const [user, donorContact] = await Promise.all([
@@ -80,11 +99,13 @@ async function seed() {
             lastName: "Caudle",
             email: "j@caudle.com",
             typeId: ContactType.Missionary,
+            orgId: org.id,
           },
         },
         password: {
           create: {
             hash: hashedPassword,
+            orgId: org.id,
           },
         },
       },
@@ -103,8 +124,10 @@ async function seed() {
             state: "CA",
             zip: "12345",
             country: "USA",
+            orgId: org.id,
           },
         },
+        orgId: org.id,
       },
     }),
   ]);
@@ -116,6 +139,7 @@ async function seed() {
       subscribers: {
         create: {
           subscriberId: user.contactId,
+          orgId: org.id,
         },
       },
       description: "Jessica Caudle - Ministry Fund",
@@ -143,6 +167,7 @@ async function seed() {
         description: faker.lorem.word(),
         accountId: account.id,
         contactId: donorContact.id,
+        orgId: org.id,
         transactionItems: {
           createMany: {
             data: [
@@ -150,11 +175,13 @@ async function seed() {
                 amountInCents: faker.number.int({ min: 100, max: 50_000 }),
                 description: faker.lorem.word(),
                 typeId: 1,
+                orgId: org.id,
               },
               {
                 amountInCents: faker.number.int({ min: 100, max: 50_000 }),
                 description: faker.lorem.word(),
                 typeId: 2,
+                orgId: org.id,
               },
             ],
           },

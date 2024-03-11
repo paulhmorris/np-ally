@@ -4,10 +4,10 @@ import { rankItem } from "@tanstack/match-sorter-utils";
 import { FilterFn } from "@tanstack/react-table";
 import clsx, { ClassValue } from "clsx";
 import { useMemo } from "react";
-import { UseDataFunctionReturn } from "remix-typedjson";
+import { useTypedRouteLoaderData } from "remix-typedjson";
 import { twMerge } from "tailwind-merge";
 
-import { loader } from "~/root";
+import { loader as rootLoder } from "~/root";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -45,13 +45,9 @@ export function useMatchesData(id: string): Record<string, unknown> | undefined 
   return route?.data as Record<string, unknown>;
 }
 
-function isUser(user: unknown): user is UseDataFunctionReturn<typeof loader>["user"] {
-  return user != null && typeof user === "object" && "contactId" in user && typeof user.contactId === "string";
-}
-
 export function useOptionalUser() {
-  const data = useMatchesData("root");
-  if (!data || !isUser(data.user)) {
+  const data = useTypedRouteLoaderData<typeof rootLoder>("root");
+  if (!data) {
     return undefined;
   }
   return data.user;
@@ -62,6 +58,11 @@ export function useUser() {
   if (!maybeUser) {
     throw new Error(
       "No user found in root loader, but user is required by useUser. If user is optional, try useOptionalUser instead.",
+    );
+  }
+  if (!maybeUser.org) {
+    throw new Error(
+      "No org found in root loader, but org is required by useUser. If org is optional, try useOptionalUser instead.",
     );
   }
   return maybeUser;

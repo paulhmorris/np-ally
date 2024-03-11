@@ -96,7 +96,7 @@ export const engagementTypes: Array<{ id: EngagementType; name: string }> = [
   { id: 5, name: "Mail" },
 ];
 
-export const defaultAccounts: Array<Prisma.AccountUncheckedCreateInput> = [
+export const defaultAccounts: Array<Omit<Prisma.AccountUncheckedCreateInput, "orgId">> = [
   { code: "1001", description: "General Fund", typeId: AccountType.Operating },
   { code: "1002", description: "Local", typeId: AccountType.Operating },
   { code: "1003", description: "International", typeId: AccountType.Operating },

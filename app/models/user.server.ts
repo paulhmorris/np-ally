@@ -7,7 +7,7 @@ export async function verifyLogin(username: NonNullable<User["username"]>, passw
   const userWithPassword = await UserService.getUserByUsername(username, {
     include: {
       password: true,
-      orgMemberships: true,
+      memberships: true,
     },
   });
 

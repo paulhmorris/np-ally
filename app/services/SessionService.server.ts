@@ -64,6 +64,7 @@ class Session implements ISessionService {
       include: {
         contact: true,
         contactAssignments: true,
+        memberships: true,
       },
     });
     if (user) return user;
@@ -108,7 +109,21 @@ class Session implements ISessionService {
     const defaultAllowedRoles: Array<UserRole> = ["USER", "ADMIN"];
     const userId = await this.requireUserId(request);
 
-    const user = await UserService.getUserById(userId, { include: { contact: true } });
+    const user = await UserService.getUserById(userId, {
+      include: {
+        contact: true,
+        memberships: {
+          include: {
+            org: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (user && user.role === UserRole.SUPERADMIN) {
       return user;

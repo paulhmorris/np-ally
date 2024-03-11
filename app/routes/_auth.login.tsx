@@ -51,12 +51,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  if (user.orgMemberships.length === 0) {
+  if (user.memberships.length === 0) {
     return toast.json(
       request,
       { message: "You are not a member of any organizations. Please contact your administrator." },
       {
-        title: "Login Error",
+        title: "Error",
         type: "error",
         description: "You are not a member of any organizations. Please contact your administrator.",
       },
@@ -65,12 +65,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   Sentry.setUser({ id: user.id, email: user.username });
 
-  // Most users are only in one organization, so we can just log them in to that org
-  if (user.orgMemberships.length === 1) {
+  // If the user has a default membership or only one org, we can just log them in to that org
+  const defaultMembership = user.memberships.find((m) => m.isDefault);
+  if (user.memberships.length === 1 || defaultMembership) {
     return SessionService.createUserSession({
       request,
       userId: user.id,
-      orgId: user.orgMemberships[0].orgId,
+      orgId: defaultMembership?.orgId ?? user.memberships[0].orgId,
       redirectTo: safeRedirect(redirectTo, "/"),
       remember: !!remember,
     });

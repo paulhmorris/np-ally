@@ -46,6 +46,13 @@ export function UserMenu() {
               <p className="text-sm leading-none text-muted-foreground sm:text-xs">{user.contact.email}</p>
             </div>
           </DropdownMenuLabel>
+          {user.memberships?.length > 1 ? (
+            <DropdownMenuItem asChild>
+              <Link className="cursor-pointer sm:hidden" to={"/choose-org"}>
+                Change Org
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>

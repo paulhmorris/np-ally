@@ -42,12 +42,13 @@ enum OrganizationRole {
 }
 
 model Membership {
-  id     Int              @id @default(autoincrement())
-  user   User             @relation(fields: [userId], references: [id])
-  userId String
-  org    Organization     @relation(fields: [orgId], references: [id])
-  orgId  String
-  role   OrganizationRole
+  id        Int              @id @default(autoincrement())
+  user      User             @relation(fields: [userId], references: [id])
+  userId    String
+  org       Organization     @relation(fields: [orgId], references: [id])
+  orgId     String
+  role      OrganizationRole
+  isDefault Boolean          @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -64,7 +65,7 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orgMemberships         Membership[]
+  memberships            Membership[]
   passwords              Password[]
   passwordResets         PasswordReset[]
   accountTypes           AccountType[]
@@ -93,8 +94,8 @@ model Password {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model PasswordReset {
@@ -105,12 +106,10 @@ model PasswordReset {
   expiresAt DateTime
   usedAt    DateTime?
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  Organization   Organization? @relation(fields: [organizationId], references: [id])
-  organizationId String?
-
-  @@index([userId])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  org       Organization @relation(fields: [orgId], references: [id])
+  orgId     String
 }
 
 model Account {
@@ -128,8 +127,8 @@ model Account {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id])
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id])
+  orgId String
 }
 
 model AccountType {
@@ -137,8 +136,8 @@ model AccountType {
   name     String    @unique
   accounts Account[]
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model AccountSubscription {
@@ -151,8 +150,8 @@ model AccountSubscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model Transaction {
@@ -169,8 +168,8 @@ model Transaction {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model TransactionItem {
@@ -187,8 +186,8 @@ model TransactionItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model TransactionItemMethod {
@@ -196,8 +195,8 @@ model TransactionItemMethod {
   name                  String                 @unique
   transactionItems      TransactionItem[]
   reimbursementRequests ReimbursementRequest[]
-  organization          Organization?          @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId                 String?
+  organization          Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId                 String
 }
 
 model TransactionItemType {
@@ -205,8 +204,8 @@ model TransactionItemType {
   name             String                        @unique
   direction        TransactionItemTypeDirection? @default(IN)
   transactionItems TransactionItem[]
-  organization     Organization?                 @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId            String?
+  organization     Organization                  @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId            String
 }
 
 enum TransactionItemTypeDirection {
@@ -232,8 +231,8 @@ model ReimbursementRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model Receipt {
@@ -249,8 +248,8 @@ model Receipt {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 enum ReimbursementRequestStatus {
@@ -280,8 +279,8 @@ model Contact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model ContactType {
@@ -289,8 +288,8 @@ model ContactType {
   name     String    @unique
   contacts Contact[]
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model ContactAssigment {
@@ -303,8 +302,10 @@ model ContactAssigment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
+
+  @@unique([contactId, userId])
 }
 
 model Address {
@@ -322,8 +323,8 @@ model Address {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model Engagement {
@@ -340,8 +341,8 @@ model Engagement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model EngagementType {
@@ -349,8 +350,8 @@ model EngagementType {
   name        String       @unique
   engagements Engagement[]
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }
 
 model Announcement {
@@ -362,6 +363,6 @@ model Announcement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String
 }

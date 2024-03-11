@@ -3,13 +3,21 @@ import { IconPlanet } from "@tabler/icons-react";
 
 export default function AuthLayout() {
   return (
-    <div className="flex min-h-full flex-col items-center justify-center dark:bg-background sm:bg-secondary">
-      <main className="mt-[33%] w-full">
+    <div className="flex min-h-full flex-col items-center dark:bg-background sm:bg-secondary">
+      <main className="grid w-full grow place-items-center">
         <Outlet />
       </main>
-      <footer className="mx-auto mb-8 mt-auto">
+      <footer className="mx-auto mb-8 mt-auto shrink">
         <p className="text-xs text-muted-foreground">
-          Copyright {new Date().getFullYear()} • Cosmic Development <IconPlanet className="mb-0.5 inline size-3.5" />
+          NP Ally • {new Date().getFullYear()} •{" "}
+          <a
+            href="https://getcosmic.dev"
+            target="_blank"
+            rel="noreferrer"
+            className="decoration-2 underline-offset-2 hover:underline"
+          >
+            Cosmic Development <IconPlanet className="mb-0.5 inline size-3.5" />
+          </a>
         </p>
       </footer>
     </div>
