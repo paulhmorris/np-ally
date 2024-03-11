@@ -12,6 +12,7 @@ jobs:
   deploy:
     name: 🚧 Deploy Preview
     runs-on: ubuntu-latest
+    environment: preview
     steps:
       - uses: actions/checkout@v4
       - name: Install Vercel CLI
@@ -25,6 +26,11 @@ jobs:
 
       - name: Deploy Project Artifacts to Vercel
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Apply pending migrations to the database
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Refresh Trigger.dev Jobs
         env:
