@@ -1,6 +1,7 @@
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -9,17 +10,17 @@ generator client {
 }
 
 model User {
-  id                    String                   @id @default(cuid())
-  username              String                   @unique
+  id                    String                 @id @default(cuid())
+  username              String                 @unique
   password              Password?
   passwordResets        PasswordReset[]
-  role                  UserRole                 @default(USER)
-  contact               Contact                  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId             String                   @unique
-  account               Account?                 @relation(fields: [accountId], references: [id])
-  accountId             String?                  @unique
-  isActive              Boolean                  @default(true)
-  orgMemberships        OrganizationMembership[]
+  role                  UserRole               @default(USER)
+  contact               Contact                @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId             String                 @unique
+  account               Account?               @relation(fields: [accountId], references: [id])
+  accountId             String?                @unique
+  isActive              Boolean                @default(true)
+  memberships           Membership[]
   receipts              Receipt[]
   reimbursementRequests ReimbursementRequest[]
   engagements           Engagement[]
@@ -40,7 +41,7 @@ enum OrganizationRole {
   ADMIN
 }
 
-model OrganizationMembership {
+model Membership {
   id     Int              @id @default(autoincrement())
   user   User             @relation(fields: [userId], references: [id])
   userId String
@@ -63,7 +64,7 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orgMemberships         OrganizationMembership[]
+  orgMemberships         Membership[]
   passwords              Password[]
   passwordResets         PasswordReset[]
   accountTypes           AccountType[]
@@ -104,17 +105,18 @@ model PasswordReset {
   expiresAt DateTime
   usedAt    DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  Organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
 
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String?
+  @@index([userId])
 }
 
 model Account {
   id                    String                 @id @default(cuid())
   code                  String                 @unique
-  description           String                 @db.MediumText
+  description           String                 @db.Text
   user                  User?
   transactions          Transaction[]
   type                  AccountType            @relation(fields: [typeId], references: [id])
@@ -157,7 +159,7 @@ model Transaction {
   id               String            @id @default(cuid())
   date             DateTime
   amountInCents    Int
-  description      String?           @db.MediumText
+  description      String?           @db.Text
   account          Account           @relation(fields: [accountId], references: [id])
   accountId        String
   contact          Contact?          @relation(fields: [contactId], references: [id])
@@ -176,7 +178,7 @@ model TransactionItem {
   amountInCents Int
   transaction   Transaction            @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   transactionId String
-  description   String?                @db.MediumText
+  description   String?                @db.Text
   method        TransactionItemMethod? @relation(fields: [methodId], references: [id])
   methodId      Int?
   type          TransactionItemType    @relation(fields: [typeId], references: [id])
@@ -217,7 +219,7 @@ model ReimbursementRequest {
   amountInCents Int
   date          DateTime
   vendor        String?
-  description   String?                    @db.LongText
+  description   String?                    @db.Text
   user          User                       @relation(fields: [userId], references: [id])
   userId        String
   account       Account                    @relation(fields: [accountId], references: [id])
@@ -237,7 +239,7 @@ model ReimbursementRequest {
 model Receipt {
   id                    String                 @id @default(cuid())
   s3Key                 String
-  s3Url                 String?                @db.MediumText
+  s3Url                 String?                @db.Text
   s3UrlExpiry           DateTime?
   title                 String
   user                  User                   @relation(fields: [userId], references: [id])
@@ -327,7 +329,7 @@ model Address {
 model Engagement {
   id          Int            @id @default(autoincrement())
   date        DateTime
-  description String?        @db.LongText
+  description String?        @db.Text
   type        EngagementType @relation(fields: [typeId], references: [id])
   typeId      Int
   contact     Contact        @relation(fields: [contactId], references: [id])
@@ -354,7 +356,7 @@ model EngagementType {
 model Announcement {
   id        Int       @id @default(autoincrement())
   title     String
-  content   String    @db.LongText
+  content   String    @db.Text
   expiresAt DateTime?
 
   createdAt DateTime @default(now())
