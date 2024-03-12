@@ -58,6 +58,7 @@ class Session implements ISessionService {
 
   async getUser(request: Request) {
     const userId = await this.getUserId(request);
+    const org = await SessionService.getOrg(request);
     if (userId === undefined) return null;
 
     const user = await UserService.getUserById(userId, {
@@ -67,7 +68,9 @@ class Session implements ISessionService {
         memberships: true,
       },
     });
-    if (user) return user;
+    if (user && org) {
+      return { ...user, org };
+    }
 
     throw await this.logout(request);
   }

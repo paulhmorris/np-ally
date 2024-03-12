@@ -60,11 +60,6 @@ export function useUser() {
       "No user found in root loader, but user is required by useUser. If user is optional, try useOptionalUser instead.",
     );
   }
-  if (!maybeUser.org) {
-    throw new Error(
-      "No org found in root loader, but org is required by useUser. If org is optional, try useOptionalUser instead.",
-    );
-  }
   return maybeUser;
 }
 
