@@ -36,24 +36,24 @@ enum UserRole {
   SUPERADMIN
 }
 
-enum OrganizationRole {
-  MEMBER
-  ADMIN
-}
-
 model Membership {
-  id        Int              @id @default(autoincrement())
-  user      User             @relation(fields: [userId], references: [id])
+  id        Int            @id @default(autoincrement())
+  user      User           @relation(fields: [userId], references: [id])
   userId    String
-  org       Organization     @relation(fields: [orgId], references: [id])
+  org       Organization   @relation(fields: [orgId], references: [id])
   orgId     String
-  role      OrganizationRole
-  isDefault Boolean          @default(false)
+  role      MembershipRole
+  isDefault Boolean        @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, orgId])
+}
+
+enum MembershipRole {
+  MEMBER
+  ADMIN
 }
 
 model Organization {
