@@ -44,13 +44,16 @@ export const meta: MetaFunction = () => [{ title: "Add Income | Alliance 436" }]
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
-    ContactService.getContacts({ include: { type: true } }),
-    ContactService.getContactTypes(),
-    prisma.account.findMany({ orderBy: { code: "asc" } }),
-    TransactionService.getItemMethods(),
+    ContactService.getContacts({ where: { orgId }, include: { type: true } }),
+    ContactService.getContactTypes({ where: { orgId } }),
+    prisma.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+    TransactionService.getItemMethods({ where: { orgId } }),
     TransactionService.getItemTypes({
       where: {
+        orgId,
         OR: [{ direction: TransactionItemTypeDirection.IN }, { id: TransactionItemType.Fee }],
       },
     }),

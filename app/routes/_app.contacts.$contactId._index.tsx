@@ -28,10 +28,12 @@ import { SessionService } from "~/services/SessionService.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.contactId, "contactId not found");
 
   const contact = await prisma.contact.findUnique({
-    where: { id: params.contactId },
+    where: { id: params.contactId, orgId },
     include: {
       user: true,
       type: true,
@@ -76,6 +78,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export async function action({ request, params }: ActionFunctionArgs) {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.contactId, "contactId not found");
 
   const validator = withZod(z.object({ _action: z.enum(["delete"]) }));
@@ -91,7 +95,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (result.data._action === "delete" && request.method === "DELETE") {
     const contact = await prisma.contact.findUnique({
-      where: { id: params.contactId },
+      where: { id: params.contactId, orgId },
       include: {
         transactions: true,
       },
@@ -124,10 +128,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
     try {
       await prisma.$transaction([
-        prisma.contactAssigment.deleteMany({ where: { contactId: contact.id } }),
-        prisma.engagement.deleteMany({ where: { contactId: contact.id } }),
-        prisma.address.deleteMany({ where: { contactId: contact.id } }),
-        prisma.contact.delete({ where: { id: contact.id } }),
+        prisma.contactAssigment.deleteMany({ where: { contactId: contact.id, orgId } }),
+        prisma.engagement.deleteMany({ where: { contactId: contact.id, orgId } }),
+        prisma.address.deleteMany({ where: { contactId: contact.id, orgId } }),
+        prisma.contact.delete({ where: { id: contact.id, orgId } }),
       ]);
       return toast.redirect(request, "/contacts", {
         type: "success",
@@ -221,7 +225,7 @@ export default function ContactDetailsPage() {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
-              <Card className="flex-1 basis-48 bg-transparent">
+              <Card className="bg-transparent flex-1 basis-48">
                 <CardHeader>
                   <CardTitle>Assigned Users</CardTitle>
                   <CardDescription>These users receive regular reminders to engage with this Contact.</CardDescription>

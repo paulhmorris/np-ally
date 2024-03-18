@@ -47,10 +47,12 @@ const validator = withZod(
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.reimbursementId, "reimbursementId not found");
 
   const rr = await prisma.reimbursementRequest.findUnique({
-    where: { id: params.reimbursementId },
+    where: { id: params.reimbursementId, orgId },
     include: {
       user: { include: { contact: true } },
       account: true,
@@ -72,7 +74,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         console.info(`Generating url for ${receipt.title}`);
         const url = await Bucket.getGETPresignedUrl(receipt.s3Key);
         return prisma.receipt.update({
-          where: { id: receipt.id },
+          where: { id: receipt.id, orgId },
           data: { s3Url: url, s3UrlExpiry: new Date(Date.now() + 6.5 * 24 * 60 * 60 * 1000) },
         });
       }
@@ -81,13 +83,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     await Promise.all(updatePromises);
   }
 
-  const accounts = await prisma.account.findMany({ orderBy: { code: "asc" } });
+  const accounts = await prisma.account.findMany({ where: { orgId }, orderBy: { code: "asc" } });
 
   return typedjson({ reimbursementRequest: rr, accounts });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
 
   if (result.error) {
@@ -99,7 +103,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // Reopen
   if (_action === "REOPEN") {
     const rr = await prisma.reimbursementRequest.update({
-      where: { id },
+      where: { id, orgId },
       data: { status: ReimbursementRequestStatus.PENDING },
     });
     return toast.json(
@@ -125,14 +129,17 @@ export async function action({ request }: ActionFunctionArgs) {
 
     try {
       const rr = await prisma.reimbursementRequest.findUniqueOrThrow({
-        where: { id },
+        where: { id, orgId },
         include: { account: true, user: true },
       });
 
       const total = rr.amountInCents;
 
       // Verify the account has enough funds
-      const account = await prisma.account.findUnique({ where: { id: accountId }, include: { transactions: true } });
+      const account = await prisma.account.findUnique({
+        where: { id: accountId, orgId },
+        include: { transactions: true },
+      });
       if (!account) {
         return validationError({
           fieldErrors: {
@@ -159,12 +166,14 @@ export async function action({ request }: ActionFunctionArgs) {
       await prisma.$transaction([
         prisma.transaction.create({
           data: {
+            orgId,
             accountId: rr.accountId,
             amountInCents: total * -1,
             description: note || "Approved reimbursement request",
             date: new Date(),
             transactionItems: {
               create: {
+                orgId,
                 amountInCents: total * -1,
                 methodId: TransactionItemMethod.Other,
                 typeId: TransactionItemType.Other_Outgoing,
@@ -173,7 +182,7 @@ export async function action({ request }: ActionFunctionArgs) {
           },
         }),
         prisma.reimbursementRequest.update({
-          where: { id },
+          where: { id, orgId },
           data: { status: _action },
           include: { account: true },
         }),
@@ -217,7 +226,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Rejected or Voided
   const rr = await prisma.reimbursementRequest.update({
-    where: { id },
+    where: { id, orgId },
     data: { status: _action },
     include: { user: true },
   });

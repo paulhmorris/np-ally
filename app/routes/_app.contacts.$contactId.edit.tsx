@@ -33,12 +33,15 @@ const UpdateContactValidator = withZod(UpdateContactSchema);
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.contactId, "contactId not found");
 
   // Users can only edit their assigned contacts
   if (user.role === UserRole.USER && params.contactId !== user.contactId) {
     const assignment = await prisma.contactAssigment.findUnique({
       where: {
+        orgId,
         contactId_userId: {
           contactId: params.contactId,
           userId: user.id,
@@ -54,6 +57,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ContactService.getContactTypes(),
     prisma.user.findMany({
       where: {
+        memberships: {
+          some: { orgId },
+        },
         role: { notIn: [UserRole.SUPERADMIN] },
         contactId: { not: params.contactId },
       },
@@ -64,7 +70,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   ]);
 
   const contact = await prisma.contact.findUnique({
-    where: { id: params.contactId },
+    where: { id: params.contactId, orgId },
     include: {
       user: true,
       assignedUsers: {
@@ -105,6 +111,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await UpdateContactValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -127,6 +135,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (user.role === UserRole.USER && formData.id !== user.contactId) {
     const assignment = await prisma.contactAssigment.findUnique({
       where: {
+        orgId,
         contactId_userId: {
           contactId: formData.id,
           userId: user.id,
@@ -161,19 +170,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const contact = await prisma.contact.update({
-    where: { id: formData.id },
+    where: { id: formData.id, orgId },
     data: {
       ...formData,
       assignedUsers: {
         // Rebuild the assigned users list
         deleteMany: {},
-        create: assignedUserIds ? assignedUserIds.map((userId) => ({ userId })) : undefined,
+        create: assignedUserIds ? assignedUserIds.map((userId) => ({ userId, orgId })) : undefined,
       },
       address: address
         ? {
             upsert: {
-              create: address,
-              update: address,
+              create: { ...address, orgId },
+              update: { ...address, orgId },
             },
           }
         : undefined,

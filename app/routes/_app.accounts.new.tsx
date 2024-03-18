@@ -28,10 +28,14 @@ const validator = withZod(
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
 
   const accountTypes = await prisma.accountType.findMany();
   const users = await prisma.user.findMany({
     where: {
+      memberships: {
+        some: { orgId },
+      },
       role: { in: [UserRole.USER, UserRole.ADMIN] },
       accountId: null,
     },
@@ -50,6 +54,8 @@ export const meta: MetaFunction = () => [{ title: "Edit Account | Alliance 436" 
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -59,6 +65,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const account = await prisma.account.create({
     data: {
       ...data,
+      orgId,
       user: {
         connect: userId ? { id: userId } : undefined,
       },

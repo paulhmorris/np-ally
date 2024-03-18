@@ -19,35 +19,21 @@ export const meta: MetaFunction = () => [{ title: "Home | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
 
   const [total, reimbursementRequests, announcement] = await Promise.all([
     prisma.transaction.aggregate({
       where: {
+        orgId,
         account: {
           user: { id: user.id },
         },
       },
       _sum: { amountInCents: true },
     }),
-    // prisma.contact.findMany({
-    //   where: {
-    //     assignedUsers: {
-    //       some: {
-    //         userId: user.id,
-    //       },
-    //     },
-    //     engagements: {
-    //       some: {},
-    //       every: {
-    //         date: {
-    //           lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    //         },
-    //       },
-    //     },
-    //   },
-    // }),
     prisma.reimbursementRequest.findMany({
       where: {
+        orgId,
         userId: user.id,
         status: "PENDING",
       },
@@ -63,6 +49,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }),
     prisma.announcement.findFirst({
       where: {
+        orgId,
         OR: [
           {
             expiresAt: { gt: dayjs().utc().toDate() },

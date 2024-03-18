@@ -39,6 +39,8 @@ const validator = withZod(
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const authorizedUser = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.userId, "userId not found");
 
   if (authorizedUser.role === UserRole.USER && authorizedUser.id !== params.userId) {
@@ -47,13 +49,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const accounts = await prisma.account.findMany({
     where: {
+      orgId,
       OR: [{ user: null }, { user: { id: params.userId } }],
     },
     orderBy: { code: "asc" },
   });
 
   const userWithPassword = await prisma.user.findUnique({
-    where: { id: params.userId },
+    where: {
+      id: params.userId,
+      memberships: {
+        some: { orgId },
+      },
+    },
     include: {
       contactAssignments: {
         include: {
@@ -101,6 +109,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authorizedUser = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
 
   const result = await validator.validate(await request.formData());
   if (result.error) {
@@ -162,7 +171,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const updatedUser = await prisma.user.update({
-    where: { id },
+    where: {
+      id,
+      memberships: {
+        some: { orgId },
+      },
+    },
     data: {
       role,
       username,
@@ -313,7 +327,7 @@ export default function UserDetailsPage() {
         </ValidatedForm>
         <div className="mt-4 max-w-lg">
           {user.contactAssignments.length > 0 ? (
-            <Card className="flex-1 basis-48 bg-transparent">
+            <Card className="bg-transparent flex-1 basis-48">
               <CardHeader>
                 <CardTitle>Contact Assignments</CardTitle>
                 <CardDescription>

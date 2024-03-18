@@ -13,17 +13,20 @@ export const meta: MetaFunction = () => [{ title: "Transactions | Alliance 436" 
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const transactions = await prisma.transaction.findMany({
-    where:
-      user.role === UserRole.USER
-        ? {
-            account: {
+    where: {
+      orgId,
+      account:
+        user.role === UserRole.USER
+          ? {
               user: {
                 id: user.id,
               },
-            },
-          }
-        : {},
+            }
+          : undefined,
+    },
     include: {
       contact: true,
       account: true,

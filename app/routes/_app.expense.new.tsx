@@ -38,12 +38,14 @@ export const meta: MetaFunction = () => [{ title: "Add Expense | Alliance 436" }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
-    prisma.contact.findMany({ include: { type: true } }),
-    prisma.contactType.findMany(),
-    prisma.account.findMany({ orderBy: { code: "asc" } }),
-    TransactionService.getItemMethods(),
-    TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.OUT } }),
+    prisma.contact.findMany({ where: { orgId }, include: { type: true } }),
+    prisma.contactType.findMany({ where: { orgId } }),
+    prisma.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+    TransactionService.getItemMethods({ where: { orgId } }),
+    TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.OUT, orgId } }),
   ]);
 
   return typedjson({
@@ -60,6 +62,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -70,15 +74,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const transaction = await prisma.transaction.create({
     data: {
       ...rest,
-      account: {
-        connect: { id: accountId },
-      },
-      contact: contactId ? { connect: { id: contactId } } : undefined,
+      orgId,
+      accountId,
+      contactId,
       amountInCents: total,
       transactionItems: {
         createMany: {
           data: transactionItems.map((i) => ({
             ...i,
+            orgId,
             amountInCents: i.amountInCents * -1,
           })),
         },

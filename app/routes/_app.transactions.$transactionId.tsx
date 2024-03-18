@@ -30,9 +30,10 @@ const validator = withZod(
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.transactionId, "transactionId not found");
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
 
   const transaction = await prisma.transaction.findUnique({
-    where: { id: params.transactionId },
+    where: { id: params.transactionId, orgId },
     include: {
       account: {
         include: {
@@ -63,6 +64,8 @@ export const meta: MetaFunction = () => [{ title: "Transaction Details | Allianc
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -70,7 +73,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   const { transactionId } = params;
 
-  const trx = await prisma.transaction.delete({ where: { id: transactionId }, include: { account: true } });
+  const trx = await prisma.transaction.delete({ where: { id: transactionId, orgId }, include: { account: true } });
   return toast.redirect(request, "/transactions", {
     type: "success",
     title: "Transaction deleted",

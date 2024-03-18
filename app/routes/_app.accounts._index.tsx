@@ -15,7 +15,10 @@ export const meta: MetaFunction = () => [{ title: "Accounts | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const accounts = await prisma.account.findMany({
+    where: { orgId },
     select: {
       id: true,
       code: true,

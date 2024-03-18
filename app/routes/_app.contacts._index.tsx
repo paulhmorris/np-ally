@@ -17,12 +17,15 @@ export const meta: MetaFunction = () => [{ title: "Contacts | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const onlyMine = new URL(request.url).searchParams.get("mine") === "true";
 
   // Only show a user's assigned contacts
   if (onlyMine) {
     const contacts = await prisma.contact.findMany({
       where: {
+        orgId,
         OR: [
           {
             assignedUsers: {
@@ -44,6 +47,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const contacts = await prisma.contact.findMany({
+    where: { orgId },
     include: { type: true },
     orderBy: { createdAt: "desc" },
   });

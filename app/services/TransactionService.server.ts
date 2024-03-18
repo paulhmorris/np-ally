@@ -72,7 +72,7 @@ class Service implements ITransactionService {
   ) {
     return withServiceErrorHandling<Model, T, "create">(async () => {
       const { transactionItems, data, ...rest } = args;
-      const { accountId, contactId, ...restOfData } = data;
+      const { accountId, contactId, orgId, ...restOfData } = data;
 
       const trxItemTypes = await this.getItemTypes();
       const total = transactionItems.reduce((acc, i) => {
@@ -88,6 +88,7 @@ class Service implements ITransactionService {
         ...rest,
         data: {
           ...restOfData,
+          orgId,
           amountInCents: total,
           transactionItems: {
             createMany: {
@@ -99,6 +100,7 @@ class Service implements ITransactionService {
                 const modifier = type.direction === TransactionItemTypeDirection.IN ? 1 : -1;
                 return {
                   ...i,
+                  orgId,
                   amountInCents: i.amountInCents * modifier,
                 };
               }),

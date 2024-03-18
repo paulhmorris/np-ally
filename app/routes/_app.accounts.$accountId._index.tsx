@@ -27,13 +27,15 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.accountId, "accountId not found");
   if (user.role === UserRole.USER && user.accountId !== params.accountId) {
     throw unauthorized("You are not authorized to view this account.");
   }
 
   const account = await prisma.account.findUnique({
-    where: { id: params.accountId },
+    where: { id: params.accountId, orgId },
     include: {
       type: true,
       user: {

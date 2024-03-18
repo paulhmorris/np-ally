@@ -6,10 +6,7 @@ import { MobileNav } from "~/components/mobile-nav";
 import { SessionService } from "~/services/SessionService.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const orgId = await SessionService.getOrgId(request);
-  if (!orgId) {
-    throw await SessionService.logout(request);
-  }
+  await SessionService.requireOrgId(request);
   return json({});
 }
 

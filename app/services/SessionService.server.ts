@@ -104,6 +104,17 @@ class Session implements ISessionService {
     return prisma.organization.findUnique({ where: { id: orgId } });
   }
 
+  async requireOrgId(request: Request) {
+    const orgId = await this.getOrgId(request);
+    if (!orgId) {
+      const originURL = new URL(request.url);
+      const returnUrl = new URL("/choose-org", originURL.origin);
+      returnUrl.searchParams.set("redirectTo", returnUrl.pathname);
+      throw redirect(returnUrl.toString());
+    }
+    return orgId;
+  }
+
   async requireUserId(request: Request, redirectTo: string = new URL(request.url).pathname) {
     const userId = await this.getUserId(request);
     if (!userId) {

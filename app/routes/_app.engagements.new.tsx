@@ -34,9 +34,12 @@ export const meta: MetaFunction = () => [{ title: "Add Engagement | Alliance 436
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const [contacts, contactTypes, engagementTypes] = await Promise.all([
     prisma.contact.findMany({
       where: {
+        orgId,
         assignedUsers:
           user.role === UserRole.USER
             ? {
@@ -48,8 +51,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         typeId: { notIn: [ContactType.Staff] },
       },
     }),
-    ContactService.getContactTypes(),
-    prisma.engagementType.findMany(),
+    ContactService.getContactTypes({ where: { orgId } }),
+    prisma.engagementType.findMany({ where: { orgId } }),
   ]);
 
   return typedjson({
@@ -61,6 +64,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -70,6 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const engagement = await prisma.engagement.create({
       data: {
         ...result.data,
+        orgId,
         userId: user.id,
       },
     });

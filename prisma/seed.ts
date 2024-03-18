@@ -45,6 +45,12 @@ async function seed() {
     prisma.contactType.createMany({ data: contactTypes.map((t) => ({ ...t, orgId: org.id })) }),
     prisma.accountType.createMany({ data: accountTypes.map((t) => ({ ...t, orgId: org.id })) }),
     prisma.engagementType.createMany({ data: engagementTypes.map((t) => ({ ...t, orgId: org.id })) }),
+
+    prisma.transactionItemType.createMany({ data: transactionItemTypes.map((t) => ({ ...t, orgId: org2.id })) }),
+    prisma.transactionItemMethod.createMany({ data: transactionItemMethods.map((t) => ({ ...t, orgId: org2.id })) }),
+    prisma.contactType.createMany({ data: contactTypes.map((t) => ({ ...t, orgId: org2.id })) }),
+    prisma.accountType.createMany({ data: accountTypes.map((t) => ({ ...t, orgId: org2.id })) }),
+    prisma.engagementType.createMany({ data: engagementTypes.map((t) => ({ ...t, orgId: org2.id })) }),
   ]);
 
   const email = "paul@remix.run";
@@ -91,13 +97,13 @@ async function seed() {
   const [user, donorContact] = await Promise.all([
     await prisma.user.create({
       data: {
-        username: "j@caudle.com",
+        username: "cassian@therebellion.com",
         role: "USER",
         contact: {
           create: {
-            firstName: "Jessica",
-            lastName: "Caudle",
-            email: "j@caudle.com",
+            firstName: "Cassian",
+            lastName: "Andor",
+            email: "cassian@therebllion.com",
             typeId: ContactType.Missionary,
             orgId: org.id,
           },

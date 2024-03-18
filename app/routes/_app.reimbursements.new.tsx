@@ -40,19 +40,22 @@ export const meta: MetaFunction = () => [{ title: "New Reimbursement Request | A
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const [receipts, methods, accounts] = await Promise.all([
     prisma.receipt.findMany({
       // Admins can see all receipts, users can only see their own
       where: {
+        orgId,
         userId: user.role === "USER" ? user.id : undefined,
         reimbursementRequests: { none: {} },
       },
       include: { user: { select: { contact: { select: { email: true } } } } },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.transactionItemMethod.findMany(),
+    prisma.transactionItemMethod.findMany({ where: { orgId } }),
     prisma.account.findMany({
-      where: user.role === UserRole.USER ? { user: { id: user.id } } : undefined,
+      where: { user: user.role === UserRole.USER ? { id: user.id } : undefined, orgId },
       include: { type: true },
       orderBy: { code: "asc" },
     }),
@@ -62,6 +65,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -72,6 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const reimbursementRequest = await prisma.reimbursementRequest.create({
     data: {
       ...data,
+      orgId,
       userId: user.id,
       status: ReimbursementRequestStatus.PENDING,
       receipts: receiptId

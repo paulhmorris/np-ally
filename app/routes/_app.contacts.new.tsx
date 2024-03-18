@@ -29,18 +29,26 @@ export const meta: MetaFunction = () => [{ title: "New Contact | Alliance 436" }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const contactTypes = await prisma.contactType.findMany({
     where:
       user.role === UserRole.USER
         ? {
+            orgId,
             id: {
               notIn: [ContactType.Staff],
             },
           }
-        : {},
+        : { orgId },
   });
   const usersWhoCanBeAssigned = await prisma.user.findMany({
-    where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
+    where: {
+      memberships: {
+        some: { orgId },
+      },
+      role: { in: [UserRole.USER, UserRole.ADMIN] },
+    },
     select: {
       id: true,
       contact: {
@@ -61,6 +69,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await NewContactValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -87,12 +97,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: {
       ...formData,
       address: {
-        create: address,
+        create: { ...address, orgId },
       },
       assignedUsers: assignedUserIds
         ? {
             createMany: {
-              data: assignedUserIds.map((userId) => ({ userId })),
+              data: assignedUserIds.map((userId) => ({ userId, orgId })),
             },
           }
         : undefined,

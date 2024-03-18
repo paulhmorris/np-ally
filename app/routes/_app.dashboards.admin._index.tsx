@@ -20,6 +20,8 @@ export const meta: MetaFunction = () => [{ title: "Home | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   if (user.role === UserRole.USER) {
     return redirect("/dashboards/staff");
   }
@@ -27,6 +29,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const [accounts, reimbursementRequests, announcement] = await Promise.all([
     prisma.account.findMany({
       where: {
+        orgId,
         typeId: AccountType.Operating,
       },
       include: {
@@ -37,6 +40,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     prisma.reimbursementRequest.findMany({
       where: {
+        orgId,
         status: ReimbursementRequestStatus.PENDING,
       },
       include: {
@@ -48,6 +52,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }),
     prisma.announcement.findFirst({
       where: {
+        orgId,
         OR: [
           {
             expiresAt: { gt: dayjs().utc().toDate() },

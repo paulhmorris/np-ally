@@ -15,7 +15,14 @@ export const meta: MetaFunction = () => [{ title: "Users | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const users = await prisma.user.findMany({
+    where: {
+      memberships: {
+        some: { orgId },
+      },
+    },
     include: { contact: true },
     orderBy: { createdAt: "desc" },
   });

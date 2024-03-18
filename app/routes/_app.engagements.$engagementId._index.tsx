@@ -23,10 +23,12 @@ export const meta: MetaFunction = () => [{ title: "View Engagement | Alliance 43
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.engagementId, "engagementId not found");
 
   const engagement = await prisma.engagement.findUnique({
-    where: { id: Number(params.engagementId) },
+    where: { id: Number(params.engagementId), orgId },
     include: {
       contact: true,
       type: true,
@@ -42,6 +44,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.engagementId, "engagementId not found");
 
   const validator = withZod(z.object({ _action: z.literal("delete") }));
@@ -57,7 +61,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   try {
     const engagement = await prisma.engagement.findUniqueOrThrow({
-      where: { id: Number(params.engagementId) },
+      where: { id: Number(params.engagementId), orgId },
       select: { userId: true },
     });
 
@@ -77,7 +81,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       }
     }
 
-    await prisma.engagement.delete({ where: { id: Number(params.engagementId) } });
+    await prisma.engagement.delete({ where: { id: Number(params.engagementId), orgId } });
     return toast.redirect(request, "/engagements", {
       type: "success",
       title: "Engagement deleted",

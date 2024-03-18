@@ -36,11 +36,14 @@ const validator = withZod(
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.engagementId, "engagementId not found");
 
   const [contacts, contactTypes, engagement, engagementTypes] = await Promise.all([
     prisma.contact.findMany({
       where: {
+        orgId,
         assignedUsers:
           user.role === UserRole.USER
             ? {
@@ -52,11 +55,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         typeId: { notIn: [ContactType.Staff] },
       },
     }),
-    ContactService.getContactTypes(),
+    ContactService.getContactTypes({ where: { orgId } }),
     prisma.engagement.findUnique({
-      where: { id: Number(params.engagementId) },
+      where: { id: Number(params.engagementId), orgId },
     }),
-    prisma.engagementType.findMany(),
+    prisma.engagementType.findMany({ where: { orgId } }),
   ]);
 
   if (!engagement) {
@@ -76,13 +79,15 @@ export const meta: MetaFunction = () => [{ title: "Edit Account | Alliance 436" 
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
 
   const engagement = await prisma.engagement.update({
-    where: { id: result.data.id },
+    where: { id: result.data.id, orgId },
     data: result.data,
   });
 

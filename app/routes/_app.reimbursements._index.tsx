@@ -12,8 +12,10 @@ export const meta: MetaFunction = () => [{ title: "Reimbursement Requests | Alli
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
 
   const requests = await prisma.reimbursementRequest.findMany({
+    where: { orgId },
     include: {
       user: {
         include: {

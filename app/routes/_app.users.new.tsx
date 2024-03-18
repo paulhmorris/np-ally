@@ -40,9 +40,12 @@ export const meta: MetaFunction = () => [{ title: "New User | Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   return typedjson({
     accounts: await prisma.account.findMany({
       where: {
+        orgId,
         user: null,
       },
       orderBy: { code: "asc" },
@@ -53,6 +56,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authorizedUser = await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -77,11 +82,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: {
       role,
       username,
+      memberships: {
+        create: {
+          orgId,
+          role,
+        },
+      },
       account: {
         connect: accountId ? { id: accountId } : undefined,
       },
       contact: {
         create: {
+          orgId,
           email: username,
           ...contact,
         },

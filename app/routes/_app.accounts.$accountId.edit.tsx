@@ -31,13 +31,18 @@ const validator = withZod(
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.accountId, "accountId not found");
 
   const [account, accountTypes, users] = await Promise.all([
-    prisma.account.findUnique({ where: { id: params.accountId }, include: { user: true } }),
-    prisma.accountType.findMany(),
+    prisma.account.findUnique({ where: { id: params.accountId, orgId }, include: { user: true } }),
+    prisma.accountType.findMany({ where: { orgId } }),
     prisma.user.findMany({
       where: {
+        memberships: {
+          some: { orgId },
+        },
         role: { in: [UserRole.USER, UserRole.ADMIN] },
         OR: [{ accountId: null }, { accountId: params.accountId }],
       },
@@ -66,6 +71,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -73,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { userId, ...data } = result.data;
   await prisma.account.update({
-    where: { id: data.id },
+    where: { id: data.id, orgId },
     data: {
       ...data,
       user: userId
