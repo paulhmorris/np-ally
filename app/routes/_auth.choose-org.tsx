@@ -10,6 +10,8 @@ import { AuthCard } from "~/components/auth-card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { prisma } from "~/integrations/prisma.server";
+import { sessionStorage } from "~/lib/session.server";
+import { toast } from "~/lib/toast.server";
 import { normalizeEnum } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
 import { SessionService } from "~/services/SessionService.server";
@@ -24,6 +26,24 @@ const validator = withZod(
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const session = await SessionService.getSession(request);
+
+  if (!user.memberships.length) {
+    return toast.redirect(
+      request,
+      "/login",
+      {
+        type: "error",
+        title: "Error",
+        description: "You are not a member of any organizations.",
+      },
+      {
+        headers: {
+          "Set-Cookie": await sessionStorage.destroySession(session),
+        },
+      },
+    );
+  }
   return typedjson({ orgs: user.memberships.map((m) => ({ id: m.org.id, name: m.org.name, role: m.role })) });
 };
 
@@ -38,7 +58,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { orgId, redirectTo, rememberSelection } = result.data;
 
   // Ensure the user is a member of the selected organization
-  await prisma.membership.findUniqueOrThrow({ where: { userId_orgId: { userId, orgId } } });
+  await prisma.membership.findUniqueOrThrow({ where: { userId_orgId: { userId, orgId } }, select: { id: true } });
 
   // Skip this screen on future logins
   if (rememberSelection) {
@@ -50,6 +70,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           userId,
         },
       },
+    });
+  } else {
+    await prisma.membership.updateMany({
+      where: { userId },
+      data: { isDefault: false },
     });
   }
 

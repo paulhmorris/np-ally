@@ -28,8 +28,16 @@ const validator = withZod(
 );
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const userId = await SessionService.getUserId(request);
-  if (userId) return redirect("/");
+  const user = await SessionService.getUser(request);
+  const orgId = await SessionService.getOrgId(request);
+
+  if (user) {
+    if (!orgId) {
+      return redirect("/choose-org");
+    }
+    return redirect("/");
+  }
+
   return json({});
 };
 

@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { Form, Link } from "@remix-run/react";
+import { IconArrowRight } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { NewInquiryModal } from "~/components/modals/inquiry-modal";
@@ -37,8 +38,22 @@ export function UserMenu() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="mb-2 w-48" align="start" forceMount>
+          <DropdownMenuLabel>
+            <p className="text-xs font-medium leading-none text-muted-foreground">{user.org?.name}</p>
+          </DropdownMenuLabel>
+          {user.memberships.length > 1 ? (
+            <>
+              <DropdownMenuItem asChild>
+                <Link className="flex cursor-pointer items-center justify-between gap-2" to="/choose-org">
+                  <span>Change Org</span>
+                  <IconArrowRight className="size-4" />
+                </Link>
+              </DropdownMenuItem>
+            </>
+          ) : null}
+          <DropdownMenuSeparator />
           <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-2 sm:space-y-1">
+            <div className="flex flex-col space-y-2 sm:space-y-0">
               <p className="text-base font-medium leading-none sm:text-sm">
                 {user.contact.firstName}
                 {user.contact.lastName ? ` ${user.contact.lastName}` : null}
@@ -46,13 +61,6 @@ export function UserMenu() {
               <p className="text-sm leading-none text-muted-foreground sm:text-xs">{user.contact.email}</p>
             </div>
           </DropdownMenuLabel>
-          {user.memberships?.length > 1 ? (
-            <DropdownMenuItem asChild>
-              <Link className="cursor-pointer sm:hidden" to={"/choose-org"}>
-                Change Org
-              </Link>
-            </DropdownMenuItem>
-          ) : null}
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>

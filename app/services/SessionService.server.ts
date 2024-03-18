@@ -68,8 +68,13 @@ class Session implements ISessionService {
         memberships: true,
       },
     });
+
     if (user && org) {
       return { ...user, org };
+    }
+
+    if (user) {
+      return { ...user, org: null };
     }
 
     throw await this.logout(request);
