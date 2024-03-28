@@ -16,30 +16,36 @@ const prisma = new PrismaClient();
 
 async function seed() {
   // cleanup the existing database
-  await Promise.all([
-    await db.transactionItem.deleteMany(),
-    await db.transaction.deleteMany(),
-    await db.user.deleteMany(),
-    await db.account.deleteMany(),
-    await db.contact.deleteMany(),
-    await db.organization.deleteMany(),
-    await db.transactionItemType.deleteMany(),
-    await db.contactType.deleteMany(),
-    await db.accountType.deleteMany(),
-    await db.transactionItemMethod.deleteMany(),
+  await prisma.$transaction([
+    prisma.transactionItem.deleteMany(),
+    prisma.transaction.deleteMany(),
+    prisma.membership.deleteMany(),
+    prisma.user.deleteMany(),
+    prisma.accountSubscription.deleteMany(),
+    prisma.contact.deleteMany(),
+    prisma.accountSubscription.deleteMany(),
+    prisma.accountType.deleteMany(),
+    prisma.account.deleteMany(),
+    prisma.organization.deleteMany(),
+    prisma.engagementType.deleteMany(),
+    prisma.engagement.deleteMany(),
+    prisma.transactionItemType.deleteMany(),
+    prisma.contactType.deleteMany(),
+    prisma.accountType.deleteMany(),
+    prisma.transactionItemMethod.deleteMany(),
   ]);
 
-  await Promise.all([
-    await db.transactionItemType.createMany({ data: transactionItemTypes }),
-    await db.transactionItemMethod.createMany({ data: transactionItemMethods }),
-    await db.contactType.createMany({ data: contactTypes }),
-    await db.accountType.createMany({ data: accountTypes }),
-    await db.engagementType.createMany({ data: engagementTypes }),
+  const org = await prisma.organization.create({ data: { name: "Alliance 436" } });
+
+  await prisma.$transaction([
+    prisma.transactionItemType.createMany({ data: transactionItemTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    prisma.transactionItemMethod.createMany({ data: transactionItemMethods.map((t) => ({ ...t, orgId: org.id })) }),
+    prisma.contactType.createMany({ data: contactTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    prisma.accountType.createMany({ data: accountTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    prisma.engagementType.createMany({ data: engagementTypes.map((t) => ({ ...t, orgId: org.id })) }),
   ]);
 
-  const org = await db.organization.create({ data: { name: "Alliance 436" } });
-
-  await db.user.create({
+  await prisma.user.create({
     data: {
       username: "paulh.morris@gmail.com",
       role: "SUPERADMIN",
@@ -49,17 +55,19 @@ async function seed() {
           lastName: "Morris",
           email: "paulh.morris@gmail.com",
           typeId: ContactType.Outreach,
+          orgId: org.id,
         },
       },
       password: {
         create: {
           hash: await bcrypt.hash("qVa0gGdSkhEZsDrr", 10),
+          orgId: org.id,
         },
       },
     },
   });
 
-  await db.user.create({
+  await prisma.user.create({
     data: {
       username: "jaredn7@gmail.com",
       role: "ADMIN",
@@ -69,20 +77,22 @@ async function seed() {
           lastName: "Nielsen",
           email: "jaredn7@gmail.com",
           typeId: ContactType.Staff,
+          orgId: org.id,
         },
       },
       password: {
         create: {
           hash: await bcrypt.hash("mTs3zV5c6mUP8MMd", 10),
+          orgId: org.id,
         },
       },
     },
   });
 
-  await db.account.createMany({
+  await prisma.account.createMany({
     data: defaultAccounts.map((a) => ({
       ...a,
-      organizationId: org.id,
+      orgId: org.id,
     })),
   });
 
@@ -95,5 +105,5 @@ seed()
     process.exit(1);
   })
   .finally(() => {
-    void db.$disconnect();
+    void prisma.$disconnect();
   });

@@ -117,7 +117,7 @@ export function FileUploader() {
           />
         </div>
         {uploadStatus.success ? (
-          <div className="flex h-10 items-center gap-1 text-green-700">
+          <div className="text-green-700 flex h-10 items-center gap-1">
             <span className="text-sm font-medium">Success!</span>
             <IconCircleCheckFilled className="h-5 w-5" />
           </div>

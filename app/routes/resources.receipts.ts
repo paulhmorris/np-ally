@@ -3,6 +3,7 @@ import { typedjson } from "remix-typedjson";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 
+import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services/SessionService.server";
 
 export async function action({ request }: ActionFunctionArgs) {
