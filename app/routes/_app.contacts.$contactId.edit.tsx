@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole, UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -37,7 +37,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.contactId, "contactId not found");
 
   // Users can only edit their assigned contacts
-  if (user.role === UserRole.USER && params.contactId !== user.contactId) {
+  if (user.role === MembershipRole.MEMBER && params.contactId !== user.contactId) {
     const assignment = await db.contactAssigment.findUnique({
       where: {
         orgId,
@@ -131,7 +131,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Users can only edit their assigned contacts and themselves
-  if (user.role === UserRole.USER && formData.id !== user.contactId) {
+  if (user.role === MembershipRole.MEMBER && formData.id !== user.contactId) {
     const assignment = await db.contactAssigment.findUnique({
       where: {
         orgId,
@@ -147,7 +147,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Users can't change their contact type
-  if (user.role === UserRole.USER) {
+  if (user.role === MembershipRole.MEMBER) {
     if (formData.typeId !== user.contact.typeId) {
       return forbidden({ message: "You do not have permission to change your contact type." });
     }
@@ -260,7 +260,7 @@ export default function EditContactPage() {
               <fieldset>
                 <legend className="mb-4 text-sm text-muted-foreground">
                   Assign users to this Contact. They will receive regular reminders to log an engagement.
-                  {contact.assignedUsers.some((a) => a.user.id === user.id) && user.role === UserRole.USER ? (
+                  {contact.assignedUsers.some((a) => a.user.id === user.id) && user.role === MembershipRole.MEMBER ? (
                     <p className="mt-2 rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
                       If you unassign yourself, you will no longer be able to view this contact&apos;s transactions or
                       make edits.

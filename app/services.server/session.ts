@@ -1,19 +1,23 @@
-import { Organization, User, UserRole } from "@prisma/client";
+import { MembershipRole, Organization, User, UserRole } from "@prisma/client";
 import { Session as RemixSession, SessionData, redirect } from "@remix-run/node";
 
 import { db } from "~/integrations/prisma.server";
-import { forbidden, unauthorized } from "~/lib/responses.server";
+import { unauthorized } from "~/lib/responses.server";
 import { sessionStorage } from "~/lib/session.server";
+
+type UserWithMembershipRoleAndOrg = Omit<User, "role"> & {
+  role: MembershipRole;
+  systemRole: UserRole;
+  org: Organization | null;
+};
 
 interface ISessionService {
   getSession(request: Request): Promise<RemixSession<SessionData, SessionData>>;
   commitSession(session: RemixSession<SessionData, SessionData>): Promise<string>;
   getUserId(request: Request): Promise<User["id"] | undefined>;
-  getUser(request: Request): Promise<User | null>;
-  getSessionUser(request: Request): Promise<User | null>;
+  getUser(request: Request): Promise<UserWithMembershipRoleAndOrg | null>;
   requireUserId(request: Request, redirectTo?: string): Promise<User["id"]>;
-  requireAdmin(request: Request): Promise<User>;
-  requireSuperAdmin(request: Request): Promise<User>;
+  requireAdmin(request: Request): Promise<UserWithMembershipRoleAndOrg>;
   createUserSession({
     request,
     userId,
@@ -71,28 +75,22 @@ class Session implements ISessionService {
       },
     });
 
-    if (user && org) {
-      return { ...user, org };
+    if (!user) {
+      throw await this.logout(request);
     }
 
-    if (user) {
-      return { ...user, org: null };
+    const currentMembership = user.memberships.find((m) => m.orgId === org?.id);
+    if (!currentMembership) {
+      console.warn("No membership in the current org - logging out...");
+      throw await this.logout(request);
     }
 
-    throw await this.logout(request);
-  }
-
-  async getSessionUser(request: Request) {
-    const userId = await this.getUserId(request);
-    if (userId === undefined) return null;
-
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: { contact: true },
-    });
-    if (user) return user;
-
-    throw await this.logout(request);
+    return {
+      ...user,
+      role: currentMembership.role,
+      systemRole: user.role,
+      org: org ?? null,
+    };
   }
 
   async getOrgId(request: Request): Promise<Organization["id"] | undefined> {
@@ -129,44 +127,70 @@ class Session implements ISessionService {
     return userId;
   }
 
-  private async requireUserByRole(request: Request, allowedRoles?: Array<UserRole>) {
-    const defaultAllowedRoles: Array<UserRole> = ["USER", "ADMIN"];
+  public async requireUserByRole(request: Request, allowedRoles?: Array<MembershipRole>) {
+    const defaultAllowedRoles: Array<MembershipRole> = [MembershipRole.MEMBER, MembershipRole.ADMIN];
     const userId = await this.requireUserId(request);
+    const orgId = await this.requireOrgId(request);
 
     const user = await db.user.findUnique({
-      where: {
-        id: userId,
-      },
+      where: { id: userId },
       include: {
         contact: true,
         memberships: {
+          where: { orgId },
           include: {
-            org: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+            org: true,
           },
         },
       },
     });
 
-    if (user && user.role === UserRole.SUPERADMIN) {
-      return user;
+    // User does not exist
+    if (!user) {
+      throw unauthorized({ user });
     }
 
-    if (user && allowedRoles && allowedRoles.length > 0) {
-      if (allowedRoles.includes(user.role)) {
-        return user;
+    // User is not a member of the current organization
+    const currentMembership = user.memberships.find((m) => m.orgId === orgId);
+    if (!currentMembership) {
+      throw unauthorized({ user });
+    }
+
+    // Superadmins are admins in all organizations
+    if (user.role === UserRole.SUPERADMIN) {
+      return {
+        ...user,
+        role: MembershipRole.ADMIN,
+        systemRole: user.role,
+        org: currentMembership.org,
+      };
+    }
+
+    // If allowedRoles are provided, check if the user has one of the allowed roles
+    if (allowedRoles && allowedRoles.length > 0) {
+      if (allowedRoles.includes(currentMembership.role)) {
+        return {
+          ...user,
+          role: currentMembership.role,
+          systemRole: user.role,
+          org: currentMembership.org,
+        };
       }
       throw unauthorized({ user });
     }
 
-    if (user && defaultAllowedRoles.includes(user.role)) {
-      return user;
+    // Otherwise check if user is a member or admin
+    if (defaultAllowedRoles.includes(currentMembership.role)) {
+      return {
+        ...user,
+        role: currentMembership.role,
+        systemRole: user.role,
+        org: currentMembership.org,
+      };
     }
-    throw forbidden({ user });
+
+    // Some other scenario
+    throw unauthorized({ user });
   }
 
   async requireUser(request: Request) {
@@ -175,10 +199,6 @@ class Session implements ISessionService {
 
   async requireAdmin(request: Request) {
     return this.requireUserByRole(request, ["ADMIN"]);
-  }
-
-  async requireSuperAdmin(request: Request) {
-    return this.requireUserByRole(request, ["SUPERADMIN"]);
   }
 
   async createUserSession({

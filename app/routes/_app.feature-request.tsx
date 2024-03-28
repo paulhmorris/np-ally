@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import { ActionFunctionArgs } from "@remix-run/node";
 import { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -53,7 +53,7 @@ export async function action({ request }: ActionFunctionArgs) {
     Sentry.captureException(issueRequest);
   }
 
-  return toast.redirect(request, user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin", {
+  return toast.redirect(request, user.role === MembershipRole.MEMBER ? "/dashboards/staff" : "/dashboards/admin", {
     type: "success",
     title: "Request Sent",
     description: "An issue has been created on our board.",

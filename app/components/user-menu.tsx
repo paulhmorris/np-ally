@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import { Form, Link } from "@remix-run/react";
 import { IconArrowRight } from "@tabler/icons-react";
 import { useState } from "react";
@@ -43,7 +43,7 @@ export function UserMenu() {
           </DropdownMenuLabel>
           {user.memberships.length > 1 ? (
             <>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="py-0.5">
                 <Link className="flex cursor-pointer items-center justify-between gap-2" to="/choose-org">
                   <span>Change Org</span>
                   <IconArrowRight className="size-4" />
@@ -66,7 +66,7 @@ export function UserMenu() {
             <DropdownMenuItem asChild>
               <Link
                 className="cursor-pointer sm:hidden"
-                to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"}
+                to={user.role === MembershipRole.MEMBER ? "/dashboards/staff" : "/dashboards/admin"}
               >
                 Home
               </Link>

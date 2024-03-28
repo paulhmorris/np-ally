@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
@@ -19,7 +19,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     where: {
       orgId,
       account:
-        user.role === UserRole.USER
+        user.role === MembershipRole.MEMBER
           ? {
               user: {
                 id: user.id,

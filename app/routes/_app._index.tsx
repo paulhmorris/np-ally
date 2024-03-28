@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import { type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import { redirect } from "remix-typedjson";
 
@@ -9,7 +9,7 @@ export const meta: MetaFunction = () => [{ title: "Home | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
-  if (user.role === UserRole.USER) {
+  if (user.role === MembershipRole.MEMBER) {
     return redirect("/dashboards/staff");
   }
   return redirect("/dashboards/admin");

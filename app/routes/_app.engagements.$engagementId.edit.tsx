@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -44,7 +44,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       where: {
         orgId,
         assignedUsers:
-          user.role === UserRole.USER
+          user.role === MembershipRole.MEMBER
             ? {
                 some: {
                   userId: user.id,

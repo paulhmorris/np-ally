@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { UserRole } from "@prisma/client";
+import { MembershipRole, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import prisma from "test/e2e/helpers/prisma";
@@ -18,11 +18,17 @@ export async function createAdmin() {
   }
   const createdUser = await prisma.user.create({
     data: {
-      role: UserRole.ADMIN,
+      role: UserRole.USER,
       username: user.username,
       password: {
         create: {
           hash: await bcrypt.hash(user.password, 10),
+        },
+      },
+      memberships: {
+        create: {
+          orgId: org.id,
+          role: MembershipRole.ADMIN,
         },
       },
       contact: {

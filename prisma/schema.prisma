@@ -32,7 +32,6 @@ model User {
 
 enum UserRole {
   USER
-  ADMIN
   SUPERADMIN
 }
 

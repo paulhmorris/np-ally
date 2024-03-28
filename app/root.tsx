@@ -7,6 +7,7 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Notifications } from "~/components/notifications";
+import { db } from "~/integrations/prisma.server";
 import { themeSessionResolver } from "~/lib/session.server";
 import { getGlobalToast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
@@ -21,8 +22,40 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await SessionService.getSession(request);
-  const user = await SessionService.getUser(request);
+  const userId = await SessionService.getUserId(request);
+  const org = await SessionService.getOrg(request);
   const { getTheme } = await themeSessionResolver(request);
+
+  let user;
+  if (userId) {
+    const dbUser = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        contact: true,
+        contactAssignments: true,
+        memberships: true,
+      },
+    });
+
+    if (!dbUser) {
+      throw await SessionService.logout(request);
+    }
+
+    const currentMembership = dbUser.memberships.find((m) => m.orgId === org?.id);
+    if (org && !currentMembership) {
+      console.warn("No membership in the current org - logging out...");
+      throw await SessionService.logout(request);
+    }
+
+    user = {
+      ...dbUser,
+      role: currentMembership!.role,
+      systemRole: dbUser.role,
+      org: org ?? null,
+    };
+  }
 
   return typedjson(
     {

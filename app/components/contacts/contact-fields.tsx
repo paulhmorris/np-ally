@@ -1,4 +1,4 @@
-import { ContactType, UserRole } from "@prisma/client";
+import { ContactType, MembershipRole } from "@prisma/client";
 import { useLocation } from "@remix-run/react";
 
 import { FormField, FormSelect } from "~/components/ui/form";
@@ -7,7 +7,7 @@ import { useUser } from "~/lib/utils";
 export function ContactFields({ contactTypes }: { contactTypes: Array<ContactType> }) {
   const user = useUser();
   const location = useLocation();
-  const shouldDisableTypeSelection = user.role === UserRole.USER && location.pathname.includes(user.contactId);
+  const shouldDisableTypeSelection = user.role === MembershipRole.MEMBER && location.pathname.includes(user.contactId);
 
   return (
     <>

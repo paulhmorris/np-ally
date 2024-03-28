@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -34,9 +34,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const users = await db.user.findMany({
     where: {
       memberships: {
-        some: { orgId },
+        some: {
+          orgId,
+          role: { in: [MembershipRole.MEMBER, MembershipRole.ADMIN] },
+        },
       },
-      role: { in: [UserRole.USER, UserRole.ADMIN] },
       accountId: null,
     },
     include: {

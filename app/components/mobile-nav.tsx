@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole, UserRole } from "@prisma/client";
 import { NavLink } from "@remix-run/react";
 import { IconMenuDeep } from "@tabler/icons-react";
 import { useState, type ComponentPropsWithoutRef } from "react";
@@ -30,19 +30,19 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
           <ul className="mt-6 space-x-0 space-y-1">
             <MobileNavLink
               setOpen={setOpen}
-              to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"}
+              to={user.role === MembershipRole.MEMBER ? "/dashboards/staff" : "/dashboards/admin"}
               name="Home"
             />
             {globalNavLinks.map((link) => (
               <MobileNavLink setOpen={setOpen} key={link.href} to={link.href} name={link.name} />
             ))}
-            {user.role === UserRole.USER
+            {user.role === MembershipRole.MEMBER
               ? userNavLinks.map((link) => (
                   <MobileNavLink setOpen={setOpen} key={link.href} to={link.href} name={link.name} />
                 ))
               : null}
           </ul>
-          {user.role === UserRole.ADMIN || user.role === UserRole.SUPERADMIN ? (
+          {user.role === MembershipRole.ADMIN || user.systemRole === UserRole.SUPERADMIN ? (
             <>
               <Separator />
               <p className="text-sm font-semibold tracking-widest text-muted-foreground">ADMIN</p>
@@ -53,7 +53,7 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
               </ul>
             </>
           ) : null}
-          {user.role === UserRole.SUPERADMIN ? (
+          {user.systemRole === UserRole.SUPERADMIN ? (
             <>
               <Separator />
               <p className="text-sm font-semibold tracking-widest text-muted-foreground">SUPER ADMIN</p>

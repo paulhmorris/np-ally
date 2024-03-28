@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { PrismaClient } from "@prisma/client";
+import { MembershipRole, PrismaClient, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import {
@@ -69,7 +69,13 @@ async function seed() {
   await prisma.user.create({
     data: {
       username: "jaredn7@gmail.com",
-      role: "ADMIN",
+      role: UserRole.USER,
+      memberships: {
+        create: {
+          orgId: org.id,
+          role: MembershipRole.ADMIN,
+        },
+      },
       contact: {
         create: {
           firstName: "Jared",

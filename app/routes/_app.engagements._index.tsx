@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { IconPlus } from "@tabler/icons-react";
@@ -21,7 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const engagements = await db.engagement.findMany({
     where: {
       orgId,
-      userId: user.role === UserRole.USER ? user.id : undefined,
+      userId: user.role === MembershipRole.MEMBER ? user.id : undefined,
     },
     include: {
       type: true,

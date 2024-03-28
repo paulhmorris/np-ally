@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -33,7 +33,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const contactTypes = await db.contactType.findMany({
     where:
-      user.role === UserRole.USER
+      user.role === MembershipRole.MEMBER
         ? {
             orgId,
             id: {
@@ -45,9 +45,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const usersWhoCanBeAssigned = await db.user.findMany({
     where: {
       memberships: {
-        some: { orgId },
+        some: {
+          orgId,
+          role: { in: [MembershipRole.ADMIN, MembershipRole.MEMBER] },
+        },
       },
-      role: { in: [UserRole.USER, UserRole.ADMIN] },
     },
     select: {
       id: true,
@@ -155,7 +157,7 @@ export default function NewContactPage() {
                       name="assignedUserIds"
                       value={user.id}
                       aria-label={`${user.contact.firstName} ${user.contact.lastName}`}
-                      defaultChecked={sessionUser.role === UserRole.USER ? user.id === sessionUser.id : false}
+                      defaultChecked={sessionUser.role === MembershipRole.MEMBER ? user.id === sessionUser.id : false}
                     />
                     <span>
                       {user.contact.firstName} {user.contact.lastName}

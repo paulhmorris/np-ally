@@ -25,8 +25,27 @@ const validator = withZod(
 );
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await SessionService.requireUser(request);
+  const userId = await SessionService.requireUserId(request);
   const session = await SessionService.getSession(request);
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      memberships: {
+        select: {
+          org: {
+            select: { id: true, name: true },
+          },
+          role: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw await SessionService.logout(request);
+  }
 
   if (!user.memberships.length) {
     return toast.redirect(

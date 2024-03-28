@@ -1,4 +1,4 @@
-import { ReimbursementRequestStatus, UserRole } from "@prisma/client";
+import { MembershipRole, ReimbursementRequestStatus } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -47,7 +47,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       // Admins can see all receipts, users can only see their own
       where: {
         orgId,
-        userId: user.role === "USER" ? user.id : undefined,
+        userId: user.role === MembershipRole.MEMBER ? user.id : undefined,
         reimbursementRequests: { none: {} },
       },
       include: { user: { select: { contact: { select: { email: true } } } } },
@@ -55,7 +55,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }),
     db.transactionItemMethod.findMany({ where: { orgId } }),
     db.account.findMany({
-      where: { user: user.role === UserRole.USER ? { id: user.id } : undefined, orgId },
+      where: { user: user.role === MembershipRole.MEMBER ? { id: user.id } : undefined, orgId },
       include: { type: true },
       orderBy: { code: "asc" },
     }),
@@ -94,7 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     reimbursementRequestId: reimbursementRequest.id,
   });
 
-  return toast.redirect(request, `/dashboards/${user.role === UserRole.USER ? "staff" : "admin"}`, {
+  return toast.redirect(request, `/dashboards/${user.role === MembershipRole.MEMBER ? "staff" : "admin"}`, {
     type: "success",
     title: "Reimbursement request submitted",
     description: "Your request will be processed as soon as possible.",
@@ -163,7 +163,7 @@ export default function NewReimbursementPage() {
                     {r.title}{" "}
                     <span className="inline-block text-xs text-muted-foreground">
                       {dayjs(r.createdAt).format("M/D")}
-                      {user.role !== "USER" ? ` by ${r.user.contact.email}` : null}
+                      {user.role !== MembershipRole.MEMBER ? ` by ${r.user.contact.email}` : null}
                     </span>
                   </span>
                 ),

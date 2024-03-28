@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole, UserRole } from "@prisma/client";
 import { Link, NavLink } from "@remix-run/react";
 import { IconWorld } from "@tabler/icons-react";
 import type { ComponentPropsWithoutRef } from "react";
@@ -28,17 +28,20 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         </Link>
       </div>
       <ul className="mt-12 space-x-0 space-y-1">
-        <DesktopNavLink to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"} name="Home" />
+        <DesktopNavLink
+          to={user.role === MembershipRole.MEMBER ? "/dashboards/staff" : "/dashboards/admin"}
+          name="Home"
+        />
         {globalNavLinks.map((link) => (
           <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
         ))}
-        {user.role === UserRole.USER
+        {user.role === MembershipRole.MEMBER
           ? userNavLinks.map((link) => (
               <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
             ))
           : null}
       </ul>
-      {user.role === UserRole.ADMIN || user.role === UserRole.SUPERADMIN ? (
+      {user.role === MembershipRole.ADMIN || user.systemRole === UserRole.SUPERADMIN ? (
         <>
           <Separator className="my-4" />
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">ADMIN</p>
@@ -49,7 +52,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           </ul>
         </>
       ) : null}
-      {user.role === UserRole.SUPERADMIN && superAdminNavLinks.length > 0 ? (
+      {user.systemRole === UserRole.SUPERADMIN && superAdminNavLinks.length > 0 ? (
         <>
           <Separator className="my-4" />
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">SUPER ADMIN</p>

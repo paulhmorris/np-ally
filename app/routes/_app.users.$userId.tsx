@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole, UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { Link, useFetcher } from "@remix-run/react";
@@ -43,7 +43,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   invariant(params.userId, "userId not found");
 
-  if (authorizedUser.role === UserRole.USER && authorizedUser.id !== params.userId) {
+  if (authorizedUser.role === MembershipRole.MEMBER && authorizedUser.id !== params.userId) {
     throw forbidden({ message: "You do not have permission to view this page" });
   }
 
@@ -123,7 +123,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     throw notFound({ message: "User not found" });
   }
 
-  if (authorizedUser.role === UserRole.USER) {
+  if (authorizedUser.role === MembershipRole.MEMBER) {
     // Users can only edit themselves
     if (authorizedUser.id !== id) {
       return toast.json(
@@ -157,7 +157,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  if (authorizedUser.role !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
+  if (authorizedUser.systemRole !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
     return toast.json(
       request,
       { message: "You do not have permission to create a Super Admin." },
@@ -281,7 +281,7 @@ export default function UserDetailsPage() {
               <FormField label="Last name" id="lastName" name="lastName" required />
             </div>
             <input type="hidden" name="id" value={user.id} />
-            {authorizedUser.role === UserRole.SUPERADMIN || authorizedUser.role === UserRole.ADMIN ? (
+            {authorizedUser.role === MembershipRole.ADMIN ? (
               <>
                 <FormField label="Username" id="username" name="username" disabled />
                 <FormSelect
@@ -294,7 +294,7 @@ export default function UserDetailsPage() {
                 >
                   <SelectItem value="USER">User</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
-                  {authorizedUser.role === UserRole.SUPERADMIN ? (
+                  {authorizedUser.systemRole === UserRole.SUPERADMIN ? (
                     <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
                   ) : null}
                 </FormSelect>
@@ -305,7 +305,7 @@ export default function UserDetailsPage() {
                 <input type="hidden" name="role" value={user.role} />
               </>
             )}
-            {authorizedUser.role !== UserRole.USER ? (
+            {authorizedUser.role !== MembershipRole.MEMBER ? (
               <FormSelect
                 name="accountId"
                 label="Linked Account"
