@@ -1,7 +1,7 @@
 import { invokeTrigger } from "@trigger.dev/sdk";
 import { z } from "zod";
 
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
 import { formatCentsAsDollars } from "~/lib/utils";
 
@@ -17,7 +17,7 @@ export const reimbursementRequestJob = trigger.defineJob({
   integrations: { resend: triggerResend },
   run: async (payload, io) => {
     const request = await io.runTask("get-request", async () => {
-      return prisma.reimbursementRequest.findUnique({
+      return db.reimbursementRequest.findUnique({
         where: { id: payload.reimbursementRequestId },
         select: {
           amountInCents: true,

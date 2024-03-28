@@ -11,7 +11,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { useUser } from "~/lib/utils";
 import { SessionService } from "~/services/SessionService.server";
 
@@ -22,7 +22,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const orgId = await SessionService.requireOrgId(request);
 
   const [total, reimbursementRequests, announcement] = await Promise.all([
-    prisma.transaction.aggregate({
+    db.transaction.aggregate({
       where: {
         orgId,
         account: {
@@ -31,7 +31,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
       _sum: { amountInCents: true },
     }),
-    prisma.reimbursementRequest.findMany({
+    db.reimbursementRequest.findMany({
       where: {
         orgId,
         userId: user.id,
@@ -47,7 +47,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         createdAt: "desc",
       },
     }),
-    prisma.announcement.findFirst({
+    db.announcement.findFirst({
       where: {
         orgId,
         OR: [

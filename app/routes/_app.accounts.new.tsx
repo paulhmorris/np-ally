@@ -12,7 +12,7 @@ import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { SessionService } from "~/services/SessionService.server";
@@ -30,8 +30,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const accountTypes = await prisma.accountType.findMany();
-  const users = await prisma.user.findMany({
+  const accountTypes = await db.accountType.findMany();
+  const users = await db.user.findMany({
     where: {
       memberships: {
         some: { orgId },
@@ -62,7 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { userId, ...data } = result.data;
-  const account = await prisma.account.create({
+  const account = await db.account.create({
     data: {
       ...data,
       orgId,

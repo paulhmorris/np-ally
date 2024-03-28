@@ -6,7 +6,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { TransactionsTable } from "~/components/transactions/transactions-table";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Transactions | Alliance 436" }];
@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const transactions = await prisma.transaction.findMany({
+  const transactions = await db.transaction.findMany({
     where: {
       orgId,
       account:

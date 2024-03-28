@@ -17,7 +17,7 @@ import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { ContactType, EngagementType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
@@ -41,7 +41,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.engagementId, "engagementId not found");
 
   const [contacts, contactTypes, engagement, engagementTypes] = await Promise.all([
-    prisma.contact.findMany({
+    db.contact.findMany({
       where: {
         orgId,
         assignedUsers:
@@ -56,10 +56,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     }),
     ContactService.getContactTypes({ where: { orgId } }),
-    prisma.engagement.findUnique({
+    db.engagement.findUnique({
       where: { id: Number(params.engagementId), orgId },
     }),
-    prisma.engagementType.findMany({ where: { orgId } }),
+    db.engagementType.findMany({ where: { orgId } }),
   ]);
 
   if (!engagement) {
@@ -86,7 +86,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const engagement = await prisma.engagement.update({
+  const engagement = await db.engagement.update({
     where: { id: result.data.id, orgId },
     data: result.data,
   });

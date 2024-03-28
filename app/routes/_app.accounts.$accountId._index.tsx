@@ -13,7 +13,7 @@ import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { AccountBalanceCard } from "~/components/users/balance-card";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { notFound, unauthorized } from "~/lib/responses.server";
 import { SessionService } from "~/services/SessionService.server";
@@ -34,7 +34,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw unauthorized("You are not authorized to view this account.");
   }
 
-  const account = await prisma.account.findUnique({
+  const account = await db.account.findUnique({
     where: { id: params.accountId, orgId },
     include: {
       type: true,
@@ -53,7 +53,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   if (!account) throw notFound({ message: "Account not found" });
 
-  const total = await prisma.transaction.aggregate({
+  const total = await db.transaction.aggregate({
     where: { accountId: account.id },
     _sum: { amountInCents: true },
   });

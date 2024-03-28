@@ -17,7 +17,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/componen
 import { FormField, FormSelect } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { TransactionItemSchema } from "~/models/schemas";
@@ -41,9 +41,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
-    prisma.contact.findMany({ where: { orgId }, include: { type: true } }),
-    prisma.contactType.findMany({ where: { orgId } }),
-    prisma.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+    db.contact.findMany({ where: { orgId }, include: { type: true } }),
+    db.contactType.findMany({ where: { orgId } }),
+    db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
     TransactionService.getItemMethods({ where: { orgId } }),
     TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.OUT, orgId } }),
   ]);
@@ -71,7 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { transactionItems, accountId, contactId, ...rest } = result.data;
   const total = transactionItems.reduce((acc, i) => acc - i.amountInCents, 0);
-  const transaction = await prisma.transaction.create({
+  const transaction = await db.transaction.create({
     data: {
       ...rest,
       orgId,

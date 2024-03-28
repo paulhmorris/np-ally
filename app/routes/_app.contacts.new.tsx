@@ -16,7 +16,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
@@ -31,7 +31,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const contactTypes = await prisma.contactType.findMany({
+  const contactTypes = await db.contactType.findMany({
     where:
       user.role === UserRole.USER
         ? {
@@ -42,7 +42,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           }
         : { orgId },
   });
-  const usersWhoCanBeAssigned = await prisma.user.findMany({
+  const usersWhoCanBeAssigned = await db.user.findMany({
     where: {
       memberships: {
         some: { orgId },
@@ -80,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Verify email is unique
   if (formData.email) {
-    const existingContact = await prisma.contact.findUnique({
+    const existingContact = await db.contact.findUnique({
       where: { email: formData.email },
     });
 
@@ -93,7 +93,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  const contact = await prisma.contact.create({
+  const contact = await db.contact.create({
     data: {
       ...formData,
       address: {

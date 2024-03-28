@@ -19,7 +19,7 @@ import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { notifySubscribersJob } from "~/jobs/notify-subscribers.server";
 import { TransactionItemType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
@@ -49,7 +49,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
     ContactService.getContacts({ where: { orgId }, include: { type: true } }),
     ContactService.getContactTypes({ where: { orgId } }),
-    prisma.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+    db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
     TransactionService.getItemMethods({ where: { orgId } }),
     TransactionService.getItemTypes({
       where: {
@@ -72,20 +72,58 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
-  const { transactionItems, shouldNotifyUser, ...rest } = result.data;
+  const { transactionItems, shouldNotifyUser, accountId, contactId, ...rest } = result.data;
 
-  const transaction = await TransactionService.createTransaction({
-    transactionItems,
-    data: { ...rest },
-    include: { account: true },
+  const trxItemTypes = await TransactionService.getItemTypes();
+  const total = transactionItems.reduce((acc, i) => {
+    const type = trxItemTypes.find((t) => t.id === i.typeId);
+    if (!type) {
+      return acc;
+    }
+    const modifier = type.direction === TransactionItemTypeDirection.IN ? 1 : -1;
+    return acc + i.amountInCents * modifier;
+  }, 0);
+
+  const transaction = await db.transaction.create({
+    select: {
+      amountInCents: true,
+      account: {
+        select: { code: true, id: true },
+      },
+    },
+    data: {
+      ...rest,
+      orgId,
+      amountInCents: total,
+      accountId,
+      contactId,
+      transactionItems: {
+        createMany: {
+          data: transactionItems.map((i) => {
+            const type = trxItemTypes.find((t) => t.id === i.typeId);
+            if (!type) {
+              return { ...i, orgId };
+            }
+            const modifier = type.direction === TransactionItemTypeDirection.IN ? 1 : -1;
+            return {
+              ...i,
+              orgId,
+              amountInCents: i.amountInCents * modifier,
+            };
+          }),
+        },
+      },
+    },
   });
 
   if (shouldNotifyUser) {
-    const account = await prisma.account.findUnique({
+    const account = await db.account.findUnique({
       where: { id: result.data.accountId },
       select: {
         user: {
@@ -119,7 +157,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  return toast.redirect(request, `/accounts/${transaction.accountId}`, {
+  return toast.redirect(request, `/accounts/${transaction.account.id}`, {
     type: "success",
     title: "Success",
     description: `Income of ${formatCentsAsDollars(transaction.amountInCents)} added to account ${

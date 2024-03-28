@@ -8,7 +8,7 @@ import { z } from "zod";
 import { zfd } from "zod-form-data";
 dayjs.extend(utc);
 
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
@@ -38,6 +38,7 @@ export const validator = withZod(
 
 export async function action({ request }: ActionFunctionArgs) {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
 
   const result = await validator.validate(await request.formData());
   if (result.error) {
@@ -58,8 +59,9 @@ export async function action({ request }: ActionFunctionArgs) {
         });
       }
 
-      const announcement = await prisma.announcement.create({
+      const announcement = await db.announcement.create({
         data: {
+          orgId,
           title,
           content,
           expiresAt: expiry?.toDate(),
@@ -89,8 +91,8 @@ export async function action({ request }: ActionFunctionArgs) {
         });
       }
 
-      const announcement = await prisma.announcement.update({
-        where: { id },
+      const announcement = await db.announcement.update({
+        where: { id, orgId },
         data: {
           title,
           content,
@@ -111,8 +113,8 @@ export async function action({ request }: ActionFunctionArgs) {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (result.data.intent === "expire") {
       const { id } = result.data;
-      await prisma.announcement.update({
-        where: { id },
+      await db.announcement.update({
+        where: { id, orgId },
         data: {
           expiresAt: dayjs().subtract(7, "day").toDate(),
         },

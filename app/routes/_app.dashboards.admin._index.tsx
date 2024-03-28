@@ -12,7 +12,7 @@ import { AnnouncementModal } from "~/components/modals/announcement-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { SessionService } from "~/services/SessionService.server";
 
@@ -27,7 +27,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const [accounts, reimbursementRequests, announcement] = await Promise.all([
-    prisma.account.findMany({
+    db.account.findMany({
       where: {
         orgId,
         typeId: AccountType.Operating,
@@ -38,7 +38,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       orderBy: { code: "asc" },
     }),
 
-    prisma.reimbursementRequest.findMany({
+    db.reimbursementRequest.findMany({
       where: {
         orgId,
         status: ReimbursementRequestStatus.PENDING,
@@ -50,7 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         },
       },
     }),
-    prisma.announcement.findFirst({
+    db.announcement.findFirst({
       where: {
         orgId,
         OR: [

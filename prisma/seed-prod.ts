@@ -17,29 +17,29 @@ const prisma = new PrismaClient();
 async function seed() {
   // cleanup the existing database
   await Promise.all([
-    await prisma.transactionItem.deleteMany(),
-    await prisma.transaction.deleteMany(),
-    await prisma.user.deleteMany(),
-    await prisma.account.deleteMany(),
-    await prisma.contact.deleteMany(),
-    await prisma.organization.deleteMany(),
-    await prisma.transactionItemType.deleteMany(),
-    await prisma.contactType.deleteMany(),
-    await prisma.accountType.deleteMany(),
-    await prisma.transactionItemMethod.deleteMany(),
+    await db.transactionItem.deleteMany(),
+    await db.transaction.deleteMany(),
+    await db.user.deleteMany(),
+    await db.account.deleteMany(),
+    await db.contact.deleteMany(),
+    await db.organization.deleteMany(),
+    await db.transactionItemType.deleteMany(),
+    await db.contactType.deleteMany(),
+    await db.accountType.deleteMany(),
+    await db.transactionItemMethod.deleteMany(),
   ]);
 
   await Promise.all([
-    await prisma.transactionItemType.createMany({ data: transactionItemTypes }),
-    await prisma.transactionItemMethod.createMany({ data: transactionItemMethods }),
-    await prisma.contactType.createMany({ data: contactTypes }),
-    await prisma.accountType.createMany({ data: accountTypes }),
-    await prisma.engagementType.createMany({ data: engagementTypes }),
+    await db.transactionItemType.createMany({ data: transactionItemTypes }),
+    await db.transactionItemMethod.createMany({ data: transactionItemMethods }),
+    await db.contactType.createMany({ data: contactTypes }),
+    await db.accountType.createMany({ data: accountTypes }),
+    await db.engagementType.createMany({ data: engagementTypes }),
   ]);
 
-  const org = await prisma.organization.create({ data: { name: "Alliance 436" } });
+  const org = await db.organization.create({ data: { name: "Alliance 436" } });
 
-  await prisma.user.create({
+  await db.user.create({
     data: {
       username: "paulh.morris@gmail.com",
       role: "SUPERADMIN",
@@ -59,7 +59,7 @@ async function seed() {
     },
   });
 
-  await prisma.user.create({
+  await db.user.create({
     data: {
       username: "jaredn7@gmail.com",
       role: "ADMIN",
@@ -79,7 +79,7 @@ async function seed() {
     },
   });
 
-  await prisma.account.createMany({
+  await db.account.createMany({
     data: defaultAccounts.map((a) => ({
       ...a,
       organizationId: org.id,
@@ -95,5 +95,5 @@ seed()
     process.exit(1);
   })
   .finally(() => {
-    void prisma.$disconnect();
+    void db.$disconnect();
   });

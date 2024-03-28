@@ -5,7 +5,7 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { ReimbursementRequestsTable } from "~/components/reimbursements/reimbursement-requests-table";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Reimbursement Requests | Alliance 436" }];
@@ -14,7 +14,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const requests = await prisma.reimbursementRequest.findMany({
+  const requests = await db.reimbursementRequest.findMany({
     where: { orgId },
     include: {
       user: {

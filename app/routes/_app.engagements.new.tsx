@@ -12,7 +12,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType, EngagementType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
@@ -37,7 +37,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   const [contacts, contactTypes, engagementTypes] = await Promise.all([
-    prisma.contact.findMany({
+    db.contact.findMany({
       where: {
         orgId,
         assignedUsers:
@@ -52,7 +52,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
     }),
     ContactService.getContactTypes({ where: { orgId } }),
-    prisma.engagementType.findMany({ where: { orgId } }),
+    db.engagementType.findMany({ where: { orgId } }),
   ]);
 
   return typedjson({
@@ -72,7 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   try {
-    const engagement = await prisma.engagement.create({
+    const engagement = await db.engagement.create({
       data: {
         ...result.data,
         orgId,

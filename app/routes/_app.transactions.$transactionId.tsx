@@ -15,7 +15,7 @@ import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars, useUser } from "~/lib/utils";
@@ -32,7 +32,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const transaction = await prisma.transaction.findUnique({
+  const transaction = await db.transaction.findUnique({
     where: { id: params.transactionId, orgId },
     include: {
       account: {
@@ -73,7 +73,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   const { transactionId } = params;
 
-  const trx = await prisma.transaction.delete({ where: { id: transactionId, orgId }, include: { account: true } });
+  const trx = await db.transaction.delete({ where: { id: transactionId, orgId }, include: { account: true } });
   return toast.redirect(request, "/transactions", {
     type: "success",
     title: "Transaction deleted",

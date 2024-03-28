@@ -15,7 +15,7 @@ import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
@@ -43,14 +43,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   return typedjson({
-    accounts: await prisma.account.findMany({
+    accounts: await db.account.findMany({
       where: {
         orgId,
         user: null,
       },
       orderBy: { code: "asc" },
     }),
-    contactTypes: await prisma.contactType.findMany(),
+    contactTypes: await db.contactType.findMany(),
   });
 };
 
@@ -78,7 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const user = await prisma.user.create({
+  const user = await db.user.create({
     data: {
       role,
       username,

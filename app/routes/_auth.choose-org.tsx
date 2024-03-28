@@ -9,7 +9,7 @@ import { z } from "zod";
 import { AuthCard } from "~/components/auth-card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { normalizeEnum } from "~/lib/utils";
@@ -58,11 +58,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { orgId, redirectTo, rememberSelection } = result.data;
 
   // Ensure the user is a member of the selected organization
-  await prisma.membership.findUniqueOrThrow({ where: { userId_orgId: { userId, orgId } }, select: { id: true } });
+  await db.membership.findUniqueOrThrow({ where: { userId_orgId: { userId, orgId } }, select: { id: true } });
 
   // Skip this screen on future logins
   if (rememberSelection) {
-    await prisma.membership.update({
+    await db.membership.update({
       data: { isDefault: true },
       where: {
         userId_orgId: {
@@ -72,7 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
   } else {
-    await prisma.membership.updateMany({
+    await db.membership.updateMany({
       where: { userId },
       data: { isDefault: false },
     });

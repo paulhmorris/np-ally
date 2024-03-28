@@ -7,7 +7,7 @@ import { wrapRemixHandleError } from "@sentry/remix";
 import isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 
 export const handleError = wrapRemixHandleError;
@@ -18,7 +18,7 @@ Sentry.init({
   tracesSampleRate: 0.25,
   environment: process.env.VERCEL_ENV,
   enabled: process.env.NODE_ENV === "production",
-  integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
+  integrations: [new Sentry.Integrations.Prisma({ client: db })],
 });
 
 const ABORT_DELAY = 5_000;

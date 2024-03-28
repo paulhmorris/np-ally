@@ -8,7 +8,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Accounts | Alliance 436" }];
@@ -17,7 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const accounts = await prisma.account.findMany({
+  const accounts = await db.account.findMany({
     where: { orgId },
     select: {
       id: true,

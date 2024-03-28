@@ -13,6 +13,7 @@ const validator = z.object({
 
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await SessionService.requireUserId(request);
+  await SessionService.requireOrgId(request);
 
   if (request.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });

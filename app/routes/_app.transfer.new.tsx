@@ -10,7 +10,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { TransactionItemType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
@@ -34,8 +34,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   const [accounts, transactionItemMethods] = await Promise.all([
-    prisma.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
-    prisma.transactionItemMethod.findMany({ where: { orgId } }),
+    db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+    db.transactionItemMethod.findMany({ where: { orgId } }),
   ]);
 
   return typedjson({
@@ -67,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const fromAccountBalance = await prisma.transaction.aggregate({
+  const fromAccountBalance = await db.transaction.aggregate({
     where: { accountId: result.data.fromAccountId, orgId },
     _sum: { amountInCents: true },
   });
@@ -87,9 +87,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  await prisma.$transaction([
+  await db.$transaction([
     // Transfer out
-    prisma.transaction.create({
+    db.transaction.create({
       data: {
         ...rest,
         orgId,
@@ -106,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     }),
     // Transfer in
-    prisma.transaction.create({
+    db.transaction.create({
       data: {
         ...rest,
         orgId,

@@ -18,7 +18,7 @@ import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
@@ -32,7 +32,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   invariant(params.contactId, "contactId not found");
 
-  const contact = await prisma.contact.findUnique({
+  const contact = await db.contact.findUnique({
     where: { id: params.contactId, orgId },
     include: {
       user: true,
@@ -94,7 +94,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (result.data._action === "delete" && request.method === "DELETE") {
-    const contact = await prisma.contact.findUnique({
+    const contact = await db.contact.findUnique({
       where: { id: params.contactId, orgId },
       include: {
         transactions: true,
@@ -127,11 +127,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 
     try {
-      await prisma.$transaction([
-        prisma.contactAssigment.deleteMany({ where: { contactId: contact.id, orgId } }),
-        prisma.engagement.deleteMany({ where: { contactId: contact.id, orgId } }),
-        prisma.address.deleteMany({ where: { contactId: contact.id, orgId } }),
-        prisma.contact.delete({ where: { id: contact.id, orgId } }),
+      await db.$transaction([
+        db.contactAssigment.deleteMany({ where: { contactId: contact.id, orgId } }),
+        db.engagement.deleteMany({ where: { contactId: contact.id, orgId } }),
+        db.address.deleteMany({ where: { contactId: contact.id, orgId } }),
+        db.contact.delete({ where: { id: contact.id, orgId } }),
       ]);
       return toast.redirect(request, "/contacts", {
         type: "success",

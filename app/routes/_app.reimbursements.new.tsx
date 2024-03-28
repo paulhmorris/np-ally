@@ -16,7 +16,7 @@ import { Callout } from "~/components/ui/callout";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
@@ -43,7 +43,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   const [receipts, methods, accounts] = await Promise.all([
-    prisma.receipt.findMany({
+    db.receipt.findMany({
       // Admins can see all receipts, users can only see their own
       where: {
         orgId,
@@ -53,8 +53,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       include: { user: { select: { contact: { select: { email: true } } } } },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.transactionItemMethod.findMany({ where: { orgId } }),
-    prisma.account.findMany({
+    db.transactionItemMethod.findMany({ where: { orgId } }),
+    db.account.findMany({
       where: { user: user.role === UserRole.USER ? { id: user.id } : undefined, orgId },
       include: { type: true },
       orderBy: { code: "asc" },
@@ -74,7 +74,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { receiptId, ...data } = result.data;
 
-  const reimbursementRequest = await prisma.reimbursementRequest.create({
+  const reimbursementRequest = await db.reimbursementRequest.create({
     data: {
       ...data,
       orgId,

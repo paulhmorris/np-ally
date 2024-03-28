@@ -9,7 +9,7 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services/SessionService.server";
 
 export const meta: MetaFunction = () => [{ title: "Engagements | Alliance 436" }];
@@ -18,7 +18,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const engagements = await prisma.engagement.findMany({
+  const engagements = await db.engagement.findMany({
     where: {
       orgId,
       userId: user.role === UserRole.USER ? user.id : undefined,

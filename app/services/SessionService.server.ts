@@ -1,7 +1,7 @@
 import { Organization, User, UserRole } from "@prisma/client";
 import { Session as RemixSession, SessionData, redirect } from "@remix-run/node";
 
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { forbidden, unauthorized } from "~/lib/responses.server";
 import { sessionStorage } from "~/lib/session.server";
 import { UserService } from "~/services/UserService.server";
@@ -101,7 +101,7 @@ class Session implements ISessionService {
     if (!orgId) {
       return null;
     }
-    return prisma.organization.findUnique({ where: { id: orgId } });
+    return db.organization.findUnique({ where: { id: orgId } });
   }
 
   async requireOrgId(request: Request) {

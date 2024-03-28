@@ -17,47 +17,47 @@ const prisma = new PrismaClient();
 
 async function seed() {
   // cleanup the existing database
-  await prisma.$transaction([
-    prisma.transactionItem.deleteMany(),
-    prisma.transaction.deleteMany(),
-    prisma.membership.deleteMany(),
-    prisma.user.deleteMany(),
-    prisma.accountSubscription.deleteMany(),
-    prisma.contact.deleteMany(),
-    prisma.accountSubscription.deleteMany(),
-    prisma.accountType.deleteMany(),
-    prisma.account.deleteMany(),
-    prisma.organization.deleteMany(),
-    prisma.engagementType.deleteMany(),
-    prisma.engagement.deleteMany(),
-    prisma.transactionItemType.deleteMany(),
-    prisma.contactType.deleteMany(),
-    prisma.accountType.deleteMany(),
-    prisma.transactionItemMethod.deleteMany(),
+  await db.$transaction([
+    db.transactionItem.deleteMany(),
+    db.transaction.deleteMany(),
+    db.membership.deleteMany(),
+    db.user.deleteMany(),
+    db.accountSubscription.deleteMany(),
+    db.contact.deleteMany(),
+    db.accountSubscription.deleteMany(),
+    db.accountType.deleteMany(),
+    db.account.deleteMany(),
+    db.organization.deleteMany(),
+    db.engagementType.deleteMany(),
+    db.engagement.deleteMany(),
+    db.transactionItemType.deleteMany(),
+    db.contactType.deleteMany(),
+    db.accountType.deleteMany(),
+    db.transactionItemMethod.deleteMany(),
   ]);
 
-  const org = await prisma.organization.create({ data: { name: "Alliance 436" } });
-  const org2 = await prisma.organization.create({ data: { name: "Moms of Courage" } });
+  const org = await db.organization.create({ data: { name: "Alliance 436" } });
+  const org2 = await db.organization.create({ data: { name: "Moms of Courage" } });
 
-  await prisma.$transaction([
-    prisma.transactionItemType.createMany({ data: transactionItemTypes.map((t) => ({ ...t, orgId: org.id })) }),
-    prisma.transactionItemMethod.createMany({ data: transactionItemMethods.map((t) => ({ ...t, orgId: org.id })) }),
-    prisma.contactType.createMany({ data: contactTypes.map((t) => ({ ...t, orgId: org.id })) }),
-    prisma.accountType.createMany({ data: accountTypes.map((t) => ({ ...t, orgId: org.id })) }),
-    prisma.engagementType.createMany({ data: engagementTypes.map((t) => ({ ...t, orgId: org.id })) }),
+  await db.$transaction([
+    db.transactionItemType.createMany({ data: transactionItemTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    db.transactionItemMethod.createMany({ data: transactionItemMethods.map((t) => ({ ...t, orgId: org.id })) }),
+    db.contactType.createMany({ data: contactTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    db.accountType.createMany({ data: accountTypes.map((t) => ({ ...t, orgId: org.id })) }),
+    db.engagementType.createMany({ data: engagementTypes.map((t) => ({ ...t, orgId: org.id })) }),
 
-    prisma.transactionItemType.createMany({ data: transactionItemTypes.map((t) => ({ ...t, orgId: org2.id })) }),
-    prisma.transactionItemMethod.createMany({ data: transactionItemMethods.map((t) => ({ ...t, orgId: org2.id })) }),
-    prisma.contactType.createMany({ data: contactTypes.map((t) => ({ ...t, orgId: org2.id })) }),
-    prisma.accountType.createMany({ data: accountTypes.map((t) => ({ ...t, orgId: org2.id })) }),
-    prisma.engagementType.createMany({ data: engagementTypes.map((t) => ({ ...t, orgId: org2.id })) }),
+    db.transactionItemType.createMany({ data: transactionItemTypes.map((t) => ({ ...t, orgId: org2.id })) }),
+    db.transactionItemMethod.createMany({ data: transactionItemMethods.map((t) => ({ ...t, orgId: org2.id })) }),
+    db.contactType.createMany({ data: contactTypes.map((t) => ({ ...t, orgId: org2.id })) }),
+    db.accountType.createMany({ data: accountTypes.map((t) => ({ ...t, orgId: org2.id })) }),
+    db.engagementType.createMany({ data: engagementTypes.map((t) => ({ ...t, orgId: org2.id })) }),
   ]);
 
   const email = "paul@remix.run";
 
   const hashedPassword = await bcrypt.hash("password", 10);
 
-  const superAdmin = await prisma.user.create({
+  const superAdmin = await db.user.create({
     data: {
       username: email,
       role: "SUPERADMIN",
@@ -79,7 +79,7 @@ async function seed() {
     },
   });
 
-  await prisma.membership.createMany({
+  await db.membership.createMany({
     data: [
       {
         userId: superAdmin.id,
@@ -95,7 +95,7 @@ async function seed() {
   });
 
   const [user, donorContact] = await Promise.all([
-    await prisma.user.create({
+    await db.user.create({
       data: {
         username: "cassian@therebellion.com",
         role: "USER",
@@ -116,7 +116,7 @@ async function seed() {
         },
       },
     }),
-    await prisma.contact.create({
+    await db.contact.create({
       data: {
         firstName: "Joe",
         lastName: "Donor",
@@ -138,7 +138,7 @@ async function seed() {
     }),
   ]);
 
-  const account = await prisma.account.create({
+  const account = await db.account.create({
     data: {
       typeId: 3,
       code: "3001-CA",
@@ -158,7 +158,7 @@ async function seed() {
     },
   });
 
-  await prisma.account.createMany({
+  await db.account.createMany({
     data: defaultAccounts.map((a) => ({
       ...a,
       orgId: org.id,
@@ -166,7 +166,7 @@ async function seed() {
   });
 
   for (let i = 0; i < 10; i++) {
-    await prisma.transaction.create({
+    await db.transaction.create({
       data: {
         amountInCents: faker.number.int({ min: 100, max: 100_000 }),
         date: faker.date.past(),
@@ -205,5 +205,5 @@ seed()
     process.exit(1);
   })
   .finally(() => {
-    void prisma.$disconnect();
+    void db.$disconnect();
   });

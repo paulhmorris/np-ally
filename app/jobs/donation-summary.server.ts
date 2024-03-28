@@ -1,6 +1,6 @@
 import { cronTrigger } from "@trigger.dev/sdk";
 
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
 import { formatCentsAsDollars } from "~/lib/utils";
@@ -19,7 +19,7 @@ export const donationSummaryJob = trigger.defineJob({
   run: async (_, io) => {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const accounts = await io.runTask("get-accounts", async () => {
-      return prisma.account.findMany({
+      return db.account.findMany({
         where: {
           subscribers: {
             some: {},

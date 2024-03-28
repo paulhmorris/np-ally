@@ -14,7 +14,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { SessionService } from "~/services/SessionService.server";
@@ -27,7 +27,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   invariant(params.engagementId, "engagementId not found");
 
-  const engagement = await prisma.engagement.findUnique({
+  const engagement = await db.engagement.findUnique({
     where: { id: Number(params.engagementId), orgId },
     include: {
       contact: true,
@@ -60,7 +60,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   try {
-    const engagement = await prisma.engagement.findUniqueOrThrow({
+    const engagement = await db.engagement.findUniqueOrThrow({
       where: { id: Number(params.engagementId), orgId },
       select: { userId: true },
     });
@@ -81,7 +81,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       }
     }
 
-    await prisma.engagement.delete({ where: { id: Number(params.engagementId), orgId } });
+    await db.engagement.delete({ where: { id: Number(params.engagementId), orgId } });
     return toast.redirect(request, "/engagements", {
       type: "success",
       title: "Engagement deleted",

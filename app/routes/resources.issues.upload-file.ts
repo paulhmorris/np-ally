@@ -7,6 +7,8 @@ import { SessionService } from "~/services/SessionService.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   await SessionService.requireUserId(request);
+  await SessionService.requireOrgId(request);
+
   const formData = await request.formData();
   const file = formData.get("file") as File;
   const uploadPayload = await Linear.fileUpload(file.type, file.name, file.size);

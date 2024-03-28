@@ -1,11 +1,11 @@
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { withServiceErrorHandling } from "~/services/helpers";
 import { Operation } from "~/services/types";
 
-type Model = typeof prisma.passwordReset;
+type Model = typeof db.passwordReset;
 type PasswordResult<M extends Model, T, O extends Operation> = Promise<Prisma.Result<M, T, O>>;
 
 interface IPasswordService {
@@ -49,8 +49,8 @@ class Service implements IPasswordService {
 
   public async generatePasswordReset<T extends Omit<Prisma.Args<Model, "create">, "data">>(username: string, args?: T) {
     return withServiceErrorHandling<Model, T, "create">(async () => {
-      const user = await prisma.user.findUnique({ where: { username } });
-      const reset = await prisma.passwordReset.create({
+      const user = await db.user.findUnique({ where: { username } });
+      const reset = await db.passwordReset.create({
         ...args,
         data: {
           expiresAt: new Date(Date.now() + 15 * 60 * 1000),
@@ -61,45 +61,45 @@ class Service implements IPasswordService {
           },
         },
       });
-      return reset as Prisma.Result<Model, T, "create">;
+      return reset;
     });
   }
 
   public async getPasswordResetByToken<T extends Prisma.Args<Model, "findUnique">>(token: string, args?: T) {
     return withServiceErrorHandling<Model, T, "findUnique">(async () => {
-      const reset = await prisma.passwordReset.findUnique({
+      const reset = await db.passwordReset.findUnique({
         ...args,
         where: { token, ...args?.where },
       });
-      return reset as Prisma.Result<Model, T, "findUnique">;
+      return reset;
     });
   }
 
   public async getPasswordResetByUserId<T extends Prisma.Args<Model, "findFirst">>(userId: string, args?: T) {
     return withServiceErrorHandling<Model, T, "findFirst">(async () => {
-      const reset = await prisma.passwordReset.findFirst({
+      const reset = await db.passwordReset.findFirst({
         ...args,
         where: { userId, expiresAt: { gte: new Date() }, ...args?.where },
       });
-      return reset as Prisma.Result<Model, T, "findFirst">;
+      return reset;
     });
   }
 
   public async expirePasswordReset<T extends Prisma.Args<Model, "updateMany">>(token: string, args?: T) {
     return withServiceErrorHandling<Model, T, "updateMany">(async () => {
-      const reset = await prisma.passwordReset.updateMany({
+      const reset = await db.passwordReset.updateMany({
         ...args,
         where: { token, ...args?.where },
         data: { expiresAt: new Date(0), usedAt: new Date() },
       });
-      return reset as Prisma.Result<Model, T, "updateMany">;
+      return reset;
     });
   }
 
   public async deletePasswordReset<T extends Prisma.Args<Model, "delete">>(id: string, args?: T) {
     return withServiceErrorHandling<Model, T, "delete">(async () => {
-      const reset = await prisma.passwordReset.delete({ ...args, where: { id, ...args?.where } });
-      return reset as Prisma.Result<Model, T, "delete">;
+      const reset = await db.passwordReset.delete({ ...args, where: { id, ...args?.where } });
+      return reset;
     });
   }
 }

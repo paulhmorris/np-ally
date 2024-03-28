@@ -13,7 +13,7 @@ import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
@@ -36,9 +36,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.accountId, "accountId not found");
 
   const [account, accountTypes, users] = await Promise.all([
-    prisma.account.findUnique({ where: { id: params.accountId, orgId }, include: { user: true } }),
-    prisma.accountType.findMany({ where: { orgId } }),
-    prisma.user.findMany({
+    db.account.findUnique({ where: { id: params.accountId, orgId }, include: { user: true } }),
+    db.accountType.findMany({ where: { orgId } }),
+    db.user.findMany({
       where: {
         memberships: {
           some: { orgId },
@@ -79,7 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { userId, ...data } = result.data;
-  await prisma.account.update({
+  await db.account.update({
     where: { id: data.id, orgId },
     data: {
       ...data,

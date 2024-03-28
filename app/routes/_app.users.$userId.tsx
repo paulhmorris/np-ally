@@ -19,7 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
@@ -47,7 +47,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw forbidden({ message: "You do not have permission to view this page" });
   }
 
-  const accounts = await prisma.account.findMany({
+  const accounts = await db.account.findMany({
     where: {
       orgId,
       OR: [{ user: null }, { user: { id: params.userId } }],
@@ -55,7 +55,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     orderBy: { code: "asc" },
   });
 
-  const userWithPassword = await prisma.user.findUnique({
+  const userWithPassword = await db.user.findUnique({
     where: {
       id: params.userId,
       memberships: {
@@ -118,7 +118,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { username, role, id, accountId, ...contact } = result.data;
 
-  const userToBeUpdated = await prisma.user.findUnique({ where: { id } });
+  const userToBeUpdated = await db.user.findUnique({ where: { id } });
   if (!userToBeUpdated) {
     throw notFound({ message: "User not found" });
   }
@@ -170,7 +170,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const updatedUser = await prisma.user.update({
+  const updatedUser = await db.user.update({
     where: {
       id,
       memberships: {

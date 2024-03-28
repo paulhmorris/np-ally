@@ -20,7 +20,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
@@ -39,7 +39,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   // Users can only edit their assigned contacts
   if (user.role === UserRole.USER && params.contactId !== user.contactId) {
-    const assignment = await prisma.contactAssigment.findUnique({
+    const assignment = await db.contactAssigment.findUnique({
       where: {
         orgId,
         contactId_userId: {
@@ -55,7 +55,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const [contactTypes, usersWhoCanBeAssigned] = await Promise.all([
     ContactService.getContactTypes(),
-    prisma.user.findMany({
+    db.user.findMany({
       where: {
         memberships: {
           some: { orgId },
@@ -69,7 +69,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     }),
   ]);
 
-  const contact = await prisma.contact.findUnique({
+  const contact = await db.contact.findUnique({
     where: { id: params.contactId, orgId },
     include: {
       user: true,
@@ -133,7 +133,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Users can only edit their assigned contacts and themselves
   if (user.role === UserRole.USER && formData.id !== user.contactId) {
-    const assignment = await prisma.contactAssigment.findUnique({
+    const assignment = await db.contactAssigment.findUnique({
       where: {
         orgId,
         contactId_userId: {
@@ -156,7 +156,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Verify email is unique
   if (formData.email) {
-    const existingContact = await prisma.contact.findUnique({
+    const existingContact = await db.contact.findUnique({
       where: { email: formData.email },
     });
 
@@ -169,7 +169,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  const contact = await prisma.contact.update({
+  const contact = await db.contact.update({
     where: { id: formData.id, orgId },
     data: {
       ...formData,
