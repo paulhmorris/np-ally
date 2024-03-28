@@ -73,7 +73,6 @@ async function seed() {
       password: {
         create: {
           hash: hashedPassword,
-          orgId: org.id,
         },
       },
     },
@@ -111,7 +110,6 @@ async function seed() {
         password: {
           create: {
             hash: hashedPassword,
-            orgId: org.id,
           },
         },
       },

@@ -15,7 +15,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({

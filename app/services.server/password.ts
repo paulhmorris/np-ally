@@ -1,12 +1,28 @@
 import type { PasswordReset, User } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import dayjs from "dayjs";
 
 import { db } from "~/integrations/prisma.server";
 
-export function getPasswordResetByToken({ token }: { token: PasswordReset["token"] }) {
+export function hashPassword(password: string) {
+  return bcrypt.hash(password, 10);
+}
+
+export function comparePasswords(password: string, hash: string) {
+  return bcrypt.compare(password, hash);
+}
+
+export function getPasswordResetByToken(token: PasswordReset["token"]) {
   return db.passwordReset.findUnique({
     where: { token },
     select: { expiresAt: true, userId: true },
+  });
+}
+
+export function getPasswordResetByUserId(userId: User["id"]) {
+  return db.passwordReset.findFirst({
+    where: { userId, expiresAt: { gte: new Date() } },
+    select: { id: true, expiresAt: true },
   });
 }
 
@@ -17,14 +33,14 @@ export function getCurrentPasswordReset({ userId }: { userId: User["id"] }) {
   });
 }
 
-export function expirePasswordReset({ token }: { token: PasswordReset["token"] }) {
+export function expirePasswordReset(token: PasswordReset["token"]) {
   return db.passwordReset.updateMany({
     where: { token },
     data: { expiresAt: new Date(0), usedAt: new Date() },
   });
 }
 
-export async function generatePasswordReset({ username }: { username: NonNullable<User["username"]> }) {
+export async function generatePasswordReset(username: User["username"]) {
   const user = await db.user.findUniqueOrThrow({ where: { username } });
   return db.passwordReset.create({
     data: {
@@ -34,6 +50,6 @@ export async function generatePasswordReset({ username }: { username: NonNullabl
   });
 }
 
-export function deletePasswordReset({ token }: { token: PasswordReset["token"] }) {
+export function deletePasswordReset(token: PasswordReset["token"]) {
   return db.passwordReset.delete({ where: { token } });
 }

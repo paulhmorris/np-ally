@@ -10,7 +10,7 @@ import { Notifications } from "~/components/notifications";
 import { themeSessionResolver } from "~/lib/session.server";
 import { getGlobalToast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 import stylesheet from "~/tailwind.css";
 
 // prettier-ignore

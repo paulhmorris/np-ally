@@ -1,8 +1,8 @@
 import { Password, User } from "@prisma/client";
 
-import { withServiceErrorHandling } from "~/services/helpers";
-import { PasswordService } from "~/services/PasswordService.server";
-import { UserService } from "~/services/UserService.server";
+import { db } from "~/integrations/prisma.server";
+import { withServiceErrorHandling } from "~/services.server/helpers";
+import { comparePasswords } from "~/services.server/password";
 
 interface IAuthService {
   verifyLogin({
@@ -17,7 +17,8 @@ interface IAuthService {
 class Service implements IAuthService {
   async verifyLogin({ username, password }: { username: NonNullable<User["username"]>; password: Password["hash"] }) {
     return withServiceErrorHandling(async () => {
-      const userWithPassword = await UserService.getUserByUsername(username, {
+      const userWithPassword = await db.user.findUnique({
+        where: { username },
         include: { password: true },
       });
 
@@ -25,7 +26,7 @@ class Service implements IAuthService {
         return null;
       }
 
-      const isValid = await PasswordService.comparePasswords(password, userWithPassword.password.hash);
+      const isValid = await comparePasswords(password, userWithPassword.password.hash);
 
       if (!isValid) {
         return null;

@@ -1,10 +1,11 @@
 import type { Password, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-import { UserService } from "~/services/UserService.server";
+import { db } from "~/integrations/prisma.server";
 
 export async function verifyLogin(username: NonNullable<User["username"]>, password: Password["hash"]) {
-  const userWithPassword = await UserService.getUserByUsername(username, {
+  const userWithPassword = await db.user.findUnique({
+    where: { username },
     include: {
       password: true,
       memberships: true,

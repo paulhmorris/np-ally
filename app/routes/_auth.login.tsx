@@ -15,8 +15,8 @@ import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
 import { safeRedirect } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
-import { verifyLogin } from "~/models/user.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
+import { verifyLogin } from "~/services.server/user";
 
 const validator = withZod(
   z.object({

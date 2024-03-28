@@ -21,7 +21,7 @@ import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
 import { NewContactSchema } from "~/models/schemas";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const NewContactValidator = withZod(NewContactSchema);
 
@@ -96,9 +96,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const contact = await db.contact.create({
     data: {
       ...formData,
-      address: {
-        create: { ...address, orgId },
-      },
+      orgId,
+      address: address
+        ? {
+            create: { ...address, orgId },
+          }
+        : undefined,
       assignedUsers: assignedUserIds
         ? {
             createMany: {

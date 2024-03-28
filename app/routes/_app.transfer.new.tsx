@@ -15,7 +15,7 @@ import { TransactionItemType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({

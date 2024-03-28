@@ -25,9 +25,7 @@ import { TransactionItemType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
-import { ContactService } from "~/services/ContactService.server";
-import { SessionService } from "~/services/SessionService.server";
-import { TransactionService } from "~/services/TransactionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -47,11 +45,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
-    ContactService.getContacts({ where: { orgId }, include: { type: true } }),
-    ContactService.getContactTypes({ where: { orgId } }),
+    db.contact.findMany({ where: { orgId }, include: { type: true } }),
+    db.contactType.findMany({ where: { orgId } }),
     db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
-    TransactionService.getItemMethods({ where: { orgId } }),
-    TransactionService.getItemTypes({
+    db.transactionItemMethod.findMany({ where: { orgId } }),
+    db.transactionItemType.findMany({
       where: {
         orgId,
         OR: [{ direction: TransactionItemTypeDirection.IN }, { id: TransactionItemType.Fee }],
@@ -80,7 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   const { transactionItems, shouldNotifyUser, accountId, contactId, ...rest } = result.data;
 
-  const trxItemTypes = await TransactionService.getItemTypes();
+  const trxItemTypes = await db.transactionItemType.findMany({ where: { orgId } });
   const total = transactionItems.reduce((acc, i) => {
     const type = trxItemTypes.find((t) => t.id === i.typeId);
     if (!type) {

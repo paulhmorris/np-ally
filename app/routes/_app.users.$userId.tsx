@@ -24,7 +24,7 @@ import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { useUser } from "~/lib/utils";
 import { passwordResetValidator } from "~/routes/resources.reset-password";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({

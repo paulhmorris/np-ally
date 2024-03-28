@@ -14,7 +14,7 @@ import { sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { normalizeEnum } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({

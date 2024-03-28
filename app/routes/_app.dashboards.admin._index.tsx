@@ -14,7 +14,7 @@ import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
 import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Home | Alliance 436" }];
 

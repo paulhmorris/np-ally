@@ -24,8 +24,8 @@ import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { capitalize, formatCentsAsDollars } from "~/lib/utils";
-import { MailService } from "~/services/MailService.server";
-import { SessionService } from "~/services/SessionService.server";
+import { MailService } from "~/services.server/MailService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
   {

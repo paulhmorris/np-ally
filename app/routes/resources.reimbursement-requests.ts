@@ -5,7 +5,7 @@ import { fromZodError } from "zod-validation-error";
 import { db } from "~/integrations/prisma.server";
 import { badRequest } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export async function action({ request }: ActionFunctionArgs) {
   await SessionService.requireUserId(request);

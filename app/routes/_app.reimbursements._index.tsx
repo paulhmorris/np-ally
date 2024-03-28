@@ -6,7 +6,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { ReimbursementRequestsTable } from "~/components/reimbursements/reimbursement-requests-table";
 import { db } from "~/integrations/prisma.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Reimbursement Requests | Alliance 436" }];
 

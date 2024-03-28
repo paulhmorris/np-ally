@@ -17,7 +17,7 @@ import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({

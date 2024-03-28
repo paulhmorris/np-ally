@@ -21,8 +21,7 @@ import { db } from "~/integrations/prisma.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { TransactionItemSchema } from "~/models/schemas";
-import { SessionService } from "~/services/SessionService.server";
-import { TransactionService } from "~/services/TransactionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -44,8 +43,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     db.contact.findMany({ where: { orgId }, include: { type: true } }),
     db.contactType.findMany({ where: { orgId } }),
     db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
-    TransactionService.getItemMethods({ where: { orgId } }),
-    TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.OUT, orgId } }),
+    db.transactionItemMethod.findMany({ where: { orgId } }),
+    db.transactionItemType.findMany({ where: { direction: TransactionItemTypeDirection.OUT, orgId } }),
   ]);
 
   return typedjson({

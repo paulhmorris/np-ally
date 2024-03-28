@@ -11,7 +11,7 @@ import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { db } from "~/integrations/prisma.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Contacts | Alliance 436" }];
 

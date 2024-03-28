@@ -21,8 +21,7 @@ import { db } from "~/integrations/prisma.server";
 import { ContactType, EngagementType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { ContactService } from "~/services/ContactService.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -55,7 +54,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         typeId: { notIn: [ContactType.Staff] },
       },
     }),
-    ContactService.getContactTypes({ where: { orgId } }),
+    db.contactType.findMany({ where: { orgId } }),
     db.engagement.findUnique({
       where: { id: Number(params.engagementId), orgId },
     }),

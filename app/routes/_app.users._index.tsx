@@ -9,7 +9,7 @@ import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { UsersTable } from "~/components/users/users-table";
 import { db } from "~/integrations/prisma.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Users | Alliance 436" }];
 

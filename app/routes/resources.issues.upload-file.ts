@@ -3,7 +3,7 @@ import { typedjson } from "remix-typedjson";
 
 import { Linear } from "~/integrations/linear.server";
 import { Sentry } from "~/integrations/sentry";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export async function action({ request }: ActionFunctionArgs) {
   await SessionService.requireUserId(request);

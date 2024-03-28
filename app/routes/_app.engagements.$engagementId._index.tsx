@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { db } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "View Engagement | Alliance 436" }];
 

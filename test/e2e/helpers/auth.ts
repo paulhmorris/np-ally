@@ -12,6 +12,10 @@ export async function createAdmin() {
     username: `e2e-admin-${faker.internet.email().toLowerCase()}`,
     password: faker.internet.password(),
   };
+  const org = await prisma.organization.findFirst();
+  if (!org) {
+    throw new Error("No organization found. Please create one.");
+  }
   const createdUser = await prisma.user.create({
     data: {
       role: UserRole.ADMIN,
@@ -23,6 +27,7 @@ export async function createAdmin() {
       },
       contact: {
         create: {
+          orgId: org.id,
           typeId: ContactType.Staff,
           firstName: user.firstName,
           lastName: user.lastName,

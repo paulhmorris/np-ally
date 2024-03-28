@@ -3,7 +3,7 @@ import { Outlet } from "@remix-run/react";
 
 import { DesktopNav } from "~/components/desktop-nav";
 import { MobileNav } from "~/components/mobile-nav";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireOrgId(request);

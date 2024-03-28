@@ -15,7 +15,7 @@ import { Linear } from "~/integrations/linear.server";
 import { Sentry } from "~/integrations/sentry";
 import { LinearLabelID, LinearTeamID } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({

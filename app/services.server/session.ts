@@ -4,7 +4,6 @@ import { Session as RemixSession, SessionData, redirect } from "@remix-run/node"
 import { db } from "~/integrations/prisma.server";
 import { forbidden, unauthorized } from "~/lib/responses.server";
 import { sessionStorage } from "~/lib/session.server";
-import { UserService } from "~/services/UserService.server";
 
 interface ISessionService {
   getSession(request: Request): Promise<RemixSession<SessionData, SessionData>>;
@@ -61,7 +60,10 @@ class Session implements ISessionService {
     const org = await SessionService.getOrg(request);
     if (userId === undefined) return null;
 
-    const user = await UserService.getUserById(userId, {
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
       include: {
         contact: true,
         contactAssignments: true,
@@ -84,7 +86,10 @@ class Session implements ISessionService {
     const userId = await this.getUserId(request);
     if (userId === undefined) return null;
 
-    const user = await UserService.getUserById(userId, { include: { contact: true } });
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: { contact: true },
+    });
     if (user) return user;
 
     throw await this.logout(request);
@@ -128,7 +133,10 @@ class Session implements ISessionService {
     const defaultAllowedRoles: Array<UserRole> = ["USER", "ADMIN"];
     const userId = await this.requireUserId(request);
 
-    const user = await UserService.getUserById(userId, {
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
       include: {
         contact: true,
         memberships: {

@@ -12,7 +12,7 @@ import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const validator = withZod(
   z.discriminatedUnion("intent", [

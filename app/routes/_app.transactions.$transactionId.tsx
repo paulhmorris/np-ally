@@ -19,7 +19,7 @@ import { db } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars, useUser } from "~/lib/utils";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({

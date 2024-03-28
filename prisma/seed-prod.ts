@@ -61,7 +61,6 @@ async function seed() {
       password: {
         create: {
           hash: await bcrypt.hash("qVa0gGdSkhEZsDrr", 10),
-          orgId: org.id,
         },
       },
     },
@@ -83,7 +82,6 @@ async function seed() {
       password: {
         create: {
           hash: await bcrypt.hash("mTs3zV5c6mUP8MMd", 10),
-          orgId: org.id,
         },
       },
     },

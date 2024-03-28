@@ -66,8 +66,6 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   memberships            Membership[]
-  passwords              Password[]
-  passwordResets         PasswordReset[]
   accountTypes           AccountType[]
   accountSubscriptions   AccountSubscription[]
   transactions           Transaction[]
@@ -93,9 +91,6 @@ model Password {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String
 }
 
 model PasswordReset {
@@ -106,10 +101,8 @@ model PasswordReset {
   expiresAt DateTime
   usedAt    DateTime?
 
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  org       Organization @relation(fields: [orgId], references: [id])
-  orgId     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {

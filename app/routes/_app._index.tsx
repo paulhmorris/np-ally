@@ -3,7 +3,7 @@ import { type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import { redirect } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Home | Alliance 436" }];
 

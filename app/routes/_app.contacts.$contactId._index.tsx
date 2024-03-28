@@ -24,7 +24,7 @@ import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { cn, useUser } from "~/lib/utils";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);

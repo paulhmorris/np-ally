@@ -18,8 +18,7 @@ import { ContactType, EngagementType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
-import { ContactService } from "~/services/ContactService.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -51,7 +50,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         typeId: { notIn: [ContactType.Staff] },
       },
     }),
-    ContactService.getContactTypes({ where: { orgId } }),
+    db.contactType.findMany({ where: { orgId } }),
     db.engagementType.findMany({ where: { orgId } }),
   ]);
 
