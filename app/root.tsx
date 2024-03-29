@@ -3,7 +3,7 @@ import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
-import { typedjson, useTypedLoaderData } from "remix-typedjson";
+import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Notifications } from "~/components/notifications";
@@ -20,6 +20,10 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  if (process.env.MAINTENANCE_MODE && new URL(request.url).pathname !== "/maintenance") {
+    return redirect("/maintenance", { status: 307 });
+  }
+
   const session = await SessionService.getSession(request);
   const { getTheme } = await themeSessionResolver(request);
 
