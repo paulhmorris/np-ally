@@ -1,9 +1,10 @@
-import { redirect } from "remix-typedjson";
+import { redirect, typedjson } from "remix-typedjson";
 
 export function loader() {
   if (!process.env.MAINTENANCE_MODE) {
     return redirect("/", { status: 307 });
   }
+  return typedjson({});
 }
 
 export default function MaintenancePage() {
