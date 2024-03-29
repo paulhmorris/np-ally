@@ -3,7 +3,8 @@
     "node_modules/@radix-ui",
     "node_modules/postcss",
     "react-day-picker",
-    "vaul"
+    "vaul",
+    "sonner"
   ],
   "typescript.tsdk": "node_modules/typescript/lib"
 }

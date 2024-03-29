@@ -1,7 +1,7 @@
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -27,9 +27,6 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([accountId])
-  @@index([contactId])
 }
 
 enum UserRole {
@@ -58,8 +55,6 @@ model PasswordReset {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([userId])
 }
 
 model Organization {
@@ -75,7 +70,7 @@ model Organization {
 model Account {
   id                    String                 @id @default(cuid())
   code                  String                 @unique
-  description           String                 @db.MediumText
+  description           String                 @db.Text
   user                  User?
   organization          Organization?          @relation(fields: [organizationId], references: [id])
   organizationId        String?
@@ -88,9 +83,6 @@ model Account {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([organizationId])
-  @@index([typeId])
 }
 
 model AccountType {
@@ -108,16 +100,13 @@ model AccountSubscription {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([accountId])
-  @@index([subscriberId])
 }
 
 model Transaction {
   id               String            @id @default(cuid())
   date             DateTime
   amountInCents    Int
-  description      String?           @db.MediumText
+  description      String?           @db.Text
   account          Account           @relation(fields: [accountId], references: [id])
   accountId        String
   contact          Contact?          @relation(fields: [contactId], references: [id])
@@ -126,9 +115,6 @@ model Transaction {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([accountId])
-  @@index([contactId])
 }
 
 model TransactionItem {
@@ -136,7 +122,7 @@ model TransactionItem {
   amountInCents Int
   transaction   Transaction            @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   transactionId String
-  description   String?                @db.MediumText
+  description   String?                @db.Text
   method        TransactionItemMethod? @relation(fields: [methodId], references: [id])
   methodId      Int?
   type          TransactionItemType    @relation(fields: [typeId], references: [id])
@@ -144,10 +130,6 @@ model TransactionItem {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([transactionId])
-  @@index([methodId])
-  @@index([typeId])
 }
 
 model TransactionItemMethod {
@@ -174,7 +156,7 @@ model ReimbursementRequest {
   amountInCents Int
   date          DateTime
   vendor        String?
-  description   String?                    @db.LongText
+  description   String?                    @db.Text
   user          User                       @relation(fields: [userId], references: [id])
   userId        String
   account       Account                    @relation(fields: [accountId], references: [id])
@@ -186,16 +168,12 @@ model ReimbursementRequest {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([accountId])
-  @@index([methodId])
 }
 
 model Receipt {
   id                    String                 @id @default(cuid())
   s3Key                 String
-  s3Url                 String?                @db.MediumText
+  s3Url                 String?                @db.Text
   s3UrlExpiry           DateTime?
   title                 String
   user                  User                   @relation(fields: [userId], references: [id])
@@ -204,8 +182,6 @@ model Receipt {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([userId])
 }
 
 enum ReimbursementRequestStatus {
@@ -234,8 +210,6 @@ model Contact {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([typeId])
 }
 
 model ContactType {
@@ -253,10 +227,6 @@ model ContactAssigment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([contactId, userId])
-  @@index([contactId])
-  @@index([userId])
 }
 
 model Address {
@@ -278,7 +248,7 @@ model Address {
 model Engagement {
   id          Int            @id @default(autoincrement())
   date        DateTime
-  description String?        @db.LongText
+  description String?        @db.Text
   type        EngagementType @relation(fields: [typeId], references: [id])
   typeId      Int
   contact     Contact        @relation(fields: [contactId], references: [id])
@@ -288,10 +258,6 @@ model Engagement {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([typeId])
-  @@index([contactId])
-  @@index([userId])
 }
 
 model EngagementType {
@@ -303,7 +269,7 @@ model EngagementType {
 model Announcement {
   id        Int       @id @default(autoincrement())
   title     String
-  content   String    @db.LongText
+  content   String    @db.Text
   expiresAt DateTime?
 
   createdAt DateTime @default(now())

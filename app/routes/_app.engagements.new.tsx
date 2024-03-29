@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useSearchParams, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -13,7 +13,9 @@ import { PageHeader } from "~/components/page-header";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { prisma } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { ContactType, EngagementType } from "~/lib/constants";
+import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { ContactService } from "~/services/ContactService.server";
@@ -64,18 +66,39 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const engagement = await prisma.engagement.create({
-    data: {
-      ...result.data,
-      userId: user.id,
-    },
-  });
+  try {
+    const engagement = await prisma.engagement.create({
+      data: {
+        ...result.data,
+        userId: user.id,
+      },
+    });
 
-  return toast.redirect(request, `/engagements/${engagement.id}`, {
-    type: "success",
-    title: "Success",
-    description: `Engagement recorded.`,
-  });
+    return toast.redirect(request, `/engagements/${engagement.id}`, {
+      type: "success",
+      title: "Success",
+      description: `Engagement recorded.`,
+    });
+  } catch (error) {
+    Sentry.captureException(error);
+    console.error(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return toast.json(
+        request,
+        { message: getPrismaErrorText(error) },
+        { type: "error", title: "Database Error", description: getPrismaErrorText(error) },
+      );
+    }
+    return toast.json(
+      request,
+      { message: "An unknown error occurred" },
+      {
+        type: "error",
+        title: "An unknown error occurred",
+        description: error instanceof Error ? error.message : "",
+      },
+    );
+  }
 };
 
 export default function NewEngagementPage() {
