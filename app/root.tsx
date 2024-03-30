@@ -3,7 +3,7 @@ import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
-import { typedjson, useTypedLoaderData } from "remix-typedjson";
+import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Notifications } from "~/components/notifications";
@@ -49,9 +49,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       throw await SessionService.logout(request);
     }
 
+    const { pathname } = new URL(request.url);
+    if (!currentMembership && !pathname.includes("/choose-org")) {
+      return redirect("/choose-org");
+    }
+
     user = {
       ...dbUser,
-      role: currentMembership!.role,
+      role: currentMembership?.role,
       systemRole: dbUser.role,
       org: org ?? null,
     };

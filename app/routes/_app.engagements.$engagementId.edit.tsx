@@ -54,11 +54,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         typeId: { notIn: [ContactType.Staff] },
       },
     }),
-    db.contactType.findMany({ where: { orgId } }),
+    db.contactType.findMany({ where: { OR: [{ orgId }, { orgId: null }] } }),
     db.engagement.findUnique({
       where: { id: Number(params.engagementId), orgId },
     }),
-    db.engagementType.findMany({ where: { orgId } }),
+    db.engagementType.findMany({ where: { OR: [{ orgId }, { orgId: null }] } }),
   ]);
 
   if (!engagement) {

@@ -59,7 +59,6 @@ model Organization {
   id       String    @id @default(cuid())
   name     String
   accounts Account[]
-  isActive Boolean   @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,7 +105,7 @@ model PasswordReset {
 
 model Account {
   id                    String                 @id @default(cuid())
-  code                  String                 @unique
+  code                  String
   description           String                 @db.Text
   user                  User?
   transactions          Transaction[]
@@ -115,21 +114,24 @@ model Account {
   reimbursementRequests ReimbursementRequest[]
   subscribers           AccountSubscription[]
 
-  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   org   Organization @relation(fields: [orgId], references: [id])
   orgId String
+
+  @@unique([code, orgId])
 }
 
 model AccountType {
   id       Int       @id @default(autoincrement())
-  name     String    @unique
+  name     String
   accounts Account[]
 
-  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([name, orgId])
 }
 
 model AccountSubscription {
@@ -184,20 +186,26 @@ model TransactionItem {
 
 model TransactionItemMethod {
   id                    Int                    @id @default(autoincrement())
-  name                  String                 @unique
+  name                  String
   transactionItems      TransactionItem[]
   reimbursementRequests ReimbursementRequest[]
-  organization          Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId                 String
+
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId        String?
+
+  @@unique([name, orgId])
 }
 
 model TransactionItemType {
   id               Int                           @id @default(autoincrement())
-  name             String                        @unique
+  name             String
   direction        TransactionItemTypeDirection? @default(IN)
   transactionItems TransactionItem[]
-  organization     Organization                  @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId            String
+
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId        String?
+
+  @@unique([name, orgId])
 }
 
 enum TransactionItemTypeDirection {
@@ -253,13 +261,12 @@ enum ReimbursementRequestStatus {
 
 model Contact {
   id                   String                @id @default(cuid())
-  email                String?               @unique
+  email                String?
   firstName            String?
   lastName             String?
   organizationName     String?
   phone                String?
   address              Address?
-  isActive             Boolean               @default(true)
   type                 ContactType           @relation(fields: [typeId], references: [id])
   typeId               Int
   user                 User?
@@ -273,15 +280,19 @@ model Contact {
 
   org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   orgId String
+
+  @@unique([email, orgId])
 }
 
 model ContactType {
   id       Int       @id @default(autoincrement())
-  name     String    @unique
+  name     String
   contacts Contact[]
 
-  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([name, orgId])
 }
 
 model ContactAssigment {
@@ -310,7 +321,6 @@ model Address {
   country   String
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId String  @unique
-  isActive  Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -339,11 +349,13 @@ model Engagement {
 
 model EngagementType {
   id          Int          @id @default(autoincrement())
-  name        String       @unique
+  name        String
   engagements Engagement[]
 
-  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orgId String
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([name, orgId])
 }
 
 model Announcement {

@@ -4,7 +4,8 @@ import dayjs from "dayjs";
 
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { formatCentsAsDollars, useUser } from "~/lib/utils";
+import { useUser } from "~/hooks/useUser";
+import { formatCentsAsDollars } from "~/lib/utils";
 
 type ReimbursementRequest = Prisma.ReimbursementRequestGetPayload<{
   include: { user: { include: { contact: true } }; account: true };

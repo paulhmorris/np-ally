@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { useUser } from "~/lib/utils";
+import { useUser } from "~/hooks/useUser";
 
 export function UserMenu() {
   const user = useUser();

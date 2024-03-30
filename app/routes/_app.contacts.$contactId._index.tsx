@@ -18,12 +18,13 @@ import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { cn, useUser } from "~/lib/utils";
+import { cn } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -225,7 +226,7 @@ export default function ContactDetailsPage() {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
-              <Card className="bg-transparent flex-1 basis-48">
+              <Card className="flex-1 basis-48 bg-transparent">
                 <CardHeader>
                   <CardTitle>Assigned Users</CardTitle>
                   <CardDescription>These users receive regular reminders to engage with this Contact.</CardDescription>

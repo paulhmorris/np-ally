@@ -19,10 +19,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { useUser } from "~/lib/utils";
 import { passwordResetValidator } from "~/routes/resources.reset-password";
 import { SessionService } from "~/services.server/session";
 
@@ -327,7 +327,7 @@ export default function UserDetailsPage() {
         </ValidatedForm>
         <div className="mt-4 max-w-lg">
           {user.contactAssignments.length > 0 ? (
-            <Card className="bg-transparent flex-1 basis-48">
+            <Card className="flex-1 basis-48 bg-transparent">
               <CardHeader>
                 <CardTitle>Contact Assignments</CardTitle>
                 <CardDescription>

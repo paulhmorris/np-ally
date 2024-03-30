@@ -16,10 +16,10 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
-import { useUser } from "~/lib/utils";
 import { NewContactSchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
 
@@ -32,15 +32,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   const contactTypes = await db.contactType.findMany({
-    where:
-      user.role === MembershipRole.MEMBER
-        ? {
-            orgId,
-            id: {
-              notIn: [ContactType.Staff],
-            },
-          }
-        : { orgId },
+    where: {
+      AND: [
+        { OR: [{ orgId }, { orgId: null }] },
+        // Members can't create staff contacts
+        user.role === MembershipRole.MEMBER ? { id: { notIn: [ContactType.Staff] } } : {},
+      ],
+    },
   });
   const usersWhoCanBeAssigned = await db.user.findMany({
     where: {
@@ -83,7 +81,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Verify email is unique
   if (formData.email) {
     const existingContact = await db.contact.findUnique({
-      where: { email: formData.email },
+      where: {
+        email_orgId: {
+          email: formData.email,
+          orgId,
+        },
+      },
     });
 
     if (existingContact) {

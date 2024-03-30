@@ -11,8 +11,8 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
+import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
-import { useUser } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Home | Alliance 436" }];

@@ -10,7 +10,7 @@ import { AnnouncementModal } from "~/components/modals/announcement-modal";
 import { Button } from "~/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Separator } from "~/components/ui/separator";
-import { useUser } from "~/lib/utils";
+import { useUser } from "~/hooks/useUser";
 import { validator } from "~/routes/api.announcements";
 
 export function AnnouncementCard({ announcement }: { announcement: Announcement }) {

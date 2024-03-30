@@ -16,11 +16,12 @@ import { Callout } from "~/components/ui/callout";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
-import { getToday, useUser } from "~/lib/utils";
+import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
 

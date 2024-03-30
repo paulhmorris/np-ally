@@ -15,10 +15,11 @@ import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { cn, formatCentsAsDollars, useUser } from "~/lib/utils";
+import { cn, formatCentsAsDollars } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
 
 const validator = withZod(

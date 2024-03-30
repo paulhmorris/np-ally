@@ -46,13 +46,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
     db.contact.findMany({ where: { orgId }, include: { type: true } }),
-    db.contactType.findMany({ where: { orgId } }),
+    db.contactType.findMany({ where: { OR: [{ orgId }, { orgId: null }] } }),
     db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
-    db.transactionItemMethod.findMany({ where: { orgId } }),
+    db.transactionItemMethod.findMany({ where: { OR: [{ orgId }, { orgId: null }] } }),
     db.transactionItemType.findMany({
       where: {
-        orgId,
-        OR: [{ direction: TransactionItemTypeDirection.IN }, { id: TransactionItemType.Fee }],
+        AND: [
+          { OR: [{ orgId }, { orgId: null }] },
+          { OR: [{ direction: TransactionItemTypeDirection.IN }, { id: TransactionItemType.Fee }] },
+        ],
       },
     }),
   ]);

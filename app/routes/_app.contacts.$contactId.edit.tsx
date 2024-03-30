@@ -20,11 +20,11 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { useUser } from "~/lib/utils";
 import { UpdateContactSchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
 
@@ -53,7 +53,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   const [contactTypes, usersWhoCanBeAssigned] = await Promise.all([
-    db.contactType.findMany({ where: { orgId } }),
+    db.contactType.findMany({ where: { OR: [{ orgId }, { orgId: null }] } }),
     db.user.findMany({
       where: {
         memberships: {
@@ -156,7 +156,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Verify email is unique
   if (formData.email) {
     const existingContact = await db.contact.findUnique({
-      where: { email: formData.email },
+      where: {
+        email_orgId: {
+          email: formData.email,
+          orgId,
+        },
+      },
     });
 
     if (existingContact && existingContact.id !== formData.id) {

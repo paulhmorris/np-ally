@@ -6,8 +6,9 @@ import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { useUser } from "~/hooks/useUser";
 import { ContactType } from "~/lib/constants";
-import { formatPhoneNumber, getInitials, useUser } from "~/lib/utils";
+import { formatPhoneNumber, getInitials } from "~/lib/utils";
 
 type Contact = Prisma.ContactGetPayload<{ include: { address: true; type: true } }>;
 export function ContactCard({ contact }: { contact: Contact }) {

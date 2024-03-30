@@ -5,7 +5,11 @@ import { db } from "~/integrations/prisma.server";
 
 export async function verifyLogin(username: NonNullable<User["username"]>, password: Password["hash"]) {
   const userWithPassword = await db.user.findUnique({
-    where: { username },
+    where: {
+      // not deactivated
+      isActive: true,
+      username,
+    },
     include: {
       password: true,
       memberships: true,

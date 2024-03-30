@@ -127,7 +127,7 @@ export default function LoginPage() {
           <Checkbox name="rememberSelection" defaultChecked={false} aria-label="Remember selection" />
           <span>Remember selection</span>
         </Label>
-        <div className="flex flex-col gap-y-4">
+        <div className="flex max-h-[30dvh] flex-col gap-y-4 overflow-y-scroll">
           {orgs.map((org) => {
             return (
               <button

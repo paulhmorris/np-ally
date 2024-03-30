@@ -9,7 +9,7 @@ export default function AuthLayout() {
       </main>
       <footer className="mx-auto mb-8 mt-auto shrink">
         <p className="text-xs text-muted-foreground">
-          NP Ally • {new Date().getFullYear()} •{" "}
+          {new Date().getFullYear()} •{" "}
           <a
             href="https://getcosmic.dev"
             target="_blank"

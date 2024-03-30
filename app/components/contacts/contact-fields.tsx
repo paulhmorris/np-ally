@@ -2,7 +2,7 @@ import { ContactType, MembershipRole } from "@prisma/client";
 import { useLocation } from "@remix-run/react";
 
 import { FormField, FormSelect } from "~/components/ui/form";
-import { useUser } from "~/lib/utils";
+import { useUser } from "~/hooks/useUser";
 
 export function ContactFields({ contactTypes }: { contactTypes: Array<ContactType> }) {
   const user = useUser();

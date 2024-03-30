@@ -7,8 +7,9 @@ import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Separator } from "~/components/ui/separator";
 import { UserMenu } from "~/components/user-menu";
+import { useUser } from "~/hooks/useUser";
 import { adminNavLinks, globalNavLinks, superAdminNavLinks, userNavLinks } from "~/lib/constants";
-import { cn, useUser } from "~/lib/utils";
+import { cn } from "~/lib/utils";
 
 export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
