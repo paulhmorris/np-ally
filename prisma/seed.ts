@@ -36,6 +36,8 @@ async function seed() {
     db.transactionItemMethod.deleteMany(),
   ]);
 
+  // TODO: change admin org host
+  const _org = await db.organization.create({ data: { name: "NP Ally", host: "np-ally.com" } });
   const org = await db.organization.create({ data: { name: "Alliance 436" } });
   const org2 = await db.organization.create({ data: { name: "Moms of Courage" } });
 
@@ -86,48 +88,68 @@ async function seed() {
     },
   });
 
-  const [user, donorContact] = await Promise.all([
-    await db.user.create({
-      data: {
-        username: "cassian@therebellion.com",
-        role: "USER",
-        contact: {
-          create: {
-            firstName: "Cassian",
-            lastName: "Andor",
-            email: "cassian@therebllion.com",
-            typeId: ContactType.Missionary,
-            orgId: org.id,
-          },
-        },
-        password: {
-          create: {
-            hash: hashedPassword,
-          },
+  const user = await db.user.create({
+    data: {
+      username: "cassian@therebellion.com",
+      role: "USER",
+      contact: {
+        create: {
+          firstName: "Cassian",
+          lastName: "Andor",
+          email: "cassian@therebllion.com",
+          typeId: ContactType.Missionary,
+          orgId: org.id,
         },
       },
-    }),
-    await db.contact.create({
-      data: {
-        firstName: "Joe",
-        lastName: "Donor",
-        email: "mr@donor.com",
-        phone: "5555555555",
-        typeId: 1,
-        address: {
-          create: {
-            street: "1234 Main St",
-            city: "Anytown",
-            state: "CA",
-            zip: "12345",
-            country: "USA",
-            orgId: org.id,
-          },
+      password: {
+        create: {
+          hash: hashedPassword,
         },
-        orgId: org.id,
       },
-    }),
-  ]);
+    },
+  });
+
+  const donorContact = await db.contact.create({
+    data: {
+      firstName: "Joe",
+      lastName: "Donor",
+      email: "mr@donor.com",
+      phone: "5555555555",
+      typeId: 1,
+      address: {
+        create: {
+          street: "1234 Main St",
+          city: "Anytown",
+          state: "CA",
+          zip: "12345",
+          country: "USA",
+          orgId: org.id,
+        },
+      },
+      orgId: org.id,
+    },
+  });
+
+  const donorContact2 = await db.contact.create({
+    data: {
+      firstName: "Joe",
+      lastName: "Donor",
+      email: "mr@donor.com",
+      phone: "5555555555",
+      typeId: 1,
+      address: {
+        create: {
+          street: "1234 Main St",
+          city: "Anytown",
+          state: "CA",
+          zip: "12345",
+          country: "USA",
+          orgId: org2.id,
+        },
+      },
+      orgId: org2.id,
+    },
+  });
 
   const account = await db.account.create({
     data: {
@@ -149,10 +171,37 @@ async function seed() {
     },
   });
 
+  const account2 = await db.account.create({
+    data: {
+      typeId: 3,
+      code: "3001-MC",
+      subscribers: {
+        create: {
+          subscriberId: user.contactId,
+          orgId: org2.id,
+        },
+      },
+      description: "MoC - Ministry Fund",
+      orgId: org2.id,
+      user: {
+        connect: {
+          id: user.id,
+        },
+      },
+    },
+  });
+
   await db.account.createMany({
     data: defaultAccounts.map((a) => ({
       ...a,
       orgId: org.id,
+    })),
+  });
+
+  await db.account.createMany({
+    data: defaultAccounts.map((a) => ({
+      ...a,
+      orgId: org2.id,
     })),
   });
 
@@ -179,6 +228,37 @@ async function seed() {
                 description: faker.lorem.word(),
                 typeId: 2,
                 orgId: org.id,
+              },
+            ],
+          },
+        },
+      },
+    });
+  }
+
+  for (let i = 0; i < 10; i++) {
+    await db.transaction.create({
+      data: {
+        amountInCents: faker.number.int({ min: 100, max: 100_000 }),
+        date: faker.date.past(),
+        description: faker.lorem.word(),
+        accountId: account2.id,
+        contactId: donorContact2.id,
+        orgId: org2.id,
+        transactionItems: {
+          createMany: {
+            data: [
+              {
+                amountInCents: faker.number.int({ min: 100, max: 50_000 }),
+                description: faker.lorem.word(),
+                typeId: 1,
+                orgId: org2.id,
+              },
+              {
+                amountInCents: faker.number.int({ min: 100, max: 50_000 }),
+                description: faker.lorem.word(),
+                typeId: 2,
+                orgId: org2.id,
               },
             ],
           },

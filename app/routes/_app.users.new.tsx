@@ -106,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (sendPasswordSetup) {
     const { token } = await generatePasswordReset(user.username);
-    await MailService.sendPasswordSetupEmail({ email: user.username, token });
+    await MailService.sendPasswordSetupEmail({ email: user.username, token, orgId });
   }
 
   return toast.redirect(request, `/users/${user.id}`, {

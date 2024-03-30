@@ -191,6 +191,7 @@ export async function action({ request }: ActionFunctionArgs) {
       await MailService.sendReimbursementRequestUpdateEmail({
         email: rr.user.username,
         status: ReimbursementRequestStatus.APPROVED,
+        orgId,
         note,
       });
 
@@ -233,6 +234,7 @@ export async function action({ request }: ActionFunctionArgs) {
   await MailService.sendReimbursementRequestUpdateEmail({
     email: rr.user.username,
     status: _action,
+    orgId,
     note,
   });
   const normalizedAction = _action === ReimbursementRequestStatus.REJECTED ? "Rejected" : "Voided";

@@ -23,6 +23,14 @@ export async function action({ request }: ActionFunctionArgs) {
     return typedjson({ status: 405 });
   }
 
+  const url = new URL(request.url);
+  let org = await db.organization.findUnique({ where: { host: url.hostname } });
+
+  // If the reset is initiated from a non-org domain, use backup NP Ally Org
+  if (!org) {
+    org = await db.organization.findUniqueOrThrow({ where: { host: "np-ally.com" } });
+  }
+
   const result = await passwordResetValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -59,8 +67,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const reset = await generatePasswordReset(user.username);
   const { data, error } =
     result.data._action === "setup"
-      ? await MailService.sendPasswordSetupEmail({ email: user.username, token: reset.token })
-      : await MailService.sendPasswordResetEmail({ email: user.username, token: reset.token });
+      ? await MailService.sendPasswordSetupEmail({ email: user.username, token: reset.token, orgId: org.id })
+      : await MailService.sendPasswordResetEmail({ email: user.username, token: reset.token, orgId: org.id });
 
   // Unknown Resend error
   if (error || !data) {
