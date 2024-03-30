@@ -28,12 +28,7 @@ export function ContactFields({ contactTypes }: { contactTypes: Array<ContactTyp
           value: ct.id,
         }))}
       />
-      <FormField
-        label="Organization Name"
-        name="organizationName"
-        placeholder="Alliance 436"
-        description="Required if type is Organization"
-      />
+      <FormField label="Organization Name" name="organizationName" description="Required if type is Organization" />
     </>
   );
 }
