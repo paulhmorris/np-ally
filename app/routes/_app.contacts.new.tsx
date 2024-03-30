@@ -36,7 +36,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       AND: [
         { OR: [{ orgId }, { orgId: null }] },
         // Members can't create staff contacts
-        user.role === MembershipRole.MEMBER ? { id: { notIn: [ContactType.Staff] } } : {},
+        user.isMember ? { id: { notIn: [ContactType.Staff] } } : {},
       ],
     },
   });
@@ -160,7 +160,7 @@ export default function NewContactPage() {
                       name="assignedUserIds"
                       value={user.id}
                       aria-label={`${user.contact.firstName} ${user.contact.lastName}`}
-                      defaultChecked={sessionUser.role === MembershipRole.MEMBER ? user.id === sessionUser.id : false}
+                      defaultChecked={sessionUser.isMember ? user.id === sessionUser.id : false}
                     />
                     <span>
                       {user.contact.firstName} {user.contact.lastName}

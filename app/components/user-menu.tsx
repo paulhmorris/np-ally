@@ -1,4 +1,3 @@
-import { MembershipRole } from "@prisma/client";
 import { Form, Link } from "@remix-run/react";
 import { IconArrowRight } from "@tabler/icons-react";
 import { useState } from "react";
@@ -64,10 +63,7 @@ export function UserMenu() {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
-              <Link
-                className="cursor-pointer sm:hidden"
-                to={user.role === MembershipRole.MEMBER ? "/dashboards/staff" : "/dashboards/admin"}
-              >
+              <Link className="cursor-pointer sm:hidden" to={user.isMember ? "/dashboards/staff" : "/dashboards/admin"}>
                 Home
               </Link>
             </DropdownMenuItem>

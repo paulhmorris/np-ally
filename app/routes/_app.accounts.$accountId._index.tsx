@@ -1,4 +1,3 @@
-import { MembershipRole } from "@prisma/client";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
 import { IconCoins, IconExclamationCircle, IconUser } from "@tabler/icons-react";
@@ -30,7 +29,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   invariant(params.accountId, "accountId not found");
-  if (user.role === MembershipRole.MEMBER && user.accountId !== params.accountId) {
+  if (user.isMember && user.accountId !== params.accountId) {
     throw unauthorized("You are not authorized to view this account.");
   }
 

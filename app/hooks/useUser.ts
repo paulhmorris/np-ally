@@ -1,4 +1,4 @@
-import { MembershipRole } from "@prisma/client";
+import { MembershipRole, UserRole } from "@prisma/client";
 
 import { useOptionalUser } from "~/hooks/useOptionalUser";
 
@@ -12,5 +12,16 @@ export function useUser() {
   if (!maybeUser.role) {
     throw new Error("User has no role in root loader.");
   }
-  return maybeUser as Omit<typeof maybeUser, "role"> & { role: MembershipRole };
+
+  return {
+    ...maybeUser,
+    isMember: maybeUser.role === MembershipRole.MEMBER,
+    isAdmin: maybeUser.role === MembershipRole.ADMIN,
+    isSuperAdmin: maybeUser.systemRole === UserRole.SUPERADMIN,
+  } as Omit<typeof maybeUser, "role"> & {
+    role: MembershipRole;
+    isMember: boolean;
+    isAdmin: boolean;
+    isSuperAdmin: boolean;
+  };
 }

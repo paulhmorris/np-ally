@@ -1,4 +1,4 @@
-import { Engagement, MembershipRole } from "@prisma/client";
+import { Engagement } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -67,8 +67,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   });
 
   if (!contact) throw notFound({ message: "Contact not found" });
-  const shouldHideTransactions =
-    user.role === MembershipRole.MEMBER && !contact.assignedUsers.some((a) => a.userId === user.id);
+  const shouldHideTransactions = user.isMember && !contact.assignedUsers.some((a) => a.userId === user.id);
 
   if (shouldHideTransactions) {
     return typedjson({ contact: { ...contact, transactions: [] } });
@@ -171,10 +170,7 @@ export default function ContactDetailsPage() {
   const { contact } = useTypedLoaderData<typeof loader>();
   const isExternal = contact.typeId !== ContactType.Staff;
   const canDelete =
-    !contact.user &&
-    contact.transactions.length === 0 &&
-    user.role !== MembershipRole.MEMBER &&
-    contact.typeId !== ContactType.Staff;
+    !contact.user && contact.transactions.length === 0 && !user.isMember && contact.typeId !== ContactType.Staff;
 
   return (
     <>

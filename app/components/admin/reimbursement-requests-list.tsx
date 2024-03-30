@@ -1,4 +1,4 @@
-import { MembershipRole, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
 import dayjs from "dayjs";
 
@@ -24,10 +24,10 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
             <TableHeader>
               <TableRow>
                 <TableHead className="w-48">Submitted On</TableHead>
-                {user.role !== MembershipRole.MEMBER ? <TableHead>Submitted By</TableHead> : null}
+                {!user.isMember ? <TableHead>Submitted By</TableHead> : null}
                 <TableHead>Account</TableHead>
                 <TableHead>Amount</TableHead>
-                {user.role !== MembershipRole.MEMBER ? (
+                {!user.isMember ? (
                   <TableHead>
                     <span className="sr-only">Action</span>
                   </TableHead>
@@ -38,10 +38,10 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
               {requests.map((req) => (
                 <TableRow key={req.id}>
                   <TableCell>{dayjs(req.createdAt).format("MM/DD/YYYY h:mm a")}</TableCell>
-                  {user.role !== MembershipRole.MEMBER ? <TableCell>{req.user.contact.email}</TableCell> : null}
+                  {!user.isMember ? <TableCell>{req.user.contact.email}</TableCell> : null}
                   <TableCell>{req.account.code}</TableCell>
                   <TableCell>{formatCentsAsDollars(req.amountInCents)}</TableCell>
-                  {user.role !== MembershipRole.MEMBER ? (
+                  {!user.isMember ? (
                     <TableCell>
                       <Link to={`/reimbursements/${req.id}`} className="font-medium text-primary">
                         View

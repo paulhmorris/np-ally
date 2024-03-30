@@ -1,4 +1,4 @@
-import { MembershipRole, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -50,7 +50,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     },
   });
-  if (user.role === MembershipRole.MEMBER && transaction?.account.user?.id !== user.id) {
+  if (user.isMember && transaction?.account.user?.id !== user.id) {
     throw forbidden({ message: "You do not have permission to view this transaction" });
   }
   if (!transaction) throw notFound({ message: "Transaction not found" });

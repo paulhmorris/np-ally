@@ -1,4 +1,3 @@
-import { MembershipRole } from "@prisma/client";
 import { type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -75,7 +74,7 @@ export default function Index() {
       <PageHeader title="Home" />
       <PageContainer className="max-w-4xl">
         <div className="mb-4">{announcement ? <AnnouncementCard announcement={announcement} /> : null}</div>
-        {user.role === MembershipRole.MEMBER ? (
+        {user.isMember ? (
           <div className="space-y-5">
             <div className="max-w-[320px]">
               <AccountBalanceCard totalCents={total} accountId={user.accountId ?? undefined} />

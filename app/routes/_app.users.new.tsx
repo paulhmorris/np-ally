@@ -67,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { role, systemRole, username, sendPasswordSetup, accountId, ...contact } = result.data;
 
   // Someone trying to create a SUPERADMIN
-  if (systemRole === UserRole.SUPERADMIN && authorizedUser.systemRole !== UserRole.SUPERADMIN) {
+  if (systemRole === UserRole.SUPERADMIN && !authorizedUser.isSuperAdmin) {
     return toast.json(
       request,
       { message: "You do not have permission to create a Super Admin" },
@@ -145,7 +145,7 @@ export default function NewUserPage() {
             <SelectItem value={MembershipRole.MEMBER}>Member</SelectItem>
             <SelectItem value={MembershipRole.ADMIN}>Admin</SelectItem>
           </FormSelect>
-          {user.systemRole === UserRole.SUPERADMIN ? (
+          {user.isSuperAdmin ? (
             <FormSelect required name="systemRole" label="System Role" placeholder="Select a system role">
               <SelectItem value={UserRole.USER}>User</SelectItem>
               <SelectItem value={UserRole.SUPERADMIN}>Super Admin</SelectItem>

@@ -1,4 +1,4 @@
-import { MembershipRole, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useSearchParams, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -39,14 +39,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     db.contact.findMany({
       where: {
         orgId,
-        assignedUsers:
-          user.role === MembershipRole.MEMBER
-            ? {
-                some: {
-                  userId: user.id,
-                },
-              }
-            : undefined,
+        assignedUsers: user.isMember
+          ? {
+              some: {
+                userId: user.id,
+              },
+            }
+          : undefined,
         typeId: { notIn: [ContactType.Staff] },
       },
     }),

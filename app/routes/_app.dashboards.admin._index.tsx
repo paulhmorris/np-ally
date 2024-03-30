@@ -1,4 +1,4 @@
-import { MembershipRole, ReimbursementRequestStatus } from "@prisma/client";
+import { ReimbursementRequestStatus } from "@prisma/client";
 import { type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -22,7 +22,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  if (user.role === MembershipRole.MEMBER) {
+  if (user.isMember) {
     return redirect("/dashboards/staff");
   }
 

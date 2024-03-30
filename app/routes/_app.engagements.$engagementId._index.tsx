@@ -1,4 +1,3 @@
-import { MembershipRole } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -66,7 +65,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
 
     // Users can only delete their own engagements
-    if (user.role === MembershipRole.MEMBER) {
+    if (user.isMember) {
       if (engagement.userId !== user.id) {
         return toast.json(
           request,

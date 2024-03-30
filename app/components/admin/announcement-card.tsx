@@ -1,4 +1,4 @@
-import { Announcement, MembershipRole } from "@prisma/client";
+import { Announcement } from "@prisma/client";
 import { useFetcher } from "@remix-run/react";
 import { IconBellFilled, IconClock, IconSelector } from "@tabler/icons-react";
 import dayjs from "dayjs";
@@ -36,7 +36,7 @@ export function AnnouncementCard({ announcement }: { announcement: Announcement 
             </Button>
           </CollapsibleTrigger>
         </div>
-        {user.role !== MembershipRole.MEMBER ? (
+        {!user.isMember ? (
           <>
             <span className="text-xs text-muted-foreground">
               {announcement.expiresAt

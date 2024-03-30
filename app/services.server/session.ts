@@ -156,10 +156,17 @@ class Session implements ISessionService {
       throw unauthorized({ user });
     }
 
+    const access = {
+      isMember: currentMembership.role === MembershipRole.MEMBER,
+      isAdmin: currentMembership.role === MembershipRole.ADMIN,
+      isSuperAdmin: user.role === UserRole.SUPERADMIN,
+    };
+
     // Superadmins are admins in all organizations
     if (user.role === UserRole.SUPERADMIN) {
       return {
         ...user,
+        ...access,
         role: MembershipRole.ADMIN,
         systemRole: user.role,
         org: currentMembership.org,
@@ -171,6 +178,7 @@ class Session implements ISessionService {
       if (allowedRoles.includes(currentMembership.role)) {
         return {
           ...user,
+          ...access,
           role: currentMembership.role,
           systemRole: user.role,
           org: currentMembership.org,
@@ -183,6 +191,7 @@ class Session implements ISessionService {
     if (defaultAllowedRoles.includes(currentMembership.role)) {
       return {
         ...user,
+        ...access,
         role: currentMembership.role,
         systemRole: user.role,
         org: currentMembership.org,

@@ -1,4 +1,3 @@
-import { MembershipRole } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
@@ -18,14 +17,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const transactions = await db.transaction.findMany({
     where: {
       orgId,
-      account:
-        user.role === MembershipRole.MEMBER
-          ? {
-              user: {
-                id: user.id,
-              },
-            }
-          : undefined,
+      account: user.isMember
+        ? {
+            user: {
+              id: user.id,
+            },
+          }
+        : undefined,
     },
     include: {
       contact: true,

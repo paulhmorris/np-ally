@@ -1,4 +1,4 @@
-import { MembershipRole, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
 import { IconAddressBook, IconMail, IconPhone } from "@tabler/icons-react";
 
@@ -77,7 +77,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
           </div>
         </dl>
       </CardContent>
-      {user.role !== MembershipRole.MEMBER || user.contactAssignments.some((a) => a.contactId === contact.id) ? (
+      {!user.isMember || user.contactAssignments.some((a) => a.contactId === contact.id) ? (
         <CardFooter>
           <Button variant="outline" className="ml-auto" asChild>
             <Link to={`/contacts/${contact.id}/edit`}>Edit</Link>
