@@ -21,6 +21,10 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  if (process.env.MAINTENANCE_MODE && new URL(request.url).pathname !== "/maintenance") {
+    return redirect("/maintenance", { status: 307 });
+  }
+
   const session = await SessionService.getSession(request);
   const userId = await SessionService.getUserId(request);
   const org = await SessionService.getOrg(request);
