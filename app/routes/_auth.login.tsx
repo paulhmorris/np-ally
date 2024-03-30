@@ -15,8 +15,8 @@ import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
 import { safeRedirect } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
+import { verifyLogin } from "~/services.server/auth";
 import { SessionService } from "~/services.server/session";
-import { verifyLogin } from "~/services.server/user";
 
 const validator = withZod(
   z.object({
@@ -49,7 +49,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { email, password, remember, redirectTo } = result.data;
-  const user = await verifyLogin(email, password);
+  const user = await verifyLogin({ username: email, password });
 
   if (!user) {
     return validationError({

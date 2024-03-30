@@ -1,16 +1,7 @@
 import type { PasswordReset, User } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import dayjs from "dayjs";
 
 import { db } from "~/integrations/prisma.server";
-
-export function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
-
-export function comparePasswords(password: string, hash: string) {
-  return bcrypt.compare(password, hash);
-}
 
 export function getPasswordResetByToken(token: PasswordReset["token"]) {
   return db.passwordReset.findUnique({

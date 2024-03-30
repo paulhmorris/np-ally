@@ -21,7 +21,7 @@ import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { CheckboxSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
-import { MailService } from "~/services.server/MailService.server";
+import { MailService } from "~/services.server/mail";
 import { generatePasswordReset } from "~/services.server/password";
 import { SessionService } from "~/services.server/session";
 

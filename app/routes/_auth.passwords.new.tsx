@@ -13,9 +13,9 @@ import { unauthorized } from "~/lib/responses.server";
 import { sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
-import { expirePasswordReset, getPasswordResetByToken, hashPassword } from "~/services.server/password";
+import { hashPassword, verifyLogin } from "~/services.server/auth";
+import { expirePasswordReset, getPasswordResetByToken } from "~/services.server/password";
 import { SessionService } from "~/services.server/session";
-import { verifyLogin } from "~/services.server/user";
 
 const validator = withZod(
   z
@@ -111,7 +111,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const hashedPassword = await hashPassword(newPassword);
   if (isReset) {
     // Check old password is correct
-    const user = await verifyLogin(userFromToken.username, oldPassword);
+    const user = await verifyLogin({ username: userFromToken.username, password: oldPassword });
     if (!user) {
       return validationError({
         fieldErrors: {

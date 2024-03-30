@@ -58,6 +58,7 @@ enum MembershipRole {
 model Organization {
   id       String    @id @default(cuid())
   name     String
+  host     String?
   accounts Account[]
 
   createdAt DateTime @default(now())

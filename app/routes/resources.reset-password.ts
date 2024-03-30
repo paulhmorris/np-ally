@@ -8,7 +8,7 @@ import { z } from "zod";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
-import { MailService } from "~/services.server/MailService.server";
+import { MailService } from "~/services.server/mail";
 import { deletePasswordReset, generatePasswordReset, getPasswordResetByUserId } from "~/services.server/password";
 
 export const passwordResetValidator = withZod(
