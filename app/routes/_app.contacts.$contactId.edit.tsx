@@ -26,6 +26,7 @@ import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { UpdateContactSchema } from "~/models/schemas";
+import { getContactTypes } from "~/services.server/contact";
 import { SessionService } from "~/services.server/session";
 
 const UpdateContactValidator = withZod(UpdateContactSchema);
@@ -53,7 +54,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   const [contactTypes, usersWhoCanBeAssigned] = await Promise.all([
-    db.contactType.findMany({ where: { OR: [{ orgId }, { orgId: null }] } }),
+    getContactTypes(orgId),
     db.user.findMany({
       where: {
         memberships: {

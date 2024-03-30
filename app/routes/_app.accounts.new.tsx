@@ -15,6 +15,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
+import { getAccountTypes } from "~/services.server/account";
 import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
@@ -30,7 +31,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const accountTypes = await db.accountType.findMany();
+  const accountTypes = await getAccountTypes(orgId);
   const users = await db.user.findMany({
     where: {
       memberships: {

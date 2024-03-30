@@ -24,6 +24,7 @@ import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
+import { getTransactionItemMethods } from "~/services.server/transaction";
 
 const validator = withZod(
   z.object({
@@ -54,7 +55,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       include: { user: { select: { contact: { select: { email: true } } } } },
       orderBy: { createdAt: "desc" },
     }),
-    db.transactionItemMethod.findMany({ where: { orgId } }),
+    getTransactionItemMethods(orgId),
     db.account.findMany({
       where: { user: user.isMember ? { id: user.id } : undefined, orgId },
       include: { type: true },

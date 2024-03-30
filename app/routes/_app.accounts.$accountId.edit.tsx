@@ -17,6 +17,7 @@ import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
+import { getAccountTypes } from "~/services.server/account";
 import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
@@ -37,7 +38,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const [account, accountTypes, users] = await Promise.all([
     db.account.findUnique({ where: { id: params.accountId, orgId }, include: { user: true } }),
-    db.accountType.findMany({ where: { orgId } }),
+    getAccountTypes(orgId),
     db.user.findMany({
       where: {
         memberships: {

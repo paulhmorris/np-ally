@@ -16,6 +16,7 @@ import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
+import { getTransactionItemMethods } from "~/services.server/transaction";
 
 const validator = withZod(
   z.object({
@@ -35,7 +36,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const [accounts, transactionItemMethods] = await Promise.all([
     db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
-    db.transactionItemMethod.findMany({ where: { orgId } }),
+    getTransactionItemMethods(orgId),
   ]);
 
   return typedjson({
