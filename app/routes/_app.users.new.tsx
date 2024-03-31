@@ -92,7 +92,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       },
       account: {
-        connect: accountId ? { id: accountId } : undefined,
+        connect: accountId
+          ? {
+              id: accountId,
+            }
+          : undefined,
       },
       contact: {
         create: {
@@ -103,6 +107,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     },
   });
+
+  // Create account subscription
+  if (accountId) {
+    await db.account.update({
+      where: { id: accountId, orgId },
+      data: {
+        subscribers: {
+          create: {
+            subscriberId: user.contactId,
+            orgId,
+          },
+        },
+      },
+    });
+  }
 
   if (sendPasswordSetup) {
     const { token } = await generatePasswordReset(user.username);
