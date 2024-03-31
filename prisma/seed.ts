@@ -38,8 +38,8 @@ async function seed() {
 
   // TODO: change admin org host
   const _org = await db.organization.create({ data: { name: "NP Ally", host: "np-ally.com" } });
-  const org = await db.organization.create({ data: { name: "Alliance 436" } });
-  const org2 = await db.organization.create({ data: { name: "Moms of Courage" } });
+  const org = await db.organization.create({ data: { name: "Alliance 436", host: "alliance436.org" } });
+  const org2 = await db.organization.create({ data: { name: "Moms of Courage", host: "momsofcourage.org" } });
 
   await db.$transaction([
     db.transactionItemType.createMany({ data: transactionItemTypes }),
