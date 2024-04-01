@@ -5,6 +5,8 @@ import { resend } from "~/integrations/resend.server";
 import { Sentry } from "~/integrations/sentry";
 import { capitalize } from "~/lib/utils";
 
+import { WelcomeEmail } from "../../emails/welcome";
+
 export type CreateEmailOptions = Parameters<typeof resend.emails.send>[0];
 export type CreateEmailRequestOptions = Parameters<typeof resend.emails.send>[1];
 
@@ -39,11 +41,11 @@ export const MailService = {
         to: email,
         subject: "Reset Your Password",
         html: `
-          <p>Hi there,</p>
-          <p>Someone requested a password reset for your ${org.name} account. If this was you, please click the link below to reset your password. The link will expire in 15 minutes.</p>
-          <p><a style="color:#976bff" href="${url.toString()}" target="_blank">Reset Password</a></p>
-          <p>If you did not request a password reset, you can safely ignore this email.</p>
-          `,
+        <p>Hi there,</p>
+        <p>Someone requested a password reset for your ${org.name} account. If this was you, please click the link below to reset your password. The link will expire in 15 minutes.</p>
+        <p><a style="color:#976bff" href="${url.toString()}" target="_blank">Reset Password</a></p>
+        <p>If you did not request a password reset, you can safely ignore this email.</p>
+        `,
       });
       return { data };
     } catch (error) {
@@ -70,11 +72,7 @@ export const MailService = {
         from: `${org.name} <no-reply@${org.host}>`,
         to: email,
         subject: "Setup Your Password",
-        html: `
-          <p>Hi there,</p>
-          <p>Someone created an ${org.name} account for you. Click the link below to setup a password. The link will expire in 15 minutes.</p>
-          <p><a style="color:#976bff" href="${url.toString()}" target="_blank">Setup Password</a></p>
-       `,
+        react: <WelcomeEmail userFirstname="Paul" orgName={org.name} url={url.toString()} />,
       });
       return { data };
     } catch (error) {
