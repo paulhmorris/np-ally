@@ -8,7 +8,7 @@ export default function AuthLayout() {
         <Outlet />
       </main>
       <footer className="mx-auto mb-8 mt-auto shrink">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs">
           {new Date().getFullYear()} •{" "}
           <a
             href="https://getcosmic.dev"

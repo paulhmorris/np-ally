@@ -1,47 +1,23 @@
 import { test as teardown } from "@playwright/test";
 
-import prisma from "test/e2e/helpers/prisma";
+import db from "test/e2e/helpers/db";
 
 teardown("delete test data", async ({}) => {
-  const users = await prisma.user.deleteMany({
-    where: {
-      username: {
-        contains: "e2e-",
-      },
-    },
-  });
-  const contacts = await prisma.contact.deleteMany({
-    where: {
-      email: {
-        contains: "e2e-",
-      },
-    },
-  });
-  const transactionItems = await prisma.transactionItem.deleteMany({
-    where: {
-      transaction: {
-        account: {
-          description: {
-            contains: "E2E",
-          },
-        },
-      },
-    },
-  });
-  const transactions = await prisma.transaction.deleteMany({
-    where: {
-      account: {
-        description: {
-          contains: "E2E",
-        },
-      },
-    },
-  });
+  const [memberships, users, contacts, trxItems, trx] = await db.$transaction([
+    db.membership.deleteMany({ where: { user: { username: { contains: "e2e-" } } } }),
+    db.user.deleteMany({ where: { username: { contains: "e2e-" } } }),
+    db.contact.deleteMany({ where: { email: { contains: "e2e-" } } }),
+    db.transactionItem.deleteMany({ where: { transaction: { account: { description: { contains: "E2E" } } } } }),
+    db.transaction.deleteMany({ where: { account: { description: { contains: "E2E" } } } }),
+    db.account.deleteMany({ where: { description: { contains: "E2E" } } }),
+    db.organization.deleteMany({ where: { host: { contains: "E2E-Test" } } }),
+  ]);
 
   console.info("Deleted test data:", {
+    memberships: memberships.count,
     users: users.count,
     contacts: contacts.count,
-    transactionItems: transactionItems.count,
-    transactions: transactions.count,
+    transactionItems: trxItems.count,
+    transactions: trx.count,
   });
 });

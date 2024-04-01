@@ -1,4 +1,4 @@
-import { TransactionItemTypeDirection } from "@prisma/client";
+import { Prisma, TransactionItemTypeDirection } from "@prisma/client";
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -20,14 +20,16 @@ import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { notifySubscribersJob } from "~/jobs/notify-subscribers.server";
 import { TransactionItemType } from "~/lib/constants";
+import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
 import { SessionService } from "~/services.server/session";
-import { getTransactionItemMethods } from "~/services.server/transaction";
+import { generateTransactionItems, getTransactionItemMethods } from "~/services.server/transaction";
 
 const validator = withZod(
   z.object({
@@ -80,59 +82,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (result.error) {
     return validationError(result.error);
   }
-  const { transactionItems, shouldNotifyUser, accountId, contactId, ...rest } = result.data;
+  const { transactionItems, shouldNotifyUser, contactId, ...rest } = result.data;
+  try {
+    const { transactionItems: trxItems, totalInCents } = await generateTransactionItems(transactionItems, orgId);
 
-  const trxItemTypes = await db.transactionItemType.findMany({ where: { OR: [{ orgId }, { orgId: null }] } });
-  const total = transactionItems.reduce((acc, i) => {
-    const type = trxItemTypes.find((t) => t.id === i.typeId);
-    if (!type) {
-      return acc;
-    }
-    const modifier = type.direction === TransactionItemTypeDirection.IN ? 1 : -1;
-    return acc + i.amountInCents * modifier;
-  }, 0);
-
-  const transaction = await db.transaction.create({
-    select: {
-      amountInCents: true,
-      account: {
-        select: { code: true, id: true },
+    const transaction = await db.transaction.create({
+      data: {
+        contactId: contactId || undefined,
+        amountInCents: totalInCents,
+        transactionItems: { createMany: { data: trxItems } },
+        orgId,
+        ...rest,
       },
-    },
-    data: {
-      ...rest,
-      orgId,
-      amountInCents: total,
-      accountId,
-      contactId,
-      transactionItems: {
-        createMany: {
-          data: transactionItems.map((i) => {
-            const type = trxItemTypes.find((t) => t.id === i.typeId);
-            if (!type) {
-              return { ...i, orgId };
-            }
-            const modifier = type.direction === TransactionItemTypeDirection.IN ? 1 : -1;
-            return {
-              ...i,
-              orgId,
-              amountInCents: i.amountInCents * modifier,
-            };
-          }),
-        },
-      },
-    },
-  });
-
-  if (shouldNotifyUser) {
-    const account = await db.account.findUnique({
-      where: { id: result.data.accountId },
       select: {
-        user: {
+        account: {
           select: {
-            contact: {
+            code: true,
+            id: true,
+            user: {
               select: {
-                email: true,
+                contact: {
+                  select: {
+                    email: true,
+                  },
+                },
               },
             },
           },
@@ -140,32 +113,43 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    if (!account) {
-      return toast.json(
-        request,
-        { message: "Error notifying subscribers" },
-        {
-          type: "error",
-          title: "Error notifying subscribers",
-          description: "We couldn't find the account for this transaction. Please contact support.",
-        },
-        { status: 404 },
-      );
+    if (shouldNotifyUser) {
+      const email = transaction.account.user?.contact.email;
+      if (!email) {
+        return toast.json(
+          request,
+          { message: "Error notifying subscribers" },
+          {
+            type: "error",
+            title: "Error notifying subscribers",
+            description: "We couldn't find the account for this transaction. Please contact support.",
+          },
+          { status: 404 },
+        );
+      }
+
+      const key = nanoid();
+      await notifySubscribersJob.invoke({ to: email }, { idempotencyKey: key });
     }
 
-    const key = nanoid();
-    if (account.user?.contact.email) {
-      await notifySubscribersJob.invoke({ to: account.user.contact.email }, { idempotencyKey: key });
+    return toast.redirect(request, `/accounts/${transaction.account.id}`, {
+      type: "success",
+      title: "Success",
+      description: `Income of ${formatCentsAsDollars(totalInCents)} added to account ${transaction.account.code}`,
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    let description = "An error occurred while creating the expense";
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      description = getPrismaErrorText(error);
     }
+    return toast.redirect(request, "/expense/new", {
+      type: "error",
+      title: "Error creating expense",
+      description,
+    });
   }
-
-  return toast.redirect(request, `/accounts/${transaction.account.id}`, {
-    type: "success",
-    title: "Success",
-    description: `Income of ${formatCentsAsDollars(transaction.amountInCents)} added to account ${
-      transaction.account.code
-    }`,
-  });
 };
 
 export default function AddIncomePage() {

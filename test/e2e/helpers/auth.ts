@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { MembershipRole, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-import prisma from "test/e2e/helpers/prisma";
+import prisma from "test/e2e/helpers/db";
 import { ContactType } from "~/lib/constants";
 
 export async function createAdmin() {
@@ -12,7 +12,7 @@ export async function createAdmin() {
     username: `e2e-admin-${faker.internet.email().toLowerCase()}`,
     password: faker.internet.password(),
   };
-  const org = await prisma.organization.findFirst();
+  const org = await prisma.organization.findUnique({ where: { host: "E2E-Test.org" } });
   if (!org) {
     throw new Error("No organization found. Please create one.");
   }
