@@ -80,7 +80,8 @@ export const donationSummaryJob = trigger.defineJob({
       const to = a.subscribers.map((s) => s.subscriber.email).filter(Boolean);
 
       return {
-        from: `${a.org.name} <${a.org.replyToEmail ?? "no-reply"}@${a.org.host}>`,
+        // TODO: remove once orgs are required
+        from: `${a.org?.name} <${a.org?.replyToEmail ?? "no-reply"}@${a.org?.host}>`,
         to,
         subject: "Weekly Donation Summary",
         html: `Account ${a.code} has received ${total} this week. Log in to see more details.`,
