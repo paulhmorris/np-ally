@@ -31,10 +31,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.getUser(request);
   const orgId = await SessionService.getOrgId(request);
 
-  if (user) {
-    if (!orgId) {
-      return redirect("/choose-org");
-    }
+  if (user && orgId) {
     return redirect("/");
   }
 

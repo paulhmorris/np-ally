@@ -125,7 +125,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }),
   ]);
 
-  return toast.redirect(request, `/accounts`, {
+  return toast.redirect(request, `/accounts/${toAccountId}`, {
     type: "success",
     title: "Success",
     description: `Transfer completed successfully.`,

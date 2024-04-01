@@ -316,7 +316,7 @@ export default function ReimbursementRequestPage() {
                     if (!receipt.s3Url) {
                       return (
                         <span key={receipt.id} className="text-muted-foreground">
-                          {receipt.title} (Link missing or broken)
+                          {receipt.title} (Link missing or broken - try refreshing)
                         </span>
                       );
                     }
