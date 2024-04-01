@@ -1,4 +1,4 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -15,11 +15,12 @@ import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { prisma } from "~/integrations/prisma.server";
+import { useUser } from "~/hooks/useUser";
+import { db } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { cn, formatCentsAsDollars, useUser } from "~/lib/utils";
-import { SessionService } from "~/services/SessionService.server";
+import { cn, formatCentsAsDollars } from "~/lib/utils";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -30,9 +31,10 @@ const validator = withZod(
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.transactionId, "transactionId not found");
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
 
-  const transaction = await prisma.transaction.findUnique({
-    where: { id: params.transactionId },
+  const transaction = await db.transaction.findUnique({
+    where: { id: params.transactionId, orgId },
     include: {
       account: {
         include: {
@@ -48,7 +50,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     },
   });
-  if (user.role === UserRole.USER && transaction?.account.user?.id !== user.id) {
+  if (user.isMember && transaction?.account.user?.id !== user.id) {
     throw forbidden({ message: "You do not have permission to view this transaction" });
   }
   if (!transaction) throw notFound({ message: "Transaction not found" });
@@ -63,6 +65,8 @@ export const meta: MetaFunction = () => [{ title: "Transaction Details | Allianc
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -70,7 +74,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   const { transactionId } = params;
 
-  const trx = await prisma.transaction.delete({ where: { id: transactionId }, include: { account: true } });
+  const trx = await db.transaction.delete({ where: { id: transactionId, orgId }, include: { account: true } });
   return toast.redirect(request, "/transactions", {
     type: "success",
     title: "Transaction deleted",

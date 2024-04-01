@@ -1,13 +1,8 @@
 import { Contact } from "@prisma/client";
-import { useMatches } from "@remix-run/react";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { FilterFn } from "@tanstack/react-table";
 import clsx, { ClassValue } from "clsx";
-import { useMemo } from "react";
-import { UseDataFunctionReturn } from "remix-typedjson";
 import { twMerge } from "tailwind-merge";
-
-import { loader } from "~/root";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -33,49 +28,9 @@ export function safeRedirect(
   return to;
 }
 
-/**
- * This base hook is used in other hooks to quickly search for specific data
- * across all loader data using useMatches.
- * @param {string} id The route id
- * @returns {JSON|undefined} The router data or undefined if not found
- */
-export function useMatchesData(id: string): Record<string, unknown> | undefined {
-  const matchingRoutes = useMatches();
-  const route = useMemo(() => matchingRoutes.find((route) => route.id === id), [matchingRoutes, id]);
-  return route?.data as Record<string, unknown>;
-}
-
-function isUser(user: unknown): user is UseDataFunctionReturn<typeof loader>["user"] {
-  return user != null && typeof user === "object" && "contactId" in user && typeof user.contactId === "string";
-}
-
-export function useOptionalUser() {
-  const data = useMatchesData("root");
-  if (!data || !isUser(data.user)) {
-    return undefined;
-  }
-  return data.user;
-}
-
-export function useUser() {
-  const maybeUser = useOptionalUser();
-  if (!maybeUser) {
-    throw new Error(
-      "No user found in root loader, but user is required by useUser. If user is optional, try useOptionalUser instead.",
-    );
-  }
-  return maybeUser;
-}
-
-export function validateEmail(email: unknown): email is string {
-  return typeof email === "string" && email.length > 3 && email.includes("@");
-}
-
 export function cn(...inputs: Array<ClassValue>) {
   return twMerge(clsx(inputs));
 }
-
-export const isBrowser = typeof document !== "undefined" && typeof process === "undefined";
 
 export function normalizeEnum(value: string) {
   const wordsToKeepLowercase = ["a", "an", "the", "and", "but", "or", "for", "of"];

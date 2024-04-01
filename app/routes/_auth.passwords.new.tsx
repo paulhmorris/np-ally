@@ -8,14 +8,14 @@ import { z } from "zod";
 import { ErrorComponent } from "~/components/error-component";
 import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { db } from "~/integrations/prisma.server";
 import { unauthorized } from "~/lib/responses.server";
 import { sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
-import { verifyLogin } from "~/models/user.server";
-import { PasswordService } from "~/services/PasswordService.server";
-import { SessionService } from "~/services/SessionService.server";
-import { UserService } from "~/services/UserService.server";
+import { hashPassword, verifyLogin } from "~/services.server/auth";
+import { expirePasswordReset, getPasswordResetByToken } from "~/services.server/password";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z
@@ -51,7 +51,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw unauthorized("No token provided");
   }
 
-  const reset = await PasswordService.getPasswordResetByToken(token);
+  const reset = await getPasswordResetByToken(token);
   if (!reset || reset.expiresAt < new Date()) {
     throw unauthorized("Invalid token");
   }
@@ -75,7 +75,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Check token
   const { oldPassword, newPassword, token } = result.data;
-  const reset = await PasswordService.getPasswordResetByToken(token);
+  const reset = await getPasswordResetByToken(token);
   if (!reset) {
     return toast.json(request, {}, { type: "error", title: "Token not found", description: "Please try again." });
   }
@@ -95,7 +95,10 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Check user
-  const userFromToken = await UserService.getUserById(reset.userId, { include: { contact: true } });
+  const userFromToken = await db.user.findUnique({
+    where: { id: reset.userId },
+    include: { contact: true },
+  });
   if (!userFromToken) {
     return toast.json(
       request,
@@ -105,9 +108,10 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Reset flow
+  const hashedPassword = await hashPassword(newPassword);
   if (isReset) {
     // Check old password is correct
-    const user = await verifyLogin(userFromToken.username, oldPassword);
+    const user = await verifyLogin({ username: userFromToken.username, password: oldPassword });
     if (!user) {
       return validationError({
         fieldErrors: {
@@ -117,14 +121,34 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Reset password
-    await UserService.resetOrSetupUserPassword({ userId: user.id, password: newPassword });
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        password: {
+          upsert: {
+            create: { hash: hashedPassword },
+            update: { hash: hashedPassword },
+          },
+        },
+      },
+    });
   } else {
     // Setup flow
-    await UserService.resetOrSetupUserPassword({ userId: userFromToken.id, password: newPassword });
+    await db.user.update({
+      where: { id: userFromToken.id },
+      data: {
+        password: {
+          upsert: {
+            create: { hash: hashedPassword },
+            update: { hash: hashedPassword },
+          },
+        },
+      },
+    });
   }
 
   // Use token
-  await PasswordService.expirePasswordReset(token);
+  await expirePasswordReset(token);
 
   return toast.redirect(request, "/login", {
     type: "success",

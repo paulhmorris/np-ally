@@ -13,6 +13,12 @@ export function ContactDropdown(
   const { types, contacts, name, label, ...rest } = props;
   return (
     <FormSelect name={name} label={label} placeholder="Select contact" {...rest}>
+      {contacts.length === 0 ? (
+        // @ts-expect-error see https://github.com/radix-ui/primitives/issues/1569#issuecomment-1567414323
+        <SelectItem value={null} disabled>
+          No Contacts
+        </SelectItem>
+      ) : null}
       {types.map((type) => {
         if (!contacts.some((c) => c.typeId === type.id)) {
           return null;

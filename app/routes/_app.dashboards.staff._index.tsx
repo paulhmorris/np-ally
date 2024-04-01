@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import { type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -11,43 +10,29 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { AccountBalanceCard } from "~/components/users/balance-card";
-import { prisma } from "~/integrations/prisma.server";
-import { useUser } from "~/lib/utils";
-import { SessionService } from "~/services/SessionService.server";
+import { useUser } from "~/hooks/useUser";
+import { db } from "~/integrations/prisma.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Home | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
 
   const [total, reimbursementRequests, announcement] = await Promise.all([
-    prisma.transaction.aggregate({
+    db.transaction.aggregate({
       where: {
+        orgId,
         account: {
           user: { id: user.id },
         },
       },
       _sum: { amountInCents: true },
     }),
-    // prisma.contact.findMany({
-    //   where: {
-    //     assignedUsers: {
-    //       some: {
-    //         userId: user.id,
-    //       },
-    //     },
-    //     engagements: {
-    //       some: {},
-    //       every: {
-    //         date: {
-    //           lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    //         },
-    //       },
-    //     },
-    //   },
-    // }),
-    prisma.reimbursementRequest.findMany({
+    db.reimbursementRequest.findMany({
       where: {
+        orgId,
         userId: user.id,
         status: "PENDING",
       },
@@ -61,8 +46,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
         createdAt: "desc",
       },
     }),
-    prisma.announcement.findFirst({
+    db.announcement.findFirst({
       where: {
+        orgId,
         OR: [
           {
             expiresAt: { gt: dayjs().utc().toDate() },
@@ -88,7 +74,7 @@ export default function Index() {
       <PageHeader title="Home" />
       <PageContainer className="max-w-4xl">
         <div className="mb-4">{announcement ? <AnnouncementCard announcement={announcement} /> : null}</div>
-        {user.role === UserRole.USER ? (
+        {user.isMember ? (
           <div className="space-y-5">
             <div className="max-w-[320px]">
               <AccountBalanceCard totalCents={total} accountId={user.accountId ?? undefined} />

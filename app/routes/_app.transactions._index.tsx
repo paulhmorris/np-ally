@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
@@ -6,24 +5,26 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { TransactionsTable } from "~/components/transactions/transactions-table";
-import { prisma } from "~/integrations/prisma.server";
-import { SessionService } from "~/services/SessionService.server";
+import { db } from "~/integrations/prisma.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Transactions | Alliance 436" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
-  const transactions = await prisma.transaction.findMany({
-    where:
-      user.role === UserRole.USER
+  const orgId = await SessionService.requireOrgId(request);
+
+  const transactions = await db.transaction.findMany({
+    where: {
+      orgId,
+      account: user.isMember
         ? {
-            account: {
-              user: {
-                id: user.id,
-              },
+            user: {
+              id: user.id,
             },
           }
-        : {},
+        : undefined,
+    },
     include: {
       contact: true,
       account: true,

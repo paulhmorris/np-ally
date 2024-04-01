@@ -1,4 +1,4 @@
-import { ReimbursementRequestStatus, UserRole } from "@prisma/client";
+import { ReimbursementRequestStatus } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -16,13 +16,15 @@ import { Callout } from "~/components/ui/callout";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { useUser } from "~/hooks/useUser";
+import { db } from "~/integrations/prisma.server";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
-import { getToday, useUser } from "~/lib/utils";
+import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
+import { getTransactionItemMethods } from "~/services.server/transaction";
 
 const validator = withZod(
   z.object({
@@ -40,19 +42,22 @@ export const meta: MetaFunction = () => [{ title: "New Reimbursement Request | A
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const [receipts, methods, accounts] = await Promise.all([
-    prisma.receipt.findMany({
+    db.receipt.findMany({
       // Admins can see all receipts, users can only see their own
       where: {
-        userId: user.role === "USER" ? user.id : undefined,
+        orgId,
+        userId: user.isMember ? user.id : undefined,
         reimbursementRequests: { none: {} },
       },
       include: { user: { select: { contact: { select: { email: true } } } } },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.transactionItemMethod.findMany(),
-    prisma.account.findMany({
-      where: user.role === UserRole.USER ? { user: { id: user.id } } : undefined,
+    getTransactionItemMethods(orgId),
+    db.account.findMany({
+      where: { user: user.isMember ? { id: user.id } : undefined, orgId },
       include: { type: true },
       orderBy: { code: "asc" },
     }),
@@ -62,6 +67,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -69,9 +76,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { receiptId, ...data } = result.data;
 
-  const reimbursementRequest = await prisma.reimbursementRequest.create({
+  const reimbursementRequest = await db.reimbursementRequest.create({
     data: {
       ...data,
+      orgId,
       userId: user.id,
       status: ReimbursementRequestStatus.PENDING,
       receipts: receiptId
@@ -88,7 +96,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     reimbursementRequestId: reimbursementRequest.id,
   });
 
-  return toast.redirect(request, `/dashboards/${user.role === UserRole.USER ? "staff" : "admin"}`, {
+  return toast.redirect(request, `/dashboards/${user.isMember ? "staff" : "admin"}`, {
     type: "success",
     title: "Reimbursement request submitted",
     description: "Your request will be processed as soon as possible.",
@@ -157,7 +165,7 @@ export default function NewReimbursementPage() {
                     {r.title}{" "}
                     <span className="inline-block text-xs text-muted-foreground">
                       {dayjs(r.createdAt).format("M/D")}
-                      {user.role !== "USER" ? ` by ${r.user.contact.email}` : null}
+                      {!user.isMember ? ` by ${r.user.contact.email}` : null}
                     </span>
                   </span>
                 ),

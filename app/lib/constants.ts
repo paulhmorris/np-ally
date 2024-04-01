@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, TransactionItemTypeDirection } from "@prisma/client";
 
 export enum AccountType {
   Operating = 1,
@@ -58,18 +58,22 @@ export const transactionItemMethods: Array<{ id: TransactionItemMethod; name: st
   { id: 7, name: "Other" },
 ];
 
-export const transactionItemTypes: Array<{ id: TransactionItemType; name: string }> = [
-  { id: 1, name: "Donation" },
-  { id: 2, name: "Income" },
-  { id: 3, name: "Expense" },
-  { id: 4, name: "Compensation" },
-  { id: 5, name: "Grant" },
-  { id: 6, name: "Tax" },
-  { id: 7, name: "Transfer In" },
-  { id: 8, name: "Transfer Out" },
-  { id: 9, name: "Other (Incoming)" },
-  { id: 10, name: "Other (Outgoing)" },
-  { id: 11, name: "Fee" },
+export const transactionItemTypes: Array<{
+  id: TransactionItemType;
+  name: string;
+  direction: TransactionItemTypeDirection;
+}> = [
+  { id: 1, name: "Donation", direction: TransactionItemTypeDirection.IN },
+  { id: 2, name: "Income", direction: TransactionItemTypeDirection.IN },
+  { id: 3, name: "Expense", direction: TransactionItemTypeDirection.OUT },
+  { id: 4, name: "Compensation", direction: TransactionItemTypeDirection.OUT },
+  { id: 5, name: "Grant", direction: TransactionItemTypeDirection.OUT },
+  { id: 6, name: "Tax", direction: TransactionItemTypeDirection.OUT },
+  { id: 7, name: "Transfer In", direction: TransactionItemTypeDirection.IN },
+  { id: 8, name: "Transfer Out", direction: TransactionItemTypeDirection.OUT },
+  { id: 9, name: "Other (Incoming)", direction: TransactionItemTypeDirection.IN },
+  { id: 10, name: "Other (Outgoing)", direction: TransactionItemTypeDirection.OUT },
+  { id: 11, name: "Fee", direction: TransactionItemTypeDirection.OUT },
 ];
 
 export const contactTypes: Array<{ id: ContactType; name: string }> = [
@@ -96,7 +100,7 @@ export const engagementTypes: Array<{ id: EngagementType; name: string }> = [
   { id: 5, name: "Mail" },
 ];
 
-export const defaultAccounts: Array<Prisma.AccountUncheckedCreateInput> = [
+export const defaultAccounts: Array<Omit<Prisma.AccountUncheckedCreateInput, "orgId">> = [
   { code: "1001", description: "General Fund", typeId: AccountType.Operating },
   { code: "1002", description: "Local", typeId: AccountType.Operating },
   { code: "1003", description: "International", typeId: AccountType.Operating },

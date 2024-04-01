@@ -1,4 +1,4 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
 import { IconAddressBook, IconMail, IconPhone } from "@tabler/icons-react";
 
@@ -6,8 +6,9 @@ import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { useUser } from "~/hooks/useUser";
 import { ContactType } from "~/lib/constants";
-import { formatPhoneNumber, getInitials, useUser } from "~/lib/utils";
+import { formatPhoneNumber, getInitials } from "~/lib/utils";
 
 type Contact = Prisma.ContactGetPayload<{ include: { address: true; type: true } }>;
 export function ContactCard({ contact }: { contact: Contact }) {
@@ -76,7 +77,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
           </div>
         </dl>
       </CardContent>
-      {user.role !== UserRole.USER || user.contactAssignments.some((a) => a.contactId === contact.id) ? (
+      {!user.isMember || user.contactAssignments.some((a) => a.contactId === contact.id) ? (
         <CardFooter>
           <Button variant="outline" className="ml-auto" asChild>
             <Link to={`/contacts/${contact.id}/edit`}>Edit</Link>

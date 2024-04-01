@@ -5,11 +5,11 @@ import { typedjson } from "remix-typedjson";
 import { validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
-import { MailService } from "~/services/MailService.server";
-import { PasswordService } from "~/services/PasswordService.server";
-import { UserService } from "~/services/UserService.server";
+import { MailService } from "~/services.server/mail";
+import { deletePasswordReset, generatePasswordReset, getPasswordResetByUserId } from "~/services.server/password";
 
 export const passwordResetValidator = withZod(
   z.object({
@@ -23,12 +23,20 @@ export async function action({ request }: ActionFunctionArgs) {
     return typedjson({ status: 405 });
   }
 
+  const url = new URL(request.url);
+  let org = await db.organization.findUnique({ where: { host: url.hostname } });
+
+  // If the reset is initiated from a non-org domain, use backup NP Ally Org
+  if (!org) {
+    org = await db.organization.findUniqueOrThrow({ where: { host: "np-ally.com" } });
+  }
+
   const result = await passwordResetValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
 
-  const user = await UserService.getUserByUsername(result.data.username);
+  const user = await db.user.findUnique({ where: { username: result.data.username } });
   if (!user) {
     return toast.json(
       request,
@@ -41,7 +49,7 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  const existingReset = await PasswordService.getPasswordResetByUserId(user.id);
+  const existingReset = await getPasswordResetByUserId(user.id);
   if (existingReset) {
     return toast.json(
       request,
@@ -56,16 +64,16 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  const reset = await PasswordService.generatePasswordReset(user.username);
+  const reset = await generatePasswordReset(user.username);
   const { data, error } =
     result.data._action === "setup"
-      ? await MailService.sendPasswordSetupEmail({ email: user.username, token: reset.token })
-      : await MailService.sendPasswordResetEmail({ email: user.username, token: reset.token });
+      ? await MailService.sendPasswordSetupEmail({ email: user.username, token: reset.token, orgId: org.id })
+      : await MailService.sendPasswordResetEmail({ email: user.username, token: reset.token, orgId: org.id });
 
   // Unknown Resend error
   if (error || !data) {
     Sentry.captureException(error);
-    await PasswordService.deletePasswordReset(reset.id);
+    await deletePasswordReset(reset.token);
     return toast.json(
       request,
       { error },
@@ -80,7 +88,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // Email not sent
   if ("statusCode" in data && data.statusCode !== 200) {
     // Delete the reset if there was an error emailing the user
-    await PasswordService.deletePasswordReset(reset.id);
+    await deletePasswordReset(reset.id);
     return toast.json(
       request,
       { data },

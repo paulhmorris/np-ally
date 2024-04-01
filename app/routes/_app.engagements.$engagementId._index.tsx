@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -14,19 +13,21 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "View Engagement | Alliance 436" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.engagementId, "engagementId not found");
 
-  const engagement = await prisma.engagement.findUnique({
-    where: { id: Number(params.engagementId) },
+  const engagement = await db.engagement.findUnique({
+    where: { id: Number(params.engagementId), orgId },
     include: {
       contact: true,
       type: true,
@@ -42,6 +43,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.engagementId, "engagementId not found");
 
   const validator = withZod(z.object({ _action: z.literal("delete") }));
@@ -56,13 +59,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   try {
-    const engagement = await prisma.engagement.findUniqueOrThrow({
-      where: { id: Number(params.engagementId) },
+    const engagement = await db.engagement.findUniqueOrThrow({
+      where: { id: Number(params.engagementId), orgId },
       select: { userId: true },
     });
 
     // Users can only delete their own engagements
-    if (user.role === UserRole.USER) {
+    if (user.isMember) {
       if (engagement.userId !== user.id) {
         return toast.json(
           request,
@@ -77,7 +80,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       }
     }
 
-    await prisma.engagement.delete({ where: { id: Number(params.engagementId) } });
+    await db.engagement.delete({ where: { id: Number(params.engagementId), orgId } });
     return toast.redirect(request, "/engagements", {
       type: "success",
       title: "Engagement deleted",

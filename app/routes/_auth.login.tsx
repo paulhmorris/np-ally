@@ -5,16 +5,18 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { AuthCard } from "~/components/auth-card";
 import { ErrorComponent } from "~/components/error-component";
 import { Checkbox } from "~/components/ui/checkbox";
 import { FormField } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { Sentry } from "~/integrations/sentry";
+import { toast } from "~/lib/toast.server";
 import { safeRedirect } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
-import { verifyLogin } from "~/models/user.server";
-import { SessionService } from "~/services/SessionService.server";
+import { verifyLogin } from "~/services.server/auth";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -26,8 +28,16 @@ const validator = withZod(
 );
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const userId = await SessionService.getUserId(request);
-  if (userId) return redirect("/");
+  const user = await SessionService.getUser(request);
+  const orgId = await SessionService.getOrgId(request);
+
+  if (user) {
+    if (!orgId) {
+      return redirect("/choose-org");
+    }
+    return redirect("/");
+  }
+
   return json({});
 };
 
@@ -39,7 +49,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { email, password, remember, redirectTo } = result.data;
-  const user = await verifyLogin(email, password);
+  const user = await verifyLogin({ username: email, password });
 
   if (!user) {
     return validationError({
@@ -49,33 +59,74 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
+  if (user.memberships.length === 0) {
+    return toast.json(
+      request,
+      { message: "You are not a member of any organizations. Please contact your administrator." },
+      {
+        title: "Error",
+        type: "error",
+        description: "You are not a member of any organizations. Please contact your administrator.",
+      },
+    );
+  }
+
   Sentry.setUser({ id: user.id, email: user.username });
 
+  // If the user has a default membership or only one org, we can just log them in to that org
+  const defaultMembership = user.memberships.find((m) => m.isDefault);
+  if (user.memberships.length === 1 || defaultMembership) {
+    return SessionService.createUserSession({
+      request,
+      userId: user.id,
+      orgId: defaultMembership?.orgId ?? user.memberships[0].orgId,
+      redirectTo: safeRedirect(redirectTo, "/"),
+      remember: !!remember,
+    });
+  }
+
+  // Users who are in multiple organizations need to choose which one to log in to
+  const url = new URL(request.url);
+  const redirectUrl = new URL("/choose-org", url.origin);
+  if (redirectTo) {
+    redirectUrl.searchParams.set("redirectTo", redirectTo);
+  }
+
+  // Log the user in but require them to choose an organization
   return SessionService.createUserSession({
     request,
     userId: user.id,
-    redirectTo: safeRedirect(redirectTo, "/"),
+    redirectTo: redirectUrl.toString(),
     remember: !!remember,
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "Login | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Login" }];
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/";
 
   return (
-    <div className="min-w-[400px] px-8">
-      <h1 className="text-4xl font-extrabold">Alliance 436</h1>
+    <AuthCard>
+      <h1 className="text-4xl font-extrabold">Login</h1>
       <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
-        <FormField label="Email" id="email" name="email" type="email" autoComplete="email" required />
+        <FormField
+          label="Email"
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          defaultValue={process.env.NODE_ENV === "development" ? "paul@remix.run" : undefined}
+        />
         <FormField
           label="Password"
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
+          defaultValue={process.env.NODE_ENV === "development" ? "password" : undefined}
           required
         />
 
@@ -90,7 +141,7 @@ export default function LoginPage() {
         </div>
         <SubmitButton className="w-full">Log in</SubmitButton>
       </ValidatedForm>
-    </div>
+    </AuthCard>
   );
 }
 

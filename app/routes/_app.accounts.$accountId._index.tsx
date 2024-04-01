@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
 import { IconCoins, IconExclamationCircle, IconUser } from "@tabler/icons-react";
@@ -13,10 +12,10 @@ import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { AccountBalanceCard } from "~/components/users/balance-card";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { notFound, unauthorized } from "~/lib/responses.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
   {
@@ -27,19 +26,21 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.accountId, "accountId not found");
-  if (user.role === UserRole.USER && user.accountId !== params.accountId) {
+  if (user.isMember && user.accountId !== params.accountId) {
     throw unauthorized("You are not authorized to view this account.");
   }
 
-  const account = await prisma.account.findUnique({
-    where: { id: params.accountId },
+  const account = await db.account.findUnique({
+    where: { id: params.accountId, orgId },
     include: {
       type: true,
       user: {
         include: { contact: true },
       },
-      organization: true,
+      org: true,
       transactions: {
         include: {
           contact: true,
@@ -51,7 +52,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   if (!account) throw notFound({ message: "Account not found" });
 
-  const total = await prisma.transaction.aggregate({
+  const total = await db.transaction.aggregate({
     where: { accountId: account.id },
     _sum: { amountInCents: true },
   });

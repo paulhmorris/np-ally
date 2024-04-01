@@ -29,6 +29,9 @@
     --input: 20 5.9% 90%;
     --ring: 199 26% 40%;
     --radius: 0.5rem;
+
+    --white: 0 0% 100%;
+    --black: 0 0% 0%;
   }
 
   :root[class~="dark"] {
@@ -69,6 +72,10 @@
 
   ::selection {
     @apply bg-primary text-white;
+  }
+
+  h1 {
+    @apply text-pretty;
   }
 
   input[type="file" i]::-webkit-file-upload-button {

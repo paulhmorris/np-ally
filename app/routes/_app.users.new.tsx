@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole, UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -15,21 +15,23 @@ import { FormField, FormSelect } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { useUser } from "~/hooks/useUser";
+import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
-import { useUser } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
-import { MailService } from "~/services/MailService.server";
-import { PasswordService } from "~/services/PasswordService.server";
-import { SessionService } from "~/services/SessionService.server";
+import { getContactTypes } from "~/services.server/contact";
+import { MailService } from "~/services.server/mail";
+import { generatePasswordReset } from "~/services.server/password";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().optional(),
     username: z.string().email({ message: "Invalid email address" }),
-    role: z.nativeEnum(UserRole),
+    role: z.nativeEnum(MembershipRole),
+    systemRole: z.nativeEnum(UserRole),
     typeId: z.coerce.number().pipe(z.nativeEnum(ContactType)),
     sendPasswordSetup: CheckboxSchema,
     accountId: z.string().optional(),
@@ -40,27 +42,33 @@ export const meta: MetaFunction = () => [{ title: "New User | Alliance 436" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   return typedjson({
-    accounts: await prisma.account.findMany({
+    accounts: await db.account.findMany({
       where: {
+        orgId,
         user: null,
       },
       orderBy: { code: "asc" },
     }),
-    contactTypes: await prisma.contactType.findMany(),
+    contactTypes: await getContactTypes(orgId),
   });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authorizedUser = await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
 
-  const { role, username, sendPasswordSetup, accountId, ...contact } = result.data;
+  const { role, systemRole, username, sendPasswordSetup, accountId, ...contact } = result.data;
 
-  if (authorizedUser.role !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
+  // Someone trying to create a SUPERADMIN
+  if (systemRole === UserRole.SUPERADMIN && !authorizedUser.isSuperAdmin) {
     return toast.json(
       request,
       { message: "You do not have permission to create a Super Admin" },
@@ -73,15 +81,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const user = await prisma.user.create({
+  const user = await db.user.create({
     data: {
-      role,
+      role: UserRole.USER,
       username,
+      memberships: {
+        create: {
+          orgId,
+          role,
+        },
+      },
       account: {
-        connect: accountId ? { id: accountId } : undefined,
+        connect: accountId
+          ? {
+              id: accountId,
+            }
+          : undefined,
       },
       contact: {
         create: {
+          orgId,
           email: username,
           ...contact,
         },
@@ -89,9 +108,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     },
   });
 
+  // Create account subscription
+  if (accountId) {
+    await db.account.update({
+      where: { id: accountId, orgId },
+      data: {
+        subscribers: {
+          create: {
+            subscriberId: user.contactId,
+            orgId,
+          },
+        },
+      },
+    });
+  }
+
   if (sendPasswordSetup) {
-    const { token } = await PasswordService.generatePasswordReset(user.username);
-    await MailService.sendPasswordSetupEmail({ email: user.username, token });
+    const { token } = await generatePasswordReset(user.username);
+    await MailService.sendPasswordSetupEmail({ email: user.username, token, orgId });
   }
 
   return toast.redirect(request, `/users/${user.id}`, {
@@ -127,11 +161,18 @@ export default function NewUserPage() {
               label: type.name,
             }))}
           />
-          <FormSelect required name="role" label="Role" placeholder="Select a role">
-            <SelectItem value="USER">User</SelectItem>
-            <SelectItem value="ADMIN">Admin</SelectItem>
-            {user.role === UserRole.SUPERADMIN ? <SelectItem value="SUPERADMIN">Super Admin</SelectItem> : null}
+          <FormSelect required name="role" label="Organization Role" placeholder="Select an org role">
+            <SelectItem value={MembershipRole.MEMBER}>Member</SelectItem>
+            <SelectItem value={MembershipRole.ADMIN}>Admin</SelectItem>
           </FormSelect>
+          {user.isSuperAdmin ? (
+            <FormSelect required name="systemRole" label="System Role" placeholder="Select a system role">
+              <SelectItem value={UserRole.USER}>User</SelectItem>
+              <SelectItem value={UserRole.SUPERADMIN}>Super Admin</SelectItem>
+            </FormSelect>
+          ) : (
+            <input type="hidden" name="systemRole" value={UserRole.USER} />
+          )}
           <FormSelect
             name="accountId"
             label="Linked Account"

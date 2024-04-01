@@ -1,10 +1,11 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
 import dayjs from "dayjs";
 
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { formatCentsAsDollars, useUser } from "~/lib/utils";
+import { useUser } from "~/hooks/useUser";
+import { formatCentsAsDollars } from "~/lib/utils";
 
 type ReimbursementRequest = Prisma.ReimbursementRequestGetPayload<{
   include: { user: { include: { contact: true } }; account: true };
@@ -23,10 +24,10 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
             <TableHeader>
               <TableRow>
                 <TableHead className="w-48">Submitted On</TableHead>
-                {user.role !== UserRole.USER ? <TableHead>Submitted By</TableHead> : null}
+                {!user.isMember ? <TableHead>Submitted By</TableHead> : null}
                 <TableHead>Account</TableHead>
                 <TableHead>Amount</TableHead>
-                {user.role !== UserRole.USER ? (
+                {!user.isMember ? (
                   <TableHead>
                     <span className="sr-only">Action</span>
                   </TableHead>
@@ -37,10 +38,10 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
               {requests.map((req) => (
                 <TableRow key={req.id}>
                   <TableCell>{dayjs(req.createdAt).format("MM/DD/YYYY h:mm a")}</TableCell>
-                  {user.role !== UserRole.USER ? <TableCell>{req.user.contact.email}</TableCell> : null}
+                  {!user.isMember ? <TableCell>{req.user.contact.email}</TableCell> : null}
                   <TableCell>{req.account.code}</TableCell>
                   <TableCell>{formatCentsAsDollars(req.amountInCents)}</TableCell>
-                  {user.role !== UserRole.USER ? (
+                  {!user.isMember ? (
                     <TableCell>
                       <Link to={`/reimbursements/${req.id}`} className="font-medium text-primary">
                         View

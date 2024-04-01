@@ -7,10 +7,11 @@ import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Notifications } from "~/components/notifications";
+import { db } from "~/integrations/prisma.server";
 import { themeSessionResolver } from "~/lib/session.server";
 import { getGlobalToast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 import stylesheet from "~/tailwind.css";
 
 // prettier-ignore
@@ -25,11 +26,49 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const session = await SessionService.getSession(request);
+  const userId = await SessionService.getUserId(request);
+  const org = await SessionService.getOrg(request);
   const { getTheme } = await themeSessionResolver(request);
+
+  let user;
+  if (userId) {
+    const dbUser = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        contact: true,
+        contactAssignments: true,
+        memberships: true,
+      },
+    });
+
+    if (!dbUser) {
+      throw await SessionService.logout(request);
+    }
+
+    const currentMembership = dbUser.memberships.find((m) => m.orgId === org?.id);
+    if (org && !currentMembership) {
+      console.warn("No membership in the current org - logging out...");
+      throw await SessionService.logout(request);
+    }
+
+    const { pathname } = new URL(request.url);
+    if (!currentMembership && !pathname.includes("/choose-org")) {
+      return redirect("/choose-org");
+    }
+
+    user = {
+      ...dbUser,
+      role: currentMembership?.role,
+      systemRole: dbUser.role,
+      org: org ?? null,
+    };
+  }
 
   return typedjson(
     {
-      user: await SessionService.getUser(request),
+      user,
       theme: getTheme(),
       serverToast: getGlobalToast(session),
       ENV: {

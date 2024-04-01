@@ -8,7 +8,7 @@ import { DialogFooter } from "~/components/ui/dialog";
 import { DrawerDialog } from "~/components/ui/drawer-dialog";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SelectItem } from "~/components/ui/select";
-import { useUser } from "~/lib/utils";
+import { useUser } from "~/hooks/useUser";
 import { validator } from "~/routes/api.inquiries";
 
 export function NewInquiryModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {

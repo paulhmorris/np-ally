@@ -10,12 +10,13 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { TransactionItemType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
+import { getTransactionItemMethods } from "~/services.server/transaction";
 
 const validator = withZod(
   z.object({
@@ -31,9 +32,11 @@ export const meta: MetaFunction = () => [{ title: "Add Transfer | Alliance 436" 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const [accounts, transactionItemMethods] = await Promise.all([
-    prisma.account.findMany({ orderBy: { code: "asc" } }),
-    prisma.transactionItemMethod.findMany(),
+    db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+    getTransactionItemMethods(orgId),
   ]);
 
   return typedjson({
@@ -44,6 +47,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -63,8 +68,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const fromAccountBalance = await prisma.transaction.aggregate({
-    where: { accountId: result.data.fromAccountId },
+  const fromAccountBalance = await db.transaction.aggregate({
+    where: { accountId: result.data.fromAccountId, orgId },
     _sum: { amountInCents: true },
   });
 
@@ -83,16 +88,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  await prisma.$transaction([
+  await db.$transaction([
     // Transfer out
-    prisma.transaction.create({
+    db.transaction.create({
       data: {
         ...rest,
+        orgId,
         description: description ? description : `Transfer to ${toAccountId}`,
         accountId: fromAccountId,
         amountInCents: -1 * amountInCents,
         transactionItems: {
           create: {
+            orgId,
             amountInCents: -1 * amountInCents,
             typeId: TransactionItemType.Transfer_Out,
           },
@@ -100,14 +107,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     }),
     // Transfer in
-    prisma.transaction.create({
+    db.transaction.create({
       data: {
         ...rest,
+        orgId,
         description: description ? description : `Transfer from ${toAccountId}`,
         accountId: toAccountId,
         amountInCents: amountInCents,
         transactionItems: {
           create: {
+            orgId,
             amountInCents: amountInCents,
             typeId: TransactionItemType.Transfer_In,
           },

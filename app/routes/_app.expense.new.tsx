@@ -1,4 +1,4 @@
-import { TransactionItemTypeDirection } from "@prisma/client";
+import { Prisma, TransactionItemTypeDirection } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -17,12 +17,15 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/componen
 import { FormField, FormSelect } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
+import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { TransactionItemSchema } from "~/models/schemas";
-import { SessionService } from "~/services/SessionService.server";
-import { TransactionService } from "~/services/TransactionService.server";
+import { getContactTypes } from "~/services.server/contact";
+import { SessionService } from "~/services.server/session";
+import { generateTransactionItems, getTransactionItemMethods } from "~/services.server/transaction";
 
 const validator = withZod(
   z.object({
@@ -38,12 +41,19 @@ export const meta: MetaFunction = () => [{ title: "Add Expense | Alliance 436" }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
-    prisma.contact.findMany({ include: { type: true } }),
-    prisma.contactType.findMany(),
-    prisma.account.findMany({ orderBy: { code: "asc" } }),
-    TransactionService.getItemMethods(),
-    TransactionService.getItemTypes({ where: { direction: TransactionItemTypeDirection.OUT } }),
+    db.contact.findMany({ where: { orgId }, include: { type: true } }),
+    getContactTypes(orgId),
+    db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+    getTransactionItemMethods(orgId),
+    db.transactionItemType.findMany({
+      where: {
+        OR: [{ orgId }, { orgId: null }],
+        direction: TransactionItemTypeDirection.OUT,
+      },
+    }),
   ]);
 
   return typedjson({
@@ -60,38 +70,52 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
+  const { transactionItems, contactId, ...rest } = result.data;
 
-  const { transactionItems, accountId, contactId, ...rest } = result.data;
-  const total = transactionItems.reduce((acc, i) => acc - i.amountInCents, 0);
-  const transaction = await prisma.transaction.create({
-    data: {
-      ...rest,
-      account: {
-        connect: { id: accountId },
+  try {
+    const { transactionItems: trxItems, totalInCents } = await generateTransactionItems(transactionItems, orgId);
+    const transaction = await db.transaction.create({
+      data: {
+        contactId: contactId || undefined,
+        amountInCents: totalInCents,
+        transactionItems: { createMany: { data: trxItems } },
+        orgId,
+        ...rest,
       },
-      contact: contactId ? { connect: { id: contactId } } : undefined,
-      amountInCents: total,
-      transactionItems: {
-        createMany: {
-          data: transactionItems.map((i) => ({
-            ...i,
-            amountInCents: i.amountInCents * -1,
-          })),
+      select: {
+        account: {
+          select: {
+            id: true,
+            code: true,
+          },
         },
       },
-    },
-    include: { account: true },
-  });
+    });
 
-  return toast.redirect(request, `/accounts/${transaction.accountId}`, {
-    type: "success",
-    title: "Success",
-    description: `Expense of ${formatCentsAsDollars(total)} charged to account ${transaction.account.code}`,
-  });
+    return toast.redirect(request, `/accounts/${transaction.account.id}`, {
+      type: "success",
+      title: "Success",
+      description: `Expense of ${formatCentsAsDollars(totalInCents)} charged to account ${transaction.account.code}`,
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    let description = "An error occurred while creating the expense";
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      description = getPrismaErrorText(error);
+    }
+    return toast.redirect(request, "/expense/new", {
+      type: "error",
+      title: "Error creating expense",
+      description,
+    });
+  }
 };
 
 export default function AddExpensePage() {

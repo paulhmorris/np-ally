@@ -20,25 +20,28 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { useUser } from "~/hooks/useUser";
+import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { useUser } from "~/lib/utils";
 import { UpdateContactSchema } from "~/models/schemas";
-import { ContactService } from "~/services/ContactService.server";
-import { SessionService } from "~/services/SessionService.server";
+import { getContactTypes } from "~/services.server/contact";
+import { SessionService } from "~/services.server/session";
 
 const UpdateContactValidator = withZod(UpdateContactSchema);
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.contactId, "contactId not found");
 
   // Users can only edit their assigned contacts
-  if (user.role === UserRole.USER && params.contactId !== user.contactId) {
-    const assignment = await prisma.contactAssigment.findUnique({
+  if (user.isMember && params.contactId !== user.contactId) {
+    const assignment = await db.contactAssigment.findUnique({
       where: {
+        orgId,
         contactId_userId: {
           contactId: params.contactId,
           userId: user.id,
@@ -51,9 +54,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   const [contactTypes, usersWhoCanBeAssigned] = await Promise.all([
-    ContactService.getContactTypes(),
-    prisma.user.findMany({
+    getContactTypes(orgId),
+    db.user.findMany({
       where: {
+        memberships: {
+          some: { orgId },
+        },
         role: { notIn: [UserRole.SUPERADMIN] },
         contactId: { not: params.contactId },
       },
@@ -63,8 +69,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     }),
   ]);
 
-  const contact = await prisma.contact.findUnique({
-    where: { id: params.contactId },
+  const contact = await db.contact.findUnique({
+    where: { id: params.contactId, orgId },
     include: {
       user: true,
       assignedUsers: {
@@ -105,6 +111,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await UpdateContactValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -124,9 +132,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Users can only edit their assigned contacts and themselves
-  if (user.role === UserRole.USER && formData.id !== user.contactId) {
-    const assignment = await prisma.contactAssigment.findUnique({
+  if (user.isMember && formData.id !== user.contactId) {
+    const assignment = await db.contactAssigment.findUnique({
       where: {
+        orgId,
         contactId_userId: {
           contactId: formData.id,
           userId: user.id,
@@ -139,7 +148,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Users can't change their contact type
-  if (user.role === UserRole.USER) {
+  if (user.isMember) {
     if (formData.typeId !== user.contact.typeId) {
       return forbidden({ message: "You do not have permission to change your contact type." });
     }
@@ -147,8 +156,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Verify email is unique
   if (formData.email) {
-    const existingContact = await prisma.contact.findUnique({
-      where: { email: formData.email },
+    const existingContact = await db.contact.findUnique({
+      where: {
+        email_orgId: {
+          email: formData.email,
+          orgId,
+        },
+      },
     });
 
     if (existingContact && existingContact.id !== formData.id) {
@@ -160,20 +174,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  const contact = await prisma.contact.update({
-    where: { id: formData.id },
+  const contact = await db.contact.update({
+    where: { id: formData.id, orgId },
     data: {
       ...formData,
       assignedUsers: {
         // Rebuild the assigned users list
         deleteMany: {},
-        create: assignedUserIds ? assignedUserIds.map((userId) => ({ userId })) : undefined,
+        create: assignedUserIds ? assignedUserIds.map((userId) => ({ userId, orgId })) : undefined,
       },
       address: address
         ? {
             upsert: {
-              create: address,
-              update: address,
+              create: { ...address, orgId },
+              update: { ...address, orgId },
             },
           }
         : undefined,
@@ -252,7 +266,7 @@ export default function EditContactPage() {
               <fieldset>
                 <legend className="mb-4 text-sm text-muted-foreground">
                   Assign users to this Contact. They will receive regular reminders to log an engagement.
-                  {contact.assignedUsers.some((a) => a.user.id === user.id) && user.role === UserRole.USER ? (
+                  {contact.assignedUsers.some((a) => a.user.id === user.id) && user.isMember ? (
                     <p className="mt-2 rounded border border-warning/25 bg-warning/10 px-2 py-1.5 text-sm font-medium text-warning-foreground">
                       If you unassign yourself, you will no longer be able to view this contact&apos;s transactions or
                       make edits.

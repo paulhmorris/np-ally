@@ -6,8 +6,8 @@ import { z } from "zod";
 import { zfd } from "zod-form-data";
 
 import { toast } from "~/lib/toast.server";
-import { MailService } from "~/services/MailService.server";
-import { SessionService } from "~/services/SessionService.server";
+import { MailService } from "~/services.server/mail";
+import { SessionService } from "~/services.server/session";
 
 export const validator = withZod(
   z.object({
