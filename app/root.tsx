@@ -2,6 +2,7 @@ import "@fontsource-variable/dm-sans/wght.css";
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
+import { Analytics } from "@vercel/analytics/react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
 import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 
@@ -75,6 +76,7 @@ function App() {
         <Links />
       </head>
       <body className="h-full min-h-full bg-background font-sans">
+        <Analytics />
         <Outlet />
         <Notifications />
         <ScrollRestoration />

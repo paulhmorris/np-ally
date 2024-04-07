@@ -57,6 +57,7 @@
     "@trigger.dev/remix": "^2.3.17",
     "@trigger.dev/resend": "^2.3.17",
     "@trigger.dev/sdk": "^2.3.17",
+    "@vercel/analytics": "^1.2.2",
     "bcryptjs": "^2.4.3",
     "chokidar": "^3.5.3",
     "class-variance-authority": "^0.7.0",
