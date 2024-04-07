@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { IconPlus } from "@tabler/icons-react";
@@ -9,21 +8,20 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { prisma } from "~/integrations/prisma.server";
-import { SessionService } from "~/services/SessionService.server";
+import { db } from "~/integrations/prisma.server";
+import { SessionService } from "~/services.server/session";
 
-export const meta: MetaFunction = () => [{ title: "Engagements | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Engagements" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
 
-  const engagements = await prisma.engagement.findMany({
-    where:
-      user.role === UserRole.USER
-        ? {
-            userId: user.id,
-          }
-        : undefined,
+  const engagements = await db.engagement.findMany({
+    where: {
+      orgId,
+      userId: user.isMember ? user.id : undefined,
+    },
     include: {
       type: true,
       contact: true,

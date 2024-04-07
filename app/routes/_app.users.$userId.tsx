@@ -19,12 +19,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { useUser } from "~/hooks/useUser";
+import { db } from "~/integrations/prisma.server";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { useUser } from "~/lib/utils";
 import { passwordResetValidator } from "~/routes/resources.reset-password";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -39,21 +39,29 @@ const validator = withZod(
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const authorizedUser = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.userId, "userId not found");
 
-  if (authorizedUser.role === UserRole.USER && authorizedUser.id !== params.userId) {
+  if (authorizedUser.isMember && authorizedUser.id !== params.userId) {
     throw forbidden({ message: "You do not have permission to view this page" });
   }
 
-  const accounts = await prisma.account.findMany({
+  const accounts = await db.account.findMany({
     where: {
+      orgId,
       OR: [{ user: null }, { user: { id: params.userId } }],
     },
     orderBy: { code: "asc" },
   });
 
-  const userWithPassword = await prisma.user.findUnique({
-    where: { id: params.userId },
+  const userWithPassword = await db.user.findUnique({
+    where: {
+      id: params.userId,
+      memberships: {
+        some: { orgId },
+      },
+    },
     include: {
       contactAssignments: {
         include: {
@@ -101,6 +109,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authorizedUser = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
 
   const result = await validator.validate(await request.formData());
   if (result.error) {
@@ -109,12 +118,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { username, role, id, accountId, ...contact } = result.data;
 
-  const userToBeUpdated = await prisma.user.findUnique({ where: { id } });
+  const userToBeUpdated = await db.user.findUnique({ where: { id } });
   if (!userToBeUpdated) {
     throw notFound({ message: "User not found" });
   }
 
-  if (authorizedUser.role === UserRole.USER) {
+  if (authorizedUser.isMember) {
     // Users can only edit themselves
     if (authorizedUser.id !== id) {
       return toast.json(
@@ -148,7 +157,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  if (authorizedUser.role !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
+  if (authorizedUser.systemRole !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
     return toast.json(
       request,
       { message: "You do not have permission to create a Super Admin." },
@@ -161,8 +170,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const updatedUser = await prisma.user.update({
-    where: { id },
+  const updatedUser = await db.user.update({
+    where: {
+      id,
+      memberships: {
+        some: { orgId },
+      },
+    },
     data: {
       role,
       username,
@@ -188,7 +202,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
     title: `User ${data?.user.contact.firstName}${
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       data?.user.contact.lastName ? " " + data?.user.contact.lastName : ""
-    } | Alliance 436`,
+    }`,
   },
 ];
 
@@ -267,7 +281,7 @@ export default function UserDetailsPage() {
               <FormField label="Last name" id="lastName" name="lastName" required />
             </div>
             <input type="hidden" name="id" value={user.id} />
-            {authorizedUser.role === UserRole.SUPERADMIN || authorizedUser.role === UserRole.ADMIN ? (
+            {authorizedUser.isAdmin ? (
               <>
                 <FormField label="Username" id="username" name="username" disabled />
                 <FormSelect
@@ -280,9 +294,7 @@ export default function UserDetailsPage() {
                 >
                   <SelectItem value="USER">User</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
-                  {authorizedUser.role === UserRole.SUPERADMIN ? (
-                    <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
-                  ) : null}
+                  {authorizedUser.isSuperAdmin ? <SelectItem value="SUPERADMIN">Super Admin</SelectItem> : null}
                 </FormSelect>
               </>
             ) : (
@@ -291,7 +303,7 @@ export default function UserDetailsPage() {
                 <input type="hidden" name="role" value={user.role} />
               </>
             )}
-            {authorizedUser.role !== UserRole.USER ? (
+            {!authorizedUser.isMember ? (
               <FormSelect
                 name="accountId"
                 label="Linked Account"
@@ -313,7 +325,7 @@ export default function UserDetailsPage() {
         </ValidatedForm>
         <div className="mt-4 max-w-lg">
           {user.contactAssignments.length > 0 ? (
-            <Card className="flex-1 basis-48 bg-transparent">
+            <Card className="bg-transparent flex-1 basis-48">
               <CardHeader>
                 <CardTitle>Contact Assignments</CardTitle>
                 <CardDescription>

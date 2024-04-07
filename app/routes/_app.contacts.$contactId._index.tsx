@@ -1,4 +1,4 @@
-import { Engagement, UserRole } from "@prisma/client";
+import { Engagement } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -18,20 +18,23 @@ import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { prisma } from "~/integrations/prisma.server";
+import { useUser } from "~/hooks/useUser";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
 import { forbidden, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
-import { cn, useUser } from "~/lib/utils";
-import { SessionService } from "~/services/SessionService.server";
+import { cn } from "~/lib/utils";
+import { SessionService } from "~/services.server/session";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.contactId, "contactId not found");
 
-  const contact = await prisma.contact.findUnique({
-    where: { id: params.contactId },
+  const contact = await db.contact.findUnique({
+    where: { id: params.contactId, orgId },
     include: {
       user: true,
       type: true,
@@ -64,8 +67,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   });
 
   if (!contact) throw notFound({ message: "Contact not found" });
-  const shouldHideTransactions =
-    user.role === UserRole.USER && !contact.assignedUsers.some((a) => a.userId === user.id);
+  const shouldHideTransactions = user.isMember && !contact.assignedUsers.some((a) => a.userId === user.id);
 
   if (shouldHideTransactions) {
     return typedjson({ contact: { ...contact, transactions: [] } });
@@ -76,6 +78,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export async function action({ request, params }: ActionFunctionArgs) {
   await SessionService.requireAdmin(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   invariant(params.contactId, "contactId not found");
 
   const validator = withZod(z.object({ _action: z.enum(["delete"]) }));
@@ -90,8 +94,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (result.data._action === "delete" && request.method === "DELETE") {
-    const contact = await prisma.contact.findUnique({
-      where: { id: params.contactId },
+    const contact = await db.contact.findUnique({
+      where: { id: params.contactId, orgId },
       include: {
         transactions: true,
       },
@@ -123,11 +127,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 
     try {
-      await prisma.$transaction([
-        prisma.contactAssigment.deleteMany({ where: { contactId: contact.id } }),
-        prisma.engagement.deleteMany({ where: { contactId: contact.id } }),
-        prisma.address.deleteMany({ where: { contactId: contact.id } }),
-        prisma.contact.delete({ where: { id: contact.id } }),
+      await db.$transaction([
+        db.contactAssigment.deleteMany({ where: { contactId: contact.id, orgId } }),
+        db.engagement.deleteMany({ where: { contactId: contact.id, orgId } }),
+        db.address.deleteMany({ where: { contactId: contact.id, orgId } }),
+        db.contact.delete({ where: { id: contact.id, orgId } }),
       ]);
       return toast.redirect(request, "/contacts", {
         type: "success",
@@ -157,7 +161,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
     title: `${data?.contact.firstName}${
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       data?.contact.lastName ? " " + data?.contact.lastName : ""
-    } | Alliance 436`,
+    }`,
   },
 ];
 
@@ -166,10 +170,7 @@ export default function ContactDetailsPage() {
   const { contact } = useTypedLoaderData<typeof loader>();
   const isExternal = contact.typeId !== ContactType.Staff;
   const canDelete =
-    !contact.user &&
-    contact.transactions.length === 0 &&
-    user.role !== UserRole.USER &&
-    contact.typeId !== ContactType.Staff;
+    !contact.user && contact.transactions.length === 0 && !user.isMember && contact.typeId !== ContactType.Staff;
 
   return (
     <>
@@ -221,7 +222,7 @@ export default function ContactDetailsPage() {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
-              <Card className="flex-1 basis-48 bg-transparent">
+              <Card className="bg-transparent flex-1 basis-48">
                 <CardHeader>
                   <CardTitle>Assigned Users</CardTitle>
                   <CardDescription>These users receive regular reminders to engage with this Contact.</CardDescription>

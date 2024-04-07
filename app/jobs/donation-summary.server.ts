@@ -1,6 +1,6 @@
 import { cronTrigger } from "@trigger.dev/sdk";
 
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
 import { formatCentsAsDollars } from "~/lib/utils";
@@ -19,7 +19,7 @@ export const donationSummaryJob = trigger.defineJob({
   run: async (_, io) => {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const accounts = await io.runTask("get-accounts", async () => {
-      return prisma.account.findMany({
+      return db.account.findMany({
         where: {
           subscribers: {
             some: {},
@@ -33,6 +33,13 @@ export const donationSummaryJob = trigger.defineJob({
           },
         },
         select: {
+          org: {
+            select: {
+              host: true,
+              name: true,
+              replyToEmail: true,
+            },
+          },
           code: true,
           transactions: {
             where: {
@@ -67,16 +74,17 @@ export const donationSummaryJob = trigger.defineJob({
     }
 
     const emails = accounts.map((a) => {
-      const totalInCents = a.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
+      const total = formatCentsAsDollars(
+        a.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0),
+      );
       const to = a.subscribers.map((s) => s.subscriber.email).filter(Boolean);
 
       return {
-        from: "Alliance 436 <no-reply@alliance436.org>",
+        // TODO: remove once orgs are required
+        from: `${a.org?.name} <${a.org?.replyToEmail ?? "no-reply"}@${a.org?.host}>`,
         to,
-        subject: "Weekly Donation summary",
-        html: `Account ${a.code} has received ${formatCentsAsDollars(
-          totalInCents,
-        )} this week. Log in to see more details.`,
+        subject: "Weekly Donation Summary",
+        html: `Account ${a.code} has received ${total} this week. Log in to see more details.`,
       };
     });
 

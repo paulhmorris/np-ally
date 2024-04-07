@@ -8,14 +8,17 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
-import { prisma } from "~/integrations/prisma.server";
-import { SessionService } from "~/services/SessionService.server";
+import { db } from "~/integrations/prisma.server";
+import { SessionService } from "~/services.server/session";
 
-export const meta: MetaFunction = () => [{ title: "Accounts | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Accounts" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
-  const accounts = await prisma.account.findMany({
+  const orgId = await SessionService.requireOrgId(request);
+
+  const accounts = await db.account.findMany({
+    where: { orgId },
     select: {
       id: true,
       code: true,

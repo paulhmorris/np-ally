@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import { ActionFunctionArgs } from "@remix-run/node";
 import { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -15,7 +14,7 @@ import { Linear } from "~/integrations/linear.server";
 import { Sentry } from "~/integrations/sentry";
 import { LinearLabelID, LinearTeamID } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -53,14 +52,14 @@ export async function action({ request }: ActionFunctionArgs) {
     Sentry.captureException(issueRequest);
   }
 
-  return toast.redirect(request, user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin", {
+  return toast.redirect(request, user.isMember ? "/dashboards/staff" : "/dashboards/admin", {
     type: "success",
     title: "Request Sent",
     description: "An issue has been created on our board.",
   });
 }
 
-export const meta: MetaFunction = () => [{ title: `Feature Request | Alliance 436` }];
+export const meta: MetaFunction = () => [{ title: `Feature Request` }];
 
 export default function FeatureRequestPage() {
   const [fileUrl, setFileUrl] = useState<string>("");

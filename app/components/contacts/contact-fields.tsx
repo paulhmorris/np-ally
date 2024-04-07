@@ -1,13 +1,13 @@
-import { ContactType, UserRole } from "@prisma/client";
+import { ContactType } from "@prisma/client";
 import { useLocation } from "@remix-run/react";
 
 import { FormField, FormSelect } from "~/components/ui/form";
-import { useUser } from "~/lib/utils";
+import { useUser } from "~/hooks/useUser";
 
 export function ContactFields({ contactTypes }: { contactTypes: Array<ContactType> }) {
   const user = useUser();
   const location = useLocation();
-  const shouldDisableTypeSelection = user.role === UserRole.USER && location.pathname.includes(user.contactId);
+  const shouldDisableTypeSelection = user.isMember && location.pathname.includes(user.contactId);
 
   return (
     <>
@@ -28,12 +28,7 @@ export function ContactFields({ contactTypes }: { contactTypes: Array<ContactTyp
           value: ct.id,
         }))}
       />
-      <FormField
-        label="Organization Name"
-        name="organizationName"
-        placeholder="Alliance 436"
-        description="Required if type is Organization"
-      />
+      <FormField label="Organization Name" name="organizationName" description="Required if type is Organization" />
     </>
   );
 }

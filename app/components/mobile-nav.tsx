@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import { NavLink } from "@remix-run/react";
 import { IconMenuDeep } from "@tabler/icons-react";
 import { useState, type ComponentPropsWithoutRef } from "react";
@@ -7,8 +6,9 @@ import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Separator } from "~/components/ui/separator";
 import { UserMenu } from "~/components/user-menu";
+import { useUser } from "~/hooks/useUser";
 import { adminNavLinks, globalNavLinks, superAdminNavLinks, userNavLinks } from "~/lib/constants";
-import { cn, useUser } from "~/lib/utils";
+import { cn } from "~/lib/utils";
 
 export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
@@ -30,19 +30,19 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
           <ul className="mt-6 space-x-0 space-y-1">
             <MobileNavLink
               setOpen={setOpen}
-              to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"}
+              to={user.isMember ? "/dashboards/staff" : "/dashboards/admin"}
               name="Home"
             />
             {globalNavLinks.map((link) => (
               <MobileNavLink setOpen={setOpen} key={link.href} to={link.href} name={link.name} />
             ))}
-            {user.role === UserRole.USER
+            {user.isMember
               ? userNavLinks.map((link) => (
                   <MobileNavLink setOpen={setOpen} key={link.href} to={link.href} name={link.name} />
                 ))
               : null}
           </ul>
-          {user.role === UserRole.ADMIN || user.role === UserRole.SUPERADMIN ? (
+          {user.isAdmin || user.isSuperAdmin ? (
             <>
               <Separator />
               <p className="text-sm font-semibold tracking-widest text-muted-foreground">ADMIN</p>
@@ -53,7 +53,7 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
               </ul>
             </>
           ) : null}
-          {user.role === UserRole.SUPERADMIN ? (
+          {user.isSuperAdmin ? (
             <>
               <Separator />
               <p className="text-sm font-semibold tracking-widest text-muted-foreground">SUPER ADMIN</p>

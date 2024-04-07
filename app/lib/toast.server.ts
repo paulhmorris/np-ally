@@ -2,7 +2,7 @@ import type { Session } from "@remix-run/node";
 import { TypedJsonResponse, redirect, typedjson } from "remix-typedjson";
 import { ExternalToast, ToastT } from "sonner";
 
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 type Toast = ExternalToast & { type: ToastT["type"]; title: ToastT["title"] };
 

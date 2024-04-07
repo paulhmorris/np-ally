@@ -8,14 +8,21 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { UsersTable } from "~/components/users/users-table";
-import { prisma } from "~/integrations/prisma.server";
-import { SessionService } from "~/services/SessionService.server";
+import { db } from "~/integrations/prisma.server";
+import { SessionService } from "~/services.server/session";
 
-export const meta: MetaFunction = () => [{ title: "Users | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Users" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
-  const users = await prisma.user.findMany({
+  const orgId = await SessionService.requireOrgId(request);
+
+  const users = await db.user.findMany({
+    where: {
+      memberships: {
+        some: { orgId },
+      },
+    },
     include: { contact: true },
     orderBy: { createdAt: "desc" },
   });

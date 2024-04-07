@@ -20,6 +20,7 @@ model User {
   account               Account?               @relation(fields: [accountId], references: [id])
   accountId             String?                @unique
   isActive              Boolean                @default(true)
+  memberships           Membership[]
   receipts              Receipt[]
   reimbursementRequests ReimbursementRequest[]
   engagements           Engagement[]
@@ -33,6 +34,56 @@ enum UserRole {
   USER
   ADMIN
   SUPERADMIN
+}
+
+model Membership {
+  id        Int            @id @default(autoincrement())
+  user      User           @relation(fields: [userId], references: [id])
+  userId    String
+  org       Organization   @relation(fields: [orgId], references: [id])
+  orgId     String
+  role      MembershipRole
+  isDefault Boolean        @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, orgId])
+}
+
+enum MembershipRole {
+  MEMBER
+  ADMIN
+}
+
+model Organization {
+  id                 String  @id @default(cuid())
+  name               String
+  host               String? @unique
+  replyToEmail       String  @default("no-reply")
+  administratorEmail String?
+  inquiriesEmail     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts               Account[]
+  memberships            Membership[]
+  accountTypes           AccountType[]
+  accountSubscriptions   AccountSubscription[]
+  transactions           Transaction[]
+  transactionItems       TransactionItem[]
+  transactionItemMethods TransactionItemMethod[]
+  transactionItemTypes   TransactionItemType[]
+  reimbursementRequests  ReimbursementRequest[]
+  receipts               Receipt[]
+  contacts               Contact[]
+  contactTypes           ContactType[]
+  contactAssigments      ContactAssigment[]
+  addresses              Address[]
+  engagements            Engagement[]
+  engagementTypes        EngagementType[]
+  announcements          Announcement[]
 }
 
 model Password {
@@ -57,38 +108,35 @@ model PasswordReset {
   updatedAt DateTime @updatedAt
 }
 
-model Organization {
-  id       String    @id @default(cuid())
-  name     String
-  accounts Account[]
-  isActive Boolean   @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model Account {
   id                    String                 @id @default(cuid())
-  code                  String                 @unique
+  code                  String
   description           String                 @db.Text
   user                  User?
-  organization          Organization?          @relation(fields: [organizationId], references: [id])
-  organizationId        String?
   transactions          Transaction[]
   type                  AccountType            @relation(fields: [typeId], references: [id])
   typeId                Int
   reimbursementRequests ReimbursementRequest[]
   subscribers           AccountSubscription[]
 
-  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id])
+  orgId String?
+
+  @@unique([code, orgId])
 }
 
 model AccountType {
   id       Int       @id @default(autoincrement())
-  name     String    @unique
+  name     String
   accounts Account[]
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([name, orgId])
 }
 
 model AccountSubscription {
@@ -100,6 +148,11 @@ model AccountSubscription {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([accountId, subscriberId])
 }
 
 model Transaction {
@@ -115,6 +168,9 @@ model Transaction {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
 }
 
 model TransactionItem {
@@ -130,20 +186,33 @@ model TransactionItem {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
 }
 
 model TransactionItemMethod {
   id                    Int                    @id @default(autoincrement())
-  name                  String                 @unique
+  name                  String
   transactionItems      TransactionItem[]
   reimbursementRequests ReimbursementRequest[]
+
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId        String?
+
+  @@unique([name, orgId])
 }
 
 model TransactionItemType {
   id               Int                           @id @default(autoincrement())
-  name             String                        @unique
+  name             String
   direction        TransactionItemTypeDirection? @default(IN)
   transactionItems TransactionItem[]
+
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId        String?
+
+  @@unique([name, orgId])
 }
 
 enum TransactionItemTypeDirection {
@@ -168,6 +237,9 @@ model ReimbursementRequest {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
 }
 
 model Receipt {
@@ -182,6 +254,9 @@ model Receipt {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
 }
 
 enum ReimbursementRequestStatus {
@@ -193,13 +268,12 @@ enum ReimbursementRequestStatus {
 
 model Contact {
   id                   String                @id @default(cuid())
-  email                String?               @unique
+  email                String?
   firstName            String?
   lastName             String?
   organizationName     String?
   phone                String?
   address              Address?
-  isActive             Boolean               @default(true)
   type                 ContactType           @relation(fields: [typeId], references: [id])
   typeId               Int
   user                 User?
@@ -210,12 +284,22 @@ model Contact {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([email, orgId])
 }
 
 model ContactType {
   id       Int       @id @default(autoincrement())
-  name     String    @unique
+  name     String
   contacts Contact[]
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([name, orgId])
 }
 
 model ContactAssigment {
@@ -227,6 +311,11 @@ model ContactAssigment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([contactId, userId])
 }
 
 model Address {
@@ -239,10 +328,12 @@ model Address {
   country   String
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId String  @unique
-  isActive  Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
 }
 
 model Engagement {
@@ -258,12 +349,20 @@ model Engagement {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
 }
 
 model EngagementType {
   id          Int          @id @default(autoincrement())
-  name        String       @unique
+  name        String
   engagements Engagement[]
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([name, orgId])
 }
 
 model Announcement {
@@ -274,4 +373,7 @@ model Announcement {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
 }

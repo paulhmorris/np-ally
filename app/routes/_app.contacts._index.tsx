@@ -10,19 +10,22 @@ import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
-import { prisma } from "~/integrations/prisma.server";
-import { SessionService } from "~/services/SessionService.server";
+import { db } from "~/integrations/prisma.server";
+import { SessionService } from "~/services.server/session";
 
-export const meta: MetaFunction = () => [{ title: "Contacts | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Contacts" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const onlyMine = new URL(request.url).searchParams.get("mine") === "true";
 
   // Only show a user's assigned contacts
   if (onlyMine) {
-    const contacts = await prisma.contact.findMany({
+    const contacts = await db.contact.findMany({
       where: {
+        orgId,
         OR: [
           {
             assignedUsers: {
@@ -43,7 +46,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return typedjson({ contacts });
   }
 
-  const contacts = await prisma.contact.findMany({
+  const contacts = await db.contact.findMany({
+    where: { orgId },
     include: { type: true },
     orderBy: { createdAt: "desc" },
   });

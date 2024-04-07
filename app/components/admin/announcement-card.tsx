@@ -1,4 +1,4 @@
-import { Announcement, UserRole } from "@prisma/client";
+import { Announcement } from "@prisma/client";
 import { useFetcher } from "@remix-run/react";
 import { IconBellFilled, IconClock, IconSelector } from "@tabler/icons-react";
 import dayjs from "dayjs";
@@ -10,7 +10,7 @@ import { AnnouncementModal } from "~/components/modals/announcement-modal";
 import { Button } from "~/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Separator } from "~/components/ui/separator";
-import { useUser } from "~/lib/utils";
+import { useUser } from "~/hooks/useUser";
 import { validator } from "~/routes/api.announcements";
 
 export function AnnouncementCard({ announcement }: { announcement: Announcement }) {
@@ -36,7 +36,7 @@ export function AnnouncementCard({ announcement }: { announcement: Announcement 
             </Button>
           </CollapsibleTrigger>
         </div>
-        {user.role !== UserRole.USER ? (
+        {!user.isMember ? (
           <>
             <span className="text-xs text-muted-foreground">
               {announcement.expiresAt

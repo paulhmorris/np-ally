@@ -1,6 +1,6 @@
 import { cronTrigger } from "@trigger.dev/sdk";
 
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
 import { ContactType } from "~/lib/constants";
 
@@ -21,7 +21,7 @@ export const engagementReminderJob = trigger.defineJob({
   run: async (_, io) => {
     const thirtyDaysAgo = new Date(Date.now() - DAYS_CUTOFF * 24 * 60 * 60 * 1000);
     const assignments = await io.runTask("get-contact-assignments", async () => {
-      return prisma.contactAssigment.findMany({
+      return db.contactAssigment.findMany({
         where: {
           contact: {
             typeId: {

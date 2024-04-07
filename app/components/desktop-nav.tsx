@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import { Link, NavLink } from "@remix-run/react";
 import { IconWorld } from "@tabler/icons-react";
 import type { ComponentPropsWithoutRef } from "react";
@@ -7,8 +6,9 @@ import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { GlobalLoader } from "~/components/ui/global-loader";
 import { Separator } from "~/components/ui/separator";
 import { UserMenu } from "~/components/user-menu";
+import { useUser } from "~/hooks/useUser";
 import { adminNavLinks, globalNavLinks, superAdminNavLinks, userNavLinks } from "~/lib/constants";
-import { cn, useUser } from "~/lib/utils";
+import { cn } from "~/lib/utils";
 
 export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
@@ -23,22 +23,22 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
       <div className="flex h-10 items-center pl-3">
         <Link to="/" className="inline-flex items-center space-x-2 text-sm font-bold text-primary">
           <IconWorld className="h-6 w-6" />
-          <span>Alliance 436</span>
+          <span>{user.org?.name}</span>
           <GlobalLoader />
         </Link>
       </div>
       <ul className="mt-12 space-x-0 space-y-1">
-        <DesktopNavLink to={user.role === UserRole.USER ? "/dashboards/staff" : "/dashboards/admin"} name="Home" />
+        <DesktopNavLink to={user.isMember ? "/dashboards/staff" : "/dashboards/admin"} name="Home" />
         {globalNavLinks.map((link) => (
           <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
         ))}
-        {user.role === UserRole.USER
+        {user.isMember
           ? userNavLinks.map((link) => (
               <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
             ))
           : null}
       </ul>
-      {user.role === UserRole.ADMIN || user.role === UserRole.SUPERADMIN ? (
+      {user.isAdmin || user.isSuperAdmin ? (
         <>
           <Separator className="my-4" />
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">ADMIN</p>
@@ -49,7 +49,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           </ul>
         </>
       ) : null}
-      {user.role === UserRole.SUPERADMIN && superAdminNavLinks.length > 0 ? (
+      {user.isSuperAdmin && superAdminNavLinks.length > 0 ? (
         <>
           <Separator className="my-4" />
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">SUPER ADMIN</p>

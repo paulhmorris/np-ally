@@ -63,7 +63,6 @@ module.exports = {
         "@typescript-eslint/no-unsafe-enum-comparison": "off",
         "@typescript-eslint/consistent-type-definitions": ["off"],
         "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unsafe-enum-comparison": "off",
         "@typescript-eslint/array-type": ["error", { default: "generic" }],
         "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
         "@typescript-eslint/no-misused-promises": [

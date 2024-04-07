@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -16,31 +16,39 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { useUser } from "~/hooks/useUser";
+import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { toast } from "~/lib/toast.server";
-import { useUser } from "~/lib/utils";
 import { NewContactSchema } from "~/models/schemas";
-import { SessionService } from "~/services/SessionService.server";
+import { SessionService } from "~/services.server/session";
 
 const NewContactValidator = withZod(NewContactSchema);
 
-export const meta: MetaFunction = () => [{ title: "New Contact | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "New Contact" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
-  const contactTypes = await prisma.contactType.findMany({
-    where:
-      user.role === UserRole.USER
-        ? {
-            id: {
-              notIn: [ContactType.Staff],
-            },
-          }
-        : {},
+  const orgId = await SessionService.requireOrgId(request);
+
+  const contactTypes = await db.contactType.findMany({
+    where: {
+      AND: [
+        { OR: [{ orgId }, { orgId: null }] },
+        // Members can't create staff contacts
+        user.isMember ? { id: { notIn: [ContactType.Staff] } } : {},
+      ],
+    },
   });
-  const usersWhoCanBeAssigned = await prisma.user.findMany({
-    where: { role: { in: [UserRole.USER, UserRole.ADMIN] } },
+  const usersWhoCanBeAssigned = await db.user.findMany({
+    where: {
+      memberships: {
+        some: {
+          orgId,
+          role: { in: [MembershipRole.ADMIN, MembershipRole.MEMBER] },
+        },
+      },
+    },
     select: {
       id: true,
       contact: {
@@ -61,6 +69,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await NewContactValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
@@ -70,8 +80,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Verify email is unique
   if (formData.email) {
-    const existingContact = await prisma.contact.findUnique({
-      where: { email: formData.email },
+    const existingContact = await db.contact.findUnique({
+      where: {
+        email_orgId: {
+          email: formData.email,
+          orgId,
+        },
+      },
     });
 
     if (existingContact) {
@@ -83,16 +98,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  const contact = await prisma.contact.create({
+  const contact = await db.contact.create({
     data: {
       ...formData,
-      address: {
-        create: address,
-      },
+      orgId,
+      address: address
+        ? {
+            create: { ...address, orgId },
+          }
+        : undefined,
       assignedUsers: assignedUserIds
         ? {
             createMany: {
-              data: assignedUserIds.map((userId) => ({ userId })),
+              data: assignedUserIds.map((userId) => ({ userId, orgId })),
             },
           }
         : undefined,
@@ -142,7 +160,7 @@ export default function NewContactPage() {
                       name="assignedUserIds"
                       value={user.id}
                       aria-label={`${user.contact.firstName} ${user.contact.lastName}`}
-                      defaultChecked={sessionUser.role === UserRole.USER ? user.id === sessionUser.id : false}
+                      defaultChecked={sessionUser.isMember ? user.id === sessionUser.id : false}
                     />
                     <span>
                       {user.contact.firstName} {user.contact.lastName}

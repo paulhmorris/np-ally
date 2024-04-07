@@ -1,4 +1,4 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useSearchParams, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -12,14 +12,15 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { prisma } from "~/integrations/prisma.server";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType, EngagementType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
-import { ContactService } from "~/services/ContactService.server";
-import { SessionService } from "~/services/SessionService.server";
+import { getContactTypes } from "~/services.server/contact";
+import { getEngagementTypes } from "~/services.server/engagement";
+import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
@@ -30,26 +31,28 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "Add Engagement | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Add Engagement" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const [contacts, contactTypes, engagementTypes] = await Promise.all([
-    prisma.contact.findMany({
+    db.contact.findMany({
       where: {
-        assignedUsers:
-          user.role === UserRole.USER
-            ? {
-                some: {
-                  userId: user.id,
-                },
-              }
-            : undefined,
+        orgId,
+        assignedUsers: user.isMember
+          ? {
+              some: {
+                userId: user.id,
+              },
+            }
+          : undefined,
         typeId: { notIn: [ContactType.Staff] },
       },
     }),
-    ContactService.getContactTypes(),
-    prisma.engagementType.findMany(),
+    getContactTypes(orgId),
+    getEngagementTypes(orgId),
   ]);
 
   return typedjson({
@@ -61,15 +64,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await SessionService.requireUser(request);
+  const orgId = await SessionService.requireOrgId(request);
+
   const result = await validator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
 
   try {
-    const engagement = await prisma.engagement.create({
+    const engagement = await db.engagement.create({
       data: {
         ...result.data,
+        orgId,
         userId: user.id,
       },
     });
