@@ -1,7 +1,8 @@
 import "@fontsource-variable/dm-sans/wght.css";
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
+import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from "@remix-run/react";
+import { captureRemixErrorBoundaryError, withSentry } from "@sentry/remix";
 import { Analytics } from "@vercel/analytics/react";
 import { useEffect } from "react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
@@ -87,7 +88,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   );
 };
 
-export default function AppWithProviders() {
+function AppWithProviders() {
   const { theme } = useTypedLoaderData<typeof loader>();
   return (
     <ThemeProvider specifiedTheme={theme} themeAction="/resources/set-theme">
@@ -95,6 +96,8 @@ export default function AppWithProviders() {
     </ThemeProvider>
   );
 }
+
+export default withSentry(AppWithProviders);
 
 function App() {
   const data = useTypedLoaderData<typeof loader>();
@@ -144,6 +147,8 @@ function App() {
 }
 
 export function ErrorBoundary() {
+  const error = useRouteError();
+  captureRemixErrorBoundaryError(error);
   return (
     <html lang="en" className="h-full">
       <head>

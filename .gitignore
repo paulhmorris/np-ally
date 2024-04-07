@@ -15,3 +15,6 @@ node_modules
 /playwright
 /blob-report/
 /playwright
+
+# Sentry Config File
+.sentryclirc
