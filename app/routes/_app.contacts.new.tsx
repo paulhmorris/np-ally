@@ -25,7 +25,7 @@ import { SessionService } from "~/services.server/session";
 
 const NewContactValidator = withZod(NewContactSchema);
 
-export const meta: MetaFunction = () => [{ title: "New Contact | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "New Contact" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);

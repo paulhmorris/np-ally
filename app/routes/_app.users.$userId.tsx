@@ -202,7 +202,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
     title: `User ${data?.user.contact.firstName}${
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       data?.user.contact.lastName ? " " + data?.user.contact.lastName : ""
-    } | Alliance 436`,
+    }`,
   },
 ];
 
@@ -325,7 +325,7 @@ export default function UserDetailsPage() {
         </ValidatedForm>
         <div className="mt-4 max-w-lg">
           {user.contactAssignments.length > 0 ? (
-            <Card className="flex-1 basis-48 bg-transparent">
+            <Card className="bg-transparent flex-1 basis-48">
               <CardHeader>
                 <CardTitle>Contact Assignments</CardTitle>
                 <CardDescription>

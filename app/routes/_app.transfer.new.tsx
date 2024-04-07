@@ -28,7 +28,7 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "Add Transfer | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Add Transfer" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);

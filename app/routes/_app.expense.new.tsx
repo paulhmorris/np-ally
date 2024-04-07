@@ -37,7 +37,7 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "Add Expense | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Add Expense" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);

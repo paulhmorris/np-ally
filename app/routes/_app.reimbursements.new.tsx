@@ -38,7 +38,7 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "New Reimbursement Request | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "New Reimbursement Request" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);

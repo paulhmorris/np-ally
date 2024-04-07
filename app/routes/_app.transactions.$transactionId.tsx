@@ -61,7 +61,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "Transaction Details | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Transaction Details" }];
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);

@@ -8,7 +8,7 @@ import { TransactionsTable } from "~/components/transactions/transactions-table"
 import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services.server/session";
 
-export const meta: MetaFunction = () => [{ title: "Transactions | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Transactions" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);

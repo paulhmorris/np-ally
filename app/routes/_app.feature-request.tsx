@@ -59,7 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
   });
 }
 
-export const meta: MetaFunction = () => [{ title: `Feature Request | Alliance 436` }];
+export const meta: MetaFunction = () => [{ title: `Feature Request` }];
 
 export default function FeatureRequestPage() {
   const [fileUrl, setFileUrl] = useState<string>("");

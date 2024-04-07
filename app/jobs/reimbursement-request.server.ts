@@ -31,6 +31,14 @@ export const reimbursementRequestJob = trigger.defineJob({
               },
             },
           },
+          org: {
+            select: {
+              name: true,
+              host: true,
+              replyToEmail: true,
+              administratorEmail: true,
+            },
+          },
         },
       });
     });
@@ -43,12 +51,20 @@ export const reimbursementRequestJob = trigger.defineJob({
       };
     }
 
-    const url = new URL("/dashboards/admin", process.env.SITE_URL ?? `https://${process.env.VERCEL_URL}`);
+    if (!request.org || !request.org.host || !request.org.replyToEmail || !request.org.administratorEmail) {
+      await io.logger.error(`No org found for request with id ${payload.reimbursementRequestId}`);
+      return {
+        status: "error",
+        message: `No org found for request with id ${payload.reimbursementRequestId}`,
+      };
+    }
+
+    const url = new URL("/dashboards/admin", `https://${request.org.host}`);
     const { contact } = request.user;
 
     await io.resend.emails.send("send-email", {
-      from: "Alliance 436 <no-reply@alliance436.org>",
-      to: "payments@alliance436.org",
+      from: `${request.org.name} <${request.org.replyToEmail}@${request.org.host}>`,
+      to: `${request.org.administratorEmail}@${request.org.host}`,
       subject: "New Reimbursement Request",
       html: `There's a new reimbursement request for ${formatCentsAsDollars(request.amountInCents)} from ${
         contact.firstName

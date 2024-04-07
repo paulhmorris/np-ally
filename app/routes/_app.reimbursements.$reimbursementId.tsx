@@ -31,8 +31,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
   {
     title: data
       ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        `${capitalize(String(data.reimbursementRequest.status))} Request | Alliance 436`
-      : "Reimbursement Request | Alliance 436",
+        `${capitalize(String(data.reimbursementRequest.status))} Request`
+      : "Reimbursement Request",
   },
 ];
 

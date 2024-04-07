@@ -18,7 +18,7 @@ import { notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
-export const meta: MetaFunction = () => [{ title: "View Engagement | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "View Engagement" }];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await SessionService.requireUser(request);

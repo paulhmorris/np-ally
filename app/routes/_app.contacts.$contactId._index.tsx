@@ -161,7 +161,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
     title: `${data?.contact.firstName}${
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       data?.contact.lastName ? " " + data?.contact.lastName : ""
-    } | Alliance 436`,
+    }`,
   },
 ];
 
@@ -222,7 +222,7 @@ export default function ContactDetailsPage() {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
-              <Card className="flex-1 basis-48 bg-transparent">
+              <Card className="bg-transparent flex-1 basis-48">
                 <CardHeader>
                   <CardTitle>Assigned Users</CardTitle>
                   <CardDescription>These users receive regular reminders to engage with this Contact.</CardDescription>

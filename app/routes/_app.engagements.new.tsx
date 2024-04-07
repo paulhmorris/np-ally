@@ -31,7 +31,7 @@ const validator = withZod(
   }),
 );
 
-export const meta: MetaFunction = () => [{ title: "Add Engagement | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Add Engagement" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);

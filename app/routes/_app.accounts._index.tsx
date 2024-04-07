@@ -11,7 +11,7 @@ import { Button } from "~/components/ui/button";
 import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services.server/session";
 
-export const meta: MetaFunction = () => [{ title: "Accounts | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Accounts" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);

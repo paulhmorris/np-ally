@@ -105,7 +105,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
     title: `Edit ${data?.contact.firstName}${
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       data?.contact.lastName ? " " + data?.contact.lastName : ""
-    } | Alliance 436`,
+    }`,
   },
 ];
 

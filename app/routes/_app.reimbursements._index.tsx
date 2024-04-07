@@ -8,7 +8,7 @@ import { ReimbursementRequestsTable } from "~/components/reimbursements/reimburs
 import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services.server/session";
 
-export const meta: MetaFunction = () => [{ title: "Reimbursement Requests | Alliance 436" }];
+export const meta: MetaFunction = () => [{ title: "Reimbursement Requests" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
