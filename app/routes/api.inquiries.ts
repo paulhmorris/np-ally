@@ -6,7 +6,7 @@ import { z } from "zod";
 import { zfd } from "zod-form-data";
 
 import { toast } from "~/lib/toast.server";
-import { MailService } from "~/services.server/mail";
+import { sendEmail } from "~/services.server/mail";
 import { SessionService } from "~/services.server/session";
 
 export const validator = withZod(
@@ -49,7 +49,7 @@ export async function action({ request }: ActionFunctionArgs) {
     });
   }
 
-  const { data, error } = await MailService.sendEmail({
+  const { data, error } = await sendEmail({
     from: "Alliance 436 <no-reply@alliance436.org>",
     to: "accounts@alliance436.org",
     subject: "New Inquiry",

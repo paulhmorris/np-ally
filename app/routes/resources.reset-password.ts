@@ -8,7 +8,7 @@ import { z } from "zod";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
-import { MailService } from "~/services.server/mail";
+import { sendPasswordResetEmail, sendPasswordSetupEmail } from "~/services.server/mail";
 import { deletePasswordReset, generatePasswordReset, getPasswordResetByUserId } from "~/services.server/password";
 
 export const passwordResetValidator = withZod(
@@ -67,8 +67,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const reset = await generatePasswordReset(user.username);
   const { data, error } =
     result.data._action === "setup"
-      ? await MailService.sendPasswordSetupEmail({ email: user.username, token: reset.token, orgId: org.id })
-      : await MailService.sendPasswordResetEmail({ email: user.username, token: reset.token, orgId: org.id });
+      ? await sendPasswordSetupEmail({ email: user.username, token: reset.token, orgId: org.id })
+      : await sendPasswordResetEmail({ email: user.username, token: reset.token, orgId: org.id });
 
   // Unknown Resend error
   if (error || !data) {

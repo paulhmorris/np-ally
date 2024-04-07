@@ -24,7 +24,7 @@ import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { capitalize, formatCentsAsDollars } from "~/lib/utils";
-import { MailService } from "~/services.server/mail";
+import { sendReimbursementRequestUpdateEmail } from "~/services.server/mail";
 import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -188,7 +188,7 @@ export async function action({ request }: ActionFunctionArgs) {
         }),
       ]);
 
-      await MailService.sendReimbursementRequestUpdateEmail({
+      await sendReimbursementRequestUpdateEmail({
         email: rr.user.username,
         status: ReimbursementRequestStatus.APPROVED,
         orgId,
@@ -231,7 +231,7 @@ export async function action({ request }: ActionFunctionArgs) {
     data: { status: _action },
     include: { user: true },
   });
-  await MailService.sendReimbursementRequestUpdateEmail({
+  await sendReimbursementRequestUpdateEmail({
     email: rr.user.username,
     status: _action,
     orgId,
