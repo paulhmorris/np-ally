@@ -27,7 +27,7 @@ export const donationSummaryJob = trigger.defineJob({
           transactions: {
             some: {
               createdAt: {
-                lte: sevenDaysAgo,
+                gte: sevenDaysAgo,
               },
             },
           },
@@ -44,7 +44,7 @@ export const donationSummaryJob = trigger.defineJob({
           transactions: {
             where: {
               createdAt: {
-                lte: sevenDaysAgo,
+                gte: sevenDaysAgo,
               },
             },
             select: {
