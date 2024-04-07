@@ -101,6 +101,10 @@ const columns: Array<ColumnDef<ReimbRequest>> = [
       );
     },
     enableColumnFilter: true,
+    filterFn: (row, id, value) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "date",
