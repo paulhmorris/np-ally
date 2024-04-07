@@ -68,7 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  Sentry.setUser({ id: user.id, email: user.username });
+  Sentry.setUser({ id: user.id, username: user.username });
 
   // If the user has a default membership or only one org, we can just log them in to that org
   const defaultMembership = user.memberships.find((m) => m.isDefault);

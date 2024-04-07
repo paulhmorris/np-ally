@@ -3,12 +3,14 @@ import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 import { Analytics } from "@vercel/analytics/react";
+import { useEffect } from "react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
 import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Notifications } from "~/components/notifications";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { themeSessionResolver } from "~/lib/session.server";
 import { getGlobalToast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
@@ -97,6 +99,16 @@ export default function AppWithProviders() {
 function App() {
   const data = useTypedLoaderData<typeof loader>();
   const [theme] = useTheme();
+  const user = data.user;
+
+  // Set the Sentry user context
+  useEffect(() => {
+    if (!user) {
+      Sentry.setUser(null);
+      return;
+    }
+    Sentry.setUser({ id: user.id, username: user.username });
+  }, [user]);
 
   return (
     <html lang="en" className={cn("h-full", theme)}>
