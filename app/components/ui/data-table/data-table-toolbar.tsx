@@ -14,7 +14,7 @@ export interface Facet {
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
-  facets: Array<Facet>;
+  facets?: Array<Facet>;
 }
 
 export function DataTableToolbar<TData>({ table, facets }: DataTableToolbarProps<TData>) {
@@ -30,21 +30,23 @@ export function DataTableToolbar<TData>({ table, facets }: DataTableToolbarProps
           onChange={(e) => table.setGlobalFilter(e.target.value)}
           className="h-8 w-[150px] lg:w-[250px]"
         />
-        <div className="flex items-center gap-2">
-          {facets.map((f) => {
-            const column = table.getColumn(f.columnId);
-            if (!column) return null;
+        {facets ? (
+          <div className="flex items-center gap-2">
+            {facets.map((f) => {
+              const column = table.getColumn(f.columnId);
+              if (!column) return null;
 
-            const options = f.options ?? [];
-            if (!f.options) {
-              const valuesMap = column.getFacetedUniqueValues();
-              valuesMap.forEach((_value, key) => {
-                options.push({ label: String(key), value: String(key) });
-              });
-            }
-            return <DataTableFacetedFilter key={f.columnId} column={column} title={f.title} options={options} />;
-          })}
-        </div>
+              const options = f.options ?? [];
+              if (!f.options) {
+                const valuesMap = column.getFacetedUniqueValues();
+                valuesMap.forEach((_value, key) => {
+                  options.push({ label: String(key), value: String(key) });
+                });
+              }
+              return <DataTableFacetedFilter key={f.columnId} column={column} title={f.title} options={options} />;
+            })}
+          </div>
+        ) : null}
         {isFiltered ? (
           <Button
             variant="ghost"

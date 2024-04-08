@@ -130,7 +130,7 @@ function App() {
         <Links />
       </head>
       <body className="h-full min-h-full bg-background font-sans">
-        <Analytics />
+        <Analytics debug={false} />
         <Outlet />
         <Notifications />
         <ScrollRestoration />

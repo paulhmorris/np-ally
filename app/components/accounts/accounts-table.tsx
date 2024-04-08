@@ -1,82 +1,20 @@
 import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import * as React from "react";
+import { ColumnDef } from "@tanstack/react-table";
 
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
-import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
-import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { formatCentsAsDollars, fuzzyFilter } from "~/lib/utils";
+import { Facet } from "~/components/ui/data-table/data-table-toolbar";
+import { formatCentsAsDollars } from "~/lib/utils";
+import { accountsIndexSelect } from "~/routes/_app.accounts._index";
 
-interface DataTableProps<TData> {
-  data: Array<TData>;
+type Account = Prisma.AccountGetPayload<{ select: typeof accountsIndexSelect }> & { balance: number };
+
+export function AccountsTable({ data }: { data: Array<Account> }) {
+  return <DataTable data={data} columns={columns} facets={facets} />;
 }
 
-export function AccountsTable<TData>({ data }: DataTableProps<TData>) {
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = React.useState<string>("");
-
-  const table = useReactTable({
-    data,
-    columns,
-    filterFns: { fuzzy: fuzzyFilter },
-    globalFilterFn: fuzzyFilter,
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 20,
-      },
-    },
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-      globalFilter,
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-  });
-
-  return (
-    <div className="space-y-4">
-      <DataTableToolbar table={table} facets={facets} />
-      <DataTable table={table} />
-      <DataTablePagination table={table} />
-    </div>
-  );
-}
-
-type Account = Prisma.AccountGetPayload<{
-  include: { transactionItems: true; type: true };
-}>;
-const columns: Array<ColumnDef<Account & { balance: number }>> = [
+const columns = [
   {
     accessorKey: "code",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Code" />,
@@ -139,7 +77,7 @@ const columns: Array<ColumnDef<Account & { balance: number }>> = [
     ),
     enableColumnFilter: false,
   },
-];
+] satisfies Array<ColumnDef<Account & { balance: number }>>;
 
 const facets: Array<Facet> = [
   {

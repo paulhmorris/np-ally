@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { IconPlus } from "@tabler/icons-react";
@@ -13,27 +14,28 @@ import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Accounts" }];
 
+export const accountsIndexSelect: Prisma.AccountSelect = {
+  id: true,
+  code: true,
+  description: true,
+  transactions: {
+    select: {
+      amountInCents: true,
+    },
+  },
+  type: {
+    select: {
+      name: true,
+    },
+  },
+};
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
   const accounts = await db.account.findMany({
     where: { orgId },
-    select: {
-      id: true,
-      code: true,
-      description: true,
-      transactions: {
-        select: {
-          amountInCents: true,
-        },
-      },
-      type: {
-        select: {
-          name: true,
-        },
-      },
-    },
+    select: accountsIndexSelect,
     orderBy: { code: "asc" },
   });
 

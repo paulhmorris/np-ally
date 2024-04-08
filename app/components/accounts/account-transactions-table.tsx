@@ -1,85 +1,24 @@
 import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import * as React from "react";
 dayjs.extend(utc);
 
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
-import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
-import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { formatCentsAsDollars, fuzzyFilter } from "~/lib/utils";
+import { Facet } from "~/components/ui/data-table/data-table-toolbar";
+import { formatCentsAsDollars } from "~/lib/utils";
 
-interface DataTableProps<TData> {
-  data: Array<TData>;
-}
-
-export function AccountTransactionsTable<TData>({ data }: DataTableProps<TData>) {
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = React.useState<string>("");
-
-  const table = useReactTable({
-    data,
-    columns,
-    filterFns: { fuzzy: fuzzyFilter },
-    globalFilterFn: fuzzyFilter,
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 20,
-      },
-    },
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-      globalFilter,
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-  });
-
-  return (
-    <div className="space-y-4">
-      <DataTableToolbar table={table} facets={facets} />
-      <DataTable table={table} />
-      <DataTablePagination table={table} />
-    </div>
-  );
-}
-
-type Account = Prisma.TransactionGetPayload<{
+type Transaction = Prisma.TransactionGetPayload<{
   include: { contact: true };
 }>;
-const columns: Array<ColumnDef<Account>> = [
+
+export function AccountTransactionsTable({ data }: { data: Array<Transaction> }) {
+  return <DataTable data={data} columns={columns} facets={facets} />;
+}
+
+const columns: Array<ColumnDef<Transaction>> = [
   {
     accessorKey: "date",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,

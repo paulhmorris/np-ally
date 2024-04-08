@@ -17,6 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const requests = await db.reimbursementRequest.findMany({
     where: { orgId },
     include: {
+      method: true,
       user: {
         include: {
           contact: true,
