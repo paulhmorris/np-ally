@@ -6,7 +6,8 @@ import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
-import { AuthCard } from "~/components/auth-card";
+import { AuthCard } from "~/components/auth/auth-card";
+import { BigButton } from "~/components/ui/big-button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { db } from "~/integrations/prisma.server";
@@ -38,6 +39,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             select: { id: true, name: true },
           },
           role: true,
+          isDefault: true,
         },
       },
     },
@@ -63,7 +65,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
     );
   }
-  return typedjson({ orgs: user.memberships.map((m) => ({ id: m.org.id, name: m.org.name, role: m.role })) });
+  return typedjson({
+    orgs: user.memberships.map((m) => ({ id: m.org.id, name: m.org.name, role: m.role, isDefault: m.isDefault })),
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -122,27 +126,25 @@ export default function LoginPage() {
       <h1 className="text-4xl font-extrabold">Choose organization</h1>
       <p className="mt-1 text-sm text-muted-foreground">You can change organizations at any time.</p>
       <ValidatedForm validator={validator} method="post" className="mt-6 space-y-4">
-        <input type="hidden" name="redirectTo" value={redirectTo} />
+        <input type="hidden" name="redirectTo" value={redirectTo === "/choose-org" ? "/" : redirectTo} />
         <Label className="inline-flex cursor-pointer items-center gap-2">
-          <Checkbox name="rememberSelection" defaultChecked={false} aria-label="Remember selection" />
+          <Checkbox
+            name="rememberSelection"
+            defaultChecked={orgs.some((o) => o.isDefault)}
+            aria-label="Remember selection"
+          />
           <span>Remember selection</span>
         </Label>
         <div className="flex max-h-[30dvh] flex-col gap-y-4 overflow-y-scroll">
           {orgs.map((org) => {
             return (
-              <button
-                key={org.id}
-                type="submit"
-                name="orgId"
-                value={org.id}
-                className="flex w-full items-center justify-between gap-2 rounded-md border p-6 text-left hover:bg-secondary"
-              >
+              <BigButton key={org.id} type="submit" name="orgId" value={org.id}>
                 <div>
                   <p className="text-lg font-bold text-foreground">{org.name}</p>
                   <p className="text-sm text-muted-foreground">{normalizeEnum(org.role)}</p>
                 </div>
                 <IconChevronRight />
-              </button>
+              </BigButton>
             );
           })}
         </div>

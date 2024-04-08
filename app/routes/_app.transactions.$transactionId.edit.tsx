@@ -5,42 +5,42 @@ import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { setFormDefaults, validationError } from "remix-validated-form";
+import { ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 dayjs.extend(utc);
 
 import { ErrorComponent } from "~/components/error-component";
-import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
+import { BackButton } from "~/components/ui/back-button";
+import { FormField } from "~/components/ui/form";
+import { SubmitButton } from "~/components/ui/submit-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
-import { forbidden, notFound } from "~/lib/responses.server";
+import { Sentry } from "~/integrations/sentry";
+import { getPrismaErrorText, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
 
-const validator = withZod(
+const schema = withZod(
   z.object({
-    _action: z.literal("delete"),
+    id: z.string().cuid(),
+    date: z.string(),
+    description: z.string().optional(),
   }),
 );
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.transactionId, "transactionId not found");
-  const user = await SessionService.requireUser(request);
+  await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
   const transaction = await db.transaction.findUnique({
     where: { id: params.transactionId, orgId },
     include: {
-      account: {
-        include: {
-          user: true,
-        },
-      },
+      account: true,
       contact: true,
       transactionItems: {
         include: {
@@ -50,56 +50,65 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     },
   });
-  if (user.isMember && transaction?.account.user?.id !== user.id) {
-    throw forbidden({ message: "You do not have permission to view this transaction" });
-  }
+
   if (!transaction) throw notFound({ message: "Transaction not found" });
 
-  return typedjson({
-    transaction,
-    ...setFormDefaults("transactionForm", { ...transaction }),
-  });
+  return typedjson({ transaction });
 };
 
-export const meta: MetaFunction = () => [{ title: "Transaction Details" }];
+export const meta: MetaFunction = () => [{ title: "Transaction Edit" }];
 
-export const action = async ({ params, request }: ActionFunctionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const result = await validator.validate(await request.formData());
+  const result = await schema.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
   }
 
-  const { transactionId } = params;
+  const { date, description, id } = result.data;
 
-  const trx = await db.transaction.delete({ where: { id: transactionId, orgId }, include: { account: true } });
-  return toast.redirect(request, "/transactions", {
-    type: "success",
-    title: "Transaction deleted",
-    description: `The transaction of ${formatCentsAsDollars(trx.amountInCents, 2)} on account ${
-      trx.account.code
-    } has been deleted.`,
-  });
+  try {
+    await db.transaction.update({
+      where: { id, orgId },
+      data: {
+        date: new Date(date),
+        description: description || undefined,
+      },
+    });
+
+    return toast.redirect(request, `/transactions/${id}`, {
+      type: "success",
+      title: "Transaction updated",
+      description: `Transaction has been updated.`,
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    let message = error instanceof Error ? error.message : "";
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      message = getPrismaErrorText(error);
+    }
+    return toast.json(
+      request,
+      { success: false },
+      {
+        type: "error",
+        title: "Error saving transaction",
+        description: message,
+      },
+    );
+  }
 };
 
 export default function TransactionDetailsPage() {
-  const authorizedUser = useUser();
   const { transaction } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
-      <PageHeader title="Transaction Details">
-        <div className="flex items-center gap-2">
-          {["SUPERADMIN", "ADMIN"].includes(authorizedUser.role) ? (
-            <ConfirmDestructiveModal
-              description={`This action cannot be undone. This will permanently delete the
-                  transaction and its items, and change the balance of account ${transaction.account.code}.`}
-            />
-          ) : null}
-        </div>
-      </PageHeader>
+      <PageHeader title="Transaction Edit" />
+      <BackButton to={`transactions/${transaction.id}`} />
 
       <PageContainer className="max-w-3xl">
         <div className="space-y-8">
@@ -112,16 +121,39 @@ export default function TransactionDetailsPage() {
                   {`${transaction.account.code}`} - {transaction.account.description}
                 </Link>
               </DetailItem>
-              <DetailItem label="Date" value={dayjs(transaction.date).utc().format("MM/DD/YYYY")} />
-              {transaction.contact ? (
-                <DetailItem label="Contact">
-                  <Link
-                    to={`/contacts/${transaction.contactId}`}
-                    className="font-medium text-primary"
-                  >{`${transaction.contact.firstName} ${transaction.contact.lastName}`}</Link>
-                </DetailItem>
-              ) : null}
-              {transaction.description ? <DetailItem label="Description" value={transaction.description} /> : null}
+              <ValidatedForm
+                id="transaction-edit"
+                validator={schema}
+                method="PUT"
+                defaultValues={{
+                  date: dayjs(transaction.date).utc().format("YYYY-MM-DD"),
+                  description: transaction.description ?? "",
+                }}
+                className="flex flex-col"
+              >
+                <input type="hidden" name="id" value={transaction.id} />
+                <div className="items-center py-1.5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <dt className="text-sm font-semibold capitalize">Date</dt>
+                  <dd className={cn("mt-1 sm:col-span-2 sm:mt-0")}>
+                    <FormField name="date" label="Date" hideLabel type="date" />
+                  </dd>
+                </div>
+                <div className="items-center py-1.5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <dt className="text-sm font-semibold capitalize">Description</dt>
+                  <dd className={cn("mt-1 sm:col-span-2 sm:mt-0")}>
+                    <FormField name="description" label="Description" hideLabel type="text" />
+                  </dd>
+                </div>
+                {transaction.contact ? (
+                  <DetailItem label="Contact">
+                    <Link
+                      to={`/contacts/${transaction.contactId}`}
+                      className="font-medium text-primary"
+                    >{`${transaction.contact.firstName} ${transaction.contact.lastName}`}</Link>
+                  </DetailItem>
+                ) : null}
+                <SubmitButton className="ml-auto">Save</SubmitButton>
+              </ValidatedForm>
             </dl>
           </div>
 

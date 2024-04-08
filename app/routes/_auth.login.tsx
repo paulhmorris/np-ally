@@ -2,16 +2,20 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remi
 import { json, redirect } from "@remix-run/node";
 import { useSearchParams } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import { IconChevronRight } from "@tabler/icons-react";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
-import { AuthCard } from "~/components/auth-card";
+import { AuthCard } from "~/components/auth/auth-card";
 import { ErrorComponent } from "~/components/error-component";
+import { BigButton } from "~/components/ui/big-button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { FormField } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
+import { unauthorized } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { safeRedirect } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
@@ -27,6 +31,12 @@ const validator = withZod(
   }),
 );
 
+const localValidator = withZod(
+  z.object({
+    loginAs: z.enum(["admin", "member"]),
+  }),
+);
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.getUser(request);
   const orgId = await SessionService.getOrgId(request);
@@ -39,7 +49,37 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const result = await validator.validate(await request.formData());
+  const formData = await request.formData();
+
+  // Local dev flow
+  if (formData.has("loginAs")) {
+    if (process.env.NODE_ENV !== "development") {
+      throw unauthorized("Unauthorized");
+    }
+
+    if (formData.get("loginAs") === "admin") {
+      const admin = await db.user.findUniqueOrThrow({ where: { username: "paul@remix.run" }, select: { id: true } });
+      return SessionService.createUserSession({
+        request,
+        userId: admin.id,
+        redirectTo: safeRedirect(formData.get("redirectTo"), "/"),
+        remember: false,
+      });
+    }
+    // Login as user
+    const user = await db.user.findUniqueOrThrow({
+      where: { username: "cassian@therebellion.com" },
+      select: { id: true },
+    });
+    return SessionService.createUserSession({
+      request,
+      userId: user.id,
+      redirectTo: safeRedirect(formData.get("redirectTo"), "/"),
+      remember: false,
+    });
+  }
+  // Normal flow
+  const result = await validator.validate(formData);
 
   if (result.error) {
     return validationError(result.error);
@@ -104,26 +144,40 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/";
 
+  if (process.env.NODE_ENV === "development") {
+    return (
+      <AuthCard>
+        <h1 className="text-4xl font-extrabold">Login</h1>
+        <ValidatedForm validator={localValidator} method="post" className="mt-4 space-y-4">
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+          <BigButton type="submit" name="loginAs" value="admin">
+            <div>
+              <p className="text-lg font-bold text-foreground">Admin</p>
+            </div>
+            <IconChevronRight />
+          </BigButton>
+          <BigButton type="submit" name="loginAs" value="member">
+            <div>
+              <p className="text-lg font-bold text-foreground">Member</p>
+            </div>
+            <IconChevronRight />
+          </BigButton>
+        </ValidatedForm>
+      </AuthCard>
+    );
+  }
+
   return (
     <AuthCard>
       <h1 className="text-4xl font-extrabold">Login</h1>
       <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
-        <FormField
-          label="Email"
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          defaultValue={process.env.NODE_ENV === "development" ? "paul@remix.run" : undefined}
-        />
+        <FormField label="Email" id="email" name="email" type="email" autoComplete="email" required />
         <FormField
           label="Password"
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
-          defaultValue={process.env.NODE_ENV === "development" ? "password" : undefined}
           required
         />
 
