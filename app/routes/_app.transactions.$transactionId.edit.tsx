@@ -108,7 +108,7 @@ export default function TransactionDetailsPage() {
   return (
     <>
       <PageHeader title="Transaction Edit" />
-      <BackButton to={`transactions/${transaction.id}`} />
+      <BackButton to={`/transactions/${transaction.id}`} />
 
       <PageContainer className="max-w-3xl">
         <div className="space-y-8">
