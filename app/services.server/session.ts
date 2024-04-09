@@ -111,8 +111,9 @@ class Session implements ISessionService {
     const orgId = await this.getOrgId(request);
     if (!orgId) {
       const originURL = new URL(request.url);
+      // console.log("----> session.ts:114 Setting redirect to choose-org... ");
       const returnUrl = new URL("/choose-org", originURL.origin);
-      returnUrl.searchParams.set("redirectTo", returnUrl.pathname);
+      returnUrl.searchParams.set("redirectTo", originURL.pathname);
       throw redirect(returnUrl.toString());
     }
     return orgId;

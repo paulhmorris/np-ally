@@ -1,76 +1,14 @@
 import { Prisma } from "@prisma/client";
 import { Link } from "@remix-run/react";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import * as React from "react";
+import { ColumnDef } from "@tanstack/react-table";
 
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
-import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
-import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { formatPhoneNumber, fuzzyFilter } from "~/lib/utils";
+import { Facet } from "~/components/ui/data-table/data-table-toolbar";
+import { formatPhoneNumber } from "~/lib/utils";
 
-interface DataTableProps<TData> {
-  data: Array<TData>;
-}
-
-export function ContactsTable<TData>({ data }: DataTableProps<TData>) {
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = React.useState<string>("");
-
-  const table = useReactTable({
-    data,
-    columns,
-    filterFns: { fuzzy: fuzzyFilter },
-    globalFilterFn: fuzzyFilter,
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 20,
-      },
-    },
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-      globalFilter,
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-  });
-
-  return (
-    <div className="space-y-4">
-      <DataTableToolbar table={table} facets={facets} />
-      <DataTable table={table} />
-      <DataTablePagination table={table} />
-    </div>
-  );
+export function ContactsTable({ data }: { data: Array<Contact> }) {
+  return <DataTable data={data} columns={columns} facets={facets} />;
 }
 
 type Contact = Prisma.ContactGetPayload<{ include: { type: true } }>;

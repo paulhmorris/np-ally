@@ -101,6 +101,12 @@ async function seed() {
           orgId: org.id,
         },
       },
+      memberships: {
+        create: {
+          orgId: org.id,
+          role: MembershipRole.MEMBER,
+        },
+      },
       password: {
         create: {
           hash: hashedPassword,

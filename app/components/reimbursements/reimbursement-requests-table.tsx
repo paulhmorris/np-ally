@@ -1,83 +1,17 @@
 import { Prisma, ReimbursementRequestStatus } from "@prisma/client";
 import { Link } from "@remix-run/react";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import * as React from "react";
 dayjs.extend(utc);
 
 import { Badge } from "~/components/ui/badge";
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
-import { DataTablePagination } from "~/components/ui/data-table/data-table-pagination";
-import { DataTableToolbar, Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { formatCentsAsDollars, fuzzyFilter } from "~/lib/utils";
+import { Facet } from "~/components/ui/data-table/data-table-toolbar";
+import { formatCentsAsDollars } from "~/lib/utils";
 
-interface DataTableProps<TData> {
-  data: Array<TData>;
-}
-
-export function ReimbursementRequestsTable<TData>({ data }: DataTableProps<TData>) {
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = React.useState<string>("");
-
-  const table = useReactTable({
-    data,
-    columns,
-    filterFns: { fuzzy: fuzzyFilter },
-    globalFilterFn: fuzzyFilter,
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 20,
-      },
-    },
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-      globalFilter,
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-  });
-
-  return (
-    <div className="space-y-4">
-      <DataTableToolbar table={table} facets={facets} />
-      <DataTable table={table} />
-      <DataTablePagination table={table} />
-    </div>
-  );
-}
-
-type ReimbRequest = Prisma.ReimbursementRequestGetPayload<{
+type ReimbursementRequest = Prisma.ReimbursementRequestGetPayload<{
   include: {
     account: true;
     method: true;
@@ -88,7 +22,11 @@ type ReimbRequest = Prisma.ReimbursementRequestGetPayload<{
     };
   };
 }>;
-const columns: Array<ColumnDef<ReimbRequest>> = [
+
+export function ReimbursementRequestsTable({ data }: { data: Array<ReimbursementRequest> }) {
+  return <DataTable data={data} columns={columns} facets={facets} />;
+}
+const columns: Array<ColumnDef<ReimbursementRequest>> = [
   {
     accessorKey: "user",
     accessorFn: (row) => `${row.user.contact.firstName} ${row.user.contact.lastName}`,
@@ -134,13 +72,12 @@ const columns: Array<ColumnDef<ReimbRequest>> = [
   },
   {
     accessorKey: "amountInCents",
+    accessorFn: (row) => formatCentsAsDollars(row.amountInCents, 2),
     header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
     cell: ({ row }) => {
       return (
-        <div>
-          <span className="max-w-[500px] truncate font-medium">
-            {formatCentsAsDollars(row.getValue("amountInCents"))}
-          </span>
+        <div className="max-w-[100px]">
+          <span className="truncate font-medium tabular-nums">{row.getValue("amountInCents")}</span>
         </div>
       );
     },

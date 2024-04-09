@@ -5,7 +5,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { setFormDefaults, validationError } from "remix-validated-form";
+import { validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 dayjs.extend(utc);
@@ -14,51 +14,60 @@ import { ErrorComponent } from "~/components/error-component";
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
+import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
-import { forbidden, notFound } from "~/lib/responses.server";
+import { Sentry } from "~/integrations/sentry";
+import { forbidden, getPrismaErrorText, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
 
-const validator = withZod(
-  z.object({
-    _action: z.literal("delete"),
-  }),
-);
+const validator = withZod(z.object({ _action: z.literal("delete") }));
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.transactionId, "transactionId not found");
   const user = await SessionService.requireUser(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const transaction = await db.transaction.findUnique({
-    where: { id: params.transactionId, orgId },
-    include: {
-      account: {
-        include: {
-          user: true,
+  try {
+    const transaction = await db.transaction.findUnique({
+      where: { id: params.transactionId, orgId },
+      include: {
+        account: {
+          include: {
+            user: true,
+          },
+        },
+        contact: true,
+        transactionItems: {
+          include: {
+            type: true,
+            method: true,
+          },
         },
       },
-      contact: true,
-      transactionItems: {
-        include: {
-          type: true,
-          method: true,
-        },
-      },
-    },
-  });
-  if (user.isMember && transaction?.account.user?.id !== user.id) {
-    throw forbidden({ message: "You do not have permission to view this transaction" });
-  }
-  if (!transaction) throw notFound({ message: "Transaction not found" });
+    });
+    if (user.isMember && transaction?.account.user?.id !== user.id) {
+      throw forbidden({ message: "You do not have permission to view this transaction" });
+    }
+    if (!transaction) throw notFound({ message: "Transaction not found" });
 
-  return typedjson({
-    transaction,
-    ...setFormDefaults("transactionForm", { ...transaction }),
-  });
+    return typedjson({ transaction });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    let message = error instanceof Error ? error.message : "";
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      message = getPrismaErrorText(error);
+    }
+    return toast.redirect(request, "/transactions", {
+      type: "error",
+      title: "Error loading transaction",
+      description: message,
+    });
+  }
 };
 
 export const meta: MetaFunction = () => [{ title: "Transaction Details" }];
@@ -92,6 +101,11 @@ export default function TransactionDetailsPage() {
     <>
       <PageHeader title="Transaction Details">
         <div className="flex items-center gap-2">
+          {!authorizedUser.isMember ? (
+            <Button variant="outline" asChild>
+              <Link to={`/transactions/${transaction.id}/edit`}>Edit</Link>
+            </Button>
+          ) : null}
           {["SUPERADMIN", "ADMIN"].includes(authorizedUser.role) ? (
             <ConfirmDestructiveModal
               description={`This action cannot be undone. This will permanently delete the

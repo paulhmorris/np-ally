@@ -9,8 +9,13 @@ import { renderToPipeableStream } from "react-dom/server";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 
-export function handleError(error: unknown, { request }: { request: Request }) {
-  void Sentry.captureRemixServerException(error, "remix.server", request);
+export function handleError(error: any, { request }: { request: Request }) {
+  void Sentry.captureRemixServerException(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    error instanceof Error ? error : "error" in error ? error.error : error,
+    "remix.server",
+    request,
+  );
 }
 
 Sentry.init({

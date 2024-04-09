@@ -5,7 +5,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
-import { AuthCard } from "~/components/auth-card";
+import { AuthCard } from "~/components/auth/auth-card";
 import { ErrorComponent } from "~/components/error-component";
 import { Checkbox } from "~/components/ui/checkbox";
 import { FormField } from "~/components/ui/form";
@@ -73,6 +73,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // If the user has a default membership or only one org, we can just log them in to that org
   const defaultMembership = user.memberships.find((m) => m.isDefault);
   if (user.memberships.length === 1 || defaultMembership) {
+    console.info("Setting session orgId to", defaultMembership?.orgId ?? user.memberships[0].orgId);
     return SessionService.createUserSession({
       request,
       userId: user.id,
@@ -81,7 +82,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       remember: !!remember,
     });
   }
-
   // Users who are in multiple organizations need to choose which one to log in to
   const url = new URL(request.url);
   const redirectUrl = new URL("/choose-org", url.origin);
@@ -108,22 +108,13 @@ export default function LoginPage() {
     <AuthCard>
       <h1 className="text-4xl font-extrabold">Login</h1>
       <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
-        <FormField
-          label="Email"
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          defaultValue={process.env.NODE_ENV === "development" ? "paul@remix.run" : undefined}
-        />
+        <FormField label="Email" id="email" name="email" type="email" autoComplete="email" required />
         <FormField
           label="Password"
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
-          defaultValue={process.env.NODE_ENV === "development" ? "password" : undefined}
           required
         />
 

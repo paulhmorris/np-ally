@@ -86,17 +86,15 @@ test.describe("Add transfer", () => {
     await page.getByRole("button", { name: /submit/i }).click();
 
     // Verifiy transfer went through
-    await page.waitForURL("/accounts");
-    await expect(page).toHaveURL("/accounts");
-    await expect(page.getByRole("heading", { name: /accounts/i })).toBeVisible();
+    await page.waitForURL(/accounts/);
+    await expect(page).toHaveURL(/accounts/);
+    await expect(page.getByRole("heading", { name: /9999/i })).toBeVisible();
 
     // Verify toast message
     await expect(page.getByRole("status")).toHaveText(/success/i);
     await page.getByLabel("Close toast").click();
 
     // Verify transaction in "to" amount is correct
-    await page.getByRole("row", { name: "9999" }).getByRole("link", { name: "View" }).click();
-    await expect(page).toHaveURL(/accounts/);
     await expect(page.getByRole("heading", { name: /9999/i })).toBeVisible();
     await expect(page.getByRole("cell", { name: amount.toString() })).toBeVisible();
 
