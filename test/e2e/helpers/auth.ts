@@ -12,9 +12,14 @@ export async function createAdmin() {
     username: `e2e-admin-${faker.internet.email().toLowerCase()}`,
     password: faker.internet.password(),
   };
-  const org = await prisma.organization.findUnique({ where: { host: "E2E-Test.org" } });
+  let org = await prisma.organization.findUnique({ where: { host: "E2E-Test.org" } });
   if (!org) {
-    throw new Error("No organization found. Please create one.");
+    org = await prisma.organization.create({
+      data: {
+        host: "E2E-Test.org",
+        name: "E2E Test Organization",
+      },
+    });
   }
   const createdUser = await prisma.user.create({
     data: {

@@ -84,7 +84,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         title: "Warning",
         description: "Insufficient funds in from account.",
       },
-      { status: 400 },
     );
   }
 

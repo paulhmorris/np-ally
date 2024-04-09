@@ -4,6 +4,13 @@ import db from "test/e2e/helpers/db";
 import { AccountType } from "~/lib/constants";
 
 setup("setup db", async () => {
+  // cleanup the existing database
+  await db.$transaction([
+    db.account.deleteMany({ where: { description: { contains: "E2E" } } }),
+    db.membership.deleteMany({ where: { org: { host: "E2E-Test.org" } } }),
+    db.organization.deleteMany({ where: { host: "E2E-Test.org" } }),
+  ]);
+
   const org = await db.organization.create({
     data: {
       host: "E2E-Test.org",
