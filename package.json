@@ -84,7 +84,7 @@
     "remix-utils": "^7.5.0",
     "remix-validated-form": "^5.1.5",
     "resend": "^3.1.0",
-    "sonner": "^1.4.0",
+    "sonner": "^1.4.41",
     "source-map-support": "^0.5.21",
     "spin-delay": "^1.2.0",
     "tailwind-merge": "^2.2.1",
