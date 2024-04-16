@@ -15,7 +15,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Callout } from "~/components/ui/callout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { FormSelect, FormTextarea } from "~/components/ui/form";
+import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { Bucket } from "~/integrations/bucket.server";
 import { db } from "~/integrations/prisma.server";
@@ -24,6 +24,7 @@ import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText, notFound } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { capitalize, formatCentsAsDollars } from "~/lib/utils";
+import { CurrencySchema } from "~/models/schemas";
 import { sendReimbursementRequestUpdateEmail } from "~/services.server/mail";
 import { SessionService } from "~/services.server/session";
 
@@ -40,6 +41,7 @@ const validator = withZod(
   z.object({
     id: z.string().cuid(),
     accountId: z.string().optional(),
+    amount: CurrencySchema,
     note: z.string().max(2000).optional(),
     _action: z.nativeEnum(ReimbursementRequestStatus).or(z.literal("REOPEN")),
   }),
@@ -98,7 +100,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return validationError(result.error);
   }
 
-  const { _action, accountId, note, id } = result.data;
+  const { _action, amount, accountId, note, id } = result.data;
 
   // Reopen
   if (_action === "REOPEN") {
@@ -130,16 +132,29 @@ export async function action({ request }: ActionFunctionArgs) {
     try {
       const rr = await db.reimbursementRequest.findUniqueOrThrow({
         where: { id, orgId },
-        include: { account: true, user: true },
+        select: {
+          accountId: true,
+          user: {
+            select: {
+              username: true,
+            },
+          },
+        },
       });
-
-      const total = rr.amountInCents;
 
       // Verify the account has enough funds
       const account = await db.account.findUnique({
         where: { id: accountId, orgId },
-        include: { transactions: true },
+        select: {
+          code: true,
+          transactions: {
+            select: {
+              amountInCents: true,
+            },
+          },
+        },
       });
+
       if (!account) {
         return validationError({
           fieldErrors: {
@@ -149,7 +164,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       const balance = account.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
-      if (balance < total) {
+      if (balance < amount) {
         return toast.json(
           request,
           { message: "Insufficient Funds" },
@@ -167,14 +182,14 @@ export async function action({ request }: ActionFunctionArgs) {
         db.transaction.create({
           data: {
             orgId,
-            accountId: rr.accountId,
-            amountInCents: total * -1,
+            accountId,
+            amountInCents: amount * -1,
             description: note || "Approved reimbursement request",
             date: new Date(),
             transactionItems: {
               create: {
                 orgId,
-                amountInCents: total * -1,
+                amountInCents: amount * -1,
                 methodId: TransactionItemMethod.Other,
                 typeId: TransactionItemType.Other_Outgoing,
               },
@@ -346,7 +361,7 @@ export default function ReimbursementRequestPage() {
               method="post"
               validator={validator}
               className="mt-8 flex w-full"
-              defaultValues={{ accountId: rr.accountId }}
+              defaultValues={{ accountId: rr.accountId, amount: rr.amountInCents / 100.0 }}
             >
               <input type="hidden" name="id" value={rr.id} />
               {rr.status === ReimbursementRequestStatus.PENDING ? (
@@ -357,6 +372,7 @@ export default function ReimbursementRequestPage() {
                     </Callout>
                   </legend>
                   <div className="mt-4 space-y-4">
+                    <FormField name="amount" label="Amount" isCurrency required />
                     <FormSelect
                       name="accountId"
                       label="Account to deduct from"

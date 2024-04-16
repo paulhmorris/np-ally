@@ -1,10 +1,9 @@
 import { Form, Link } from "@remix-run/react";
-import { IconArrowRight } from "@tabler/icons-react";
+import { IconArrowRight, IconMoon, IconSelector, IconSun } from "@tabler/icons-react";
 import { useState } from "react";
+import { Theme, useTheme } from "remix-themes";
 
 import { NewInquiryModal } from "~/components/modals/inquiry-modal";
-import { Avatar, AvatarFallback } from "~/components/ui/avatar";
-import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,48 +18,52 @@ import { useUser } from "~/hooks/useUser";
 export function UserMenu() {
   const user = useUser();
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [_, setTheme] = useTheme();
+
+  function handleToggleTheme() {
+    setTheme((theme) => (theme === Theme.DARK ? Theme.LIGHT : Theme.DARK));
+  }
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative mt-auto h-10 w-10 rounded-full">
+          <button className="relative -mx-2 -my-1.5 flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium ring-offset-background hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:w-full">
             <span className="sr-only">Open User Menu</span>
-            <Avatar aria-hidden="true">
+            {/* <Avatar aria-hidden="true">
               <AvatarFallback className="bg-primary text-white dark:text-black" aria-hidden="true">
                 <span>
                   {user.contact.firstName?.charAt(0).toUpperCase()}
                   {user.contact.lastName?.charAt(0).toUpperCase()}
                 </span>
               </AvatarFallback>
-            </Avatar>
-          </Button>
+            </Avatar> */}
+            <div className="flex flex-col space-y-2 text-left md:space-y-0">
+              <p className="text-base font-medium leading-none md:text-sm">
+                {`${user.contact.firstName} ${user.contact.lastName}`}
+              </p>
+              <p className="text-sm leading-none text-muted-foreground md:text-xs">{user.contact.email}</p>
+            </div>
+            <IconSelector className="ml-auto size-5 text-muted-foreground" />
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="mb-2 w-48" align="start" forceMount>
-          <DropdownMenuLabel>
-            <p className="text-xs font-medium leading-none text-muted-foreground">{user.org?.name}</p>
-          </DropdownMenuLabel>
-          {user.memberships.length > 1 ? (
-            <>
-              <DropdownMenuItem asChild className="py-0.5">
-                <Link className="flex cursor-pointer items-center justify-between gap-2" to="/choose-org">
-                  <span>Change Org</span>
-                  <IconArrowRight className="size-4" />
-                </Link>
-              </DropdownMenuItem>
-            </>
-          ) : null}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-2 sm:space-y-0">
-              <p className="text-base font-medium leading-none sm:text-sm">
-                {user.contact.firstName}
-                {user.contact.lastName ? ` ${user.contact.lastName}` : null}
-              </p>
-              <p className="text-sm leading-none text-muted-foreground sm:text-xs">{user.contact.email}</p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+          <div className="md:hidden">
+            <DropdownMenuLabel>
+              <p className="text-xs font-medium leading-none text-muted-foreground">{user.org?.name}</p>
+            </DropdownMenuLabel>
+            {user.memberships.length > 1 ? (
+              <>
+                <DropdownMenuItem asChild className="py-0.5">
+                  <Link className="flex cursor-pointer items-center justify-between gap-2" to="/choose-org">
+                    <span>Change Org</span>
+                    <IconArrowRight className="size-4" />
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            ) : null}
+            <DropdownMenuSeparator />
+          </div>
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
               <Link className="cursor-pointer sm:hidden" to={user.isMember ? "/dashboards/staff" : "/dashboards/admin"}>
@@ -80,11 +83,14 @@ export function UserMenu() {
             <DropdownMenuItem className="cursor-pointer" onClick={() => setInquiryOpen(true)}>
               New Inquiry
             </DropdownMenuItem>
-            {/* <DropdownMenuItem className="cursor-pointer" onSelect={handleToggleTheme}>
-            <span>Toggle theme</span>
-            <IconSun className="absolute right-2 h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <IconMoon className="absolute right-2 h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </DropdownMenuItem> */}
+            <button
+              className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-base outline-none transition-colors hover:bg-secondary focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 sm:text-sm"
+              onClick={handleToggleTheme}
+            >
+              <span>Toggle theme</span>
+              <IconSun className="absolute right-2 size-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <IconMoon className="absolute right-2 size-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </button>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="px-0 py-0">

@@ -2,7 +2,6 @@ import { NavLink } from "@remix-run/react";
 import { IconMenuDeep } from "@tabler/icons-react";
 import { useState, type ComponentPropsWithoutRef } from "react";
 
-import { ThemeModeToggle } from "~/components/theme-mode-toggle";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Separator } from "~/components/ui/separator";
 import { UserMenu } from "~/components/user-menu";
@@ -15,11 +14,8 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className={cn("flex items-center justify-between border-b px-6 py-4 md:hidden", props.className)}>
-      <div className="flex items-center gap-4">
-        <UserMenu />
-        <ThemeModeToggle />
-      </div>
+    <nav className={cn("flex items-center justify-between gap-4 border-b px-6 py-4 md:hidden", props.className)}>
+      <UserMenu />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger>
           <span className="sr-only">Open Navigation Menu</span>
@@ -34,11 +30,11 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
               name="Home"
             />
             {globalNavLinks.map((link) => (
-              <MobileNavLink setOpen={setOpen} key={link.href} to={link.href} name={link.name} />
+              <MobileNavLink setOpen={setOpen} key={link.to} to={link.to} name={link.name} />
             ))}
             {user.isMember
               ? userNavLinks.map((link) => (
-                  <MobileNavLink setOpen={setOpen} key={link.href} to={link.href} name={link.name} />
+                  <MobileNavLink setOpen={setOpen} key={link.to} to={link.to} name={link.name} />
                 ))
               : null}
           </ul>
@@ -48,18 +44,18 @@ export function MobileNav(props: ComponentPropsWithoutRef<"nav">) {
               <p className="text-sm font-semibold tracking-widest text-muted-foreground">ADMIN</p>
               <ul className="space-x-0 space-y-1">
                 {adminNavLinks.map((link) => (
-                  <MobileNavLink setOpen={setOpen} key={link.href} to={link.href} name={link.name} />
+                  <MobileNavLink setOpen={setOpen} key={link.to} to={link.to} name={link.name} />
                 ))}
               </ul>
             </>
           ) : null}
-          {user.isSuperAdmin ? (
+          {user.isSuperAdmin && superAdminNavLinks.length > 0 ? (
             <>
               <Separator />
               <p className="text-sm font-semibold tracking-widest text-muted-foreground">SUPER ADMIN</p>
               <ul className="space-x-0 space-y-1">
                 {superAdminNavLinks.map((link) => (
-                  <MobileNavLink setOpen={setOpen} key={link.href} to={link.href} name={link.name} />
+                  <MobileNavLink setOpen={setOpen} key={link.to} to={link.to} name={link.name} />
                 ))}
               </ul>
             </>

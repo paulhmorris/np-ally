@@ -1,42 +1,84 @@
-import { Link, NavLink } from "@remix-run/react";
-import { IconWorld } from "@tabler/icons-react";
-import type { ComponentPropsWithoutRef } from "react";
+import { Form, Link, NavLink, useLocation } from "@remix-run/react";
+import { IconHome, IconSelector, IconWorld } from "@tabler/icons-react";
+import { type ComponentPropsWithoutRef } from "react";
 
-import { ThemeModeToggle } from "~/components/theme-mode-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { GlobalLoader } from "~/components/ui/global-loader";
 import { Separator } from "~/components/ui/separator";
 import { UserMenu } from "~/components/user-menu";
 import { useUser } from "~/hooks/useUser";
-import { adminNavLinks, globalNavLinks, superAdminNavLinks, userNavLinks } from "~/lib/constants";
-import { cn } from "~/lib/utils";
+import { AppNavLink, adminNavLinks, globalNavLinks, superAdminNavLinks, userNavLinks } from "~/lib/constants";
+import { cn, normalizeEnum } from "~/lib/utils";
 
 export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
+  const location = useLocation();
+  const hasMultipleOrgs = user.memberships.length > 1;
+  const role = user.memberships.find((m) => m.orgId === user.org?.id)?.role;
 
   return (
     <nav
       className={cn(
-        "fixed left-0 z-10 hidden min-h-full w-64 flex-col space-x-2 border-r border-border bg-card px-6 py-10 md:flex",
+        "fixed left-0 z-10 hidden min-h-full w-64 flex-col space-x-2 border-r border-border bg-card py-10 pl-3 pr-6 md:flex",
         props.className,
       )}
     >
-      <div className="flex h-10 items-center pl-3">
-        <Link to="/" className="inline-flex items-center space-x-2 text-sm font-bold text-primary">
-          <IconWorld className="h-6 w-6" />
-          <span>{user.org?.name}</span>
+      {hasMultipleOrgs ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="relative flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-primary ring-offset-background hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:w-full">
+              <span className="sr-only">Change Organization</span>
+              <IconWorld className="size-10 shrink-0" stroke={1.2} />
+              <div className="flex flex-col text-left">
+                <span className="text-pretty">{user.org?.name}</span>
+                {role ? <span className="text-xs font-medium text-muted-foreground">{normalizeEnum(role)}</span> : null}
+              </div>
+              <IconSelector className="ml-auto size-5 shrink-0 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="mb-2 w-56 space-y-1" align="center" forceMount>
+            <Form action="/api/change-org" method="post">
+              <input type="hidden" name="pathname" value={location.pathname} />
+              {user.memberships.map((m) => (
+                <DropdownMenuItem asChild key={m.orgId} className="cursor-pointer" disabled={user.org?.id === m.orgId}>
+                  <button type="submit" name="orgId" value={m.orgId} className="w-full">
+                    {m.org.name}
+                  </button>
+                </DropdownMenuItem>
+              ))}
+            </Form>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <div className="flex items-center px-2.5">
+          <Link to="/" className="inline-flex items-center space-x-2 text-sm font-bold text-primary">
+            <IconWorld className="size-10" stroke={1.2} />
+            <div className="flex flex-col">
+              <span className="text-pretty">{user.org?.name}</span>
+              {role ? <span className="text-xs font-medium text-muted-foreground">{normalizeEnum(role)}</span> : null}
+            </div>
+          </Link>
+        </div>
+      )}
+      <ul className="relative mt-8 space-x-0 space-y-1">
+        <div className="absolute -top-6 left-0.5">
           <GlobalLoader />
-        </Link>
-      </div>
-      <ul className="mt-12 space-x-0 space-y-1">
-        <DesktopNavLink to={user.isMember ? "/dashboards/staff" : "/dashboards/admin"} name="Home" />
+        </div>
+        <DesktopNavLink
+          to={user.isMember ? "/dashboards/staff" : "/dashboards/admin"}
+          name="Home"
+          icon={IconHome}
+          end={false}
+        />
         {globalNavLinks.map((link) => (
-          <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
+          <DesktopNavLink key={link.to} {...link} />
         ))}
-        {user.isMember
-          ? userNavLinks.map((link) => (
-              <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
-            ))
-          : null}
+        {user.isMember ? userNavLinks.map((link) => <DesktopNavLink key={link.to} {...link} />) : null}
       </ul>
       {user.isAdmin || user.isSuperAdmin ? (
         <>
@@ -44,7 +86,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">ADMIN</p>
           <ul className="space-x-0 space-y-1">
             {adminNavLinks.map((link) => (
-              <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
+              <DesktopNavLink key={link.to} {...link} />
             ))}
           </ul>
         </>
@@ -55,20 +97,19 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           <p className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground">SUPER ADMIN</p>
           <ul className="space-x-0 space-y-1">
             {superAdminNavLinks.map((link) => (
-              <DesktopNavLink key={link.href} to={link.href} name={link.name} end={link.end} />
+              <DesktopNavLink key={link.to} {...link} />
             ))}
           </ul>
         </>
       ) : null}
-      <div className="mt-auto flex items-center gap-2">
-        <UserMenu />
-        <ThemeModeToggle />
-      </div>
+
+      <Separator className="my-4 mt-auto" />
+      <UserMenu />
     </nav>
   );
 }
 
-function DesktopNavLink({ to, name, end }: { to: string; name: string; end?: boolean }) {
+function DesktopNavLink({ to, name, end, icon: Icon }: AppNavLink) {
   return (
     <li>
       <NavLink
@@ -76,12 +117,13 @@ function DesktopNavLink({ to, name, end }: { to: string; name: string; end?: boo
         to={to}
         className={({ isActive }) =>
           cn(
-            "flex cursor-pointer items-center rounded-md px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-primary/10",
-            isActive && "bg-primary/10",
+            "flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
+            isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted",
           )
         }
       >
-        {name}
+        <Icon className="size-5" />
+        <span>{name}</span>
       </NavLink>
     </li>
   );
