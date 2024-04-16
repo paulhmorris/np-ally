@@ -13,7 +13,9 @@ import { FileUploader } from "~/components/file-uploader";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Callout } from "~/components/ui/callout";
+import { Checkbox } from "~/components/ui/checkbox";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";
@@ -33,7 +35,7 @@ const validator = withZod(
     description: z.string().optional(),
     amountInCents: CurrencySchema,
     accountId: z.string().cuid(),
-    receiptId: zfd.text(z.string().cuid().optional()),
+    receiptIds: zfd.repeatableOfType(z.string().cuid().optional()),
     methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
   }),
 );
@@ -74,7 +76,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { receiptId, ...data } = result.data;
+  const { receiptIds, ...data } = result.data;
 
   const reimbursementRequest = await db.reimbursementRequest.create({
     data: {
@@ -82,13 +84,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       orgId,
       userId: user.id,
       status: ReimbursementRequestStatus.PENDING,
-      receipts: receiptId
-        ? {
-            connect: {
-              id: receiptId,
-            },
-          }
-        : undefined,
+      receipts:
+        receiptIds.length > 0
+          ? {
+              connect: receiptIds.map((id) => ({ id })),
+            }
+          : undefined,
     },
   });
 
@@ -120,7 +121,7 @@ export default function NewReimbursementPage() {
         </p>
         <Separator className="my-8" />
 
-        <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-xl">
+        <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-2xl">
           <FormField name="vendor" label="Vendor" />
           <FormTextarea name="description" label="Description" />
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
@@ -153,25 +154,26 @@ export default function NewReimbursementPage() {
                 label: `${t.code} - ${t.type.name}`,
               }))}
             />
-            <FormSelect
-              name="receiptId"
-              label="Receipt"
-              placeholder="Select a receipt"
-              className="max-w-[400px]"
-              options={receipts.map((r) => ({
-                value: r.id,
-                label: (
-                  <span className="inline-block">
-                    {r.title}{" "}
-                    <span className="inline-block text-xs text-muted-foreground">
-                      {dayjs(r.createdAt).format("M/D")}
-                      {!user.isMember ? ` by ${r.user.contact.email}` : null}
-                    </span>
-                  </span>
-                ),
-              }))}
-            />
           </div>
+          <fieldset>
+            <legend className="mb-2 text-sm text-muted-foreground">Select receipts to attach to this request.</legend>
+            <div className="flex flex-col gap-y-4 sm:gap-2.5">
+              {receipts.map((r) => {
+                return (
+                  <Label key={r.id} className="inline-flex cursor-pointer flex-wrap items-center gap-1.5">
+                    <Checkbox name="receiptIds" value={r.id} aria-label={r.title} defaultChecked={false} />
+                    <span>{r.title}</span>
+                    <span className="ml-6 text-xs text-muted-foreground sm:ml-auto">
+                      uploaded {dayjs(r.createdAt).format("MM/DD/YY h:mma")}
+                    </span>
+                    {!user.isMember ? (
+                      <span className="text-xs text-muted-foreground">by {r.user.contact.email}</span>
+                    ) : null}
+                  </Label>
+                );
+              })}
+            </div>
+          </fieldset>
           <Callout variant="warning">
             High quality images of itemized receipts are required. Please allow two weeks for processing.
           </Callout>
