@@ -23,9 +23,9 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-48">Submitted On</TableHead>
-                {!user.isMember ? <TableHead>Submitted By</TableHead> : null}
-                <TableHead>Account</TableHead>
+                <TableHead className="w-48">Submitted</TableHead>
+                {!user.isMember ? <TableHead>User</TableHead> : null}
+                <TableHead className="hidden lg:table-cell">Account</TableHead>
                 <TableHead>Amount</TableHead>
                 {!user.isMember ? (
                   <TableHead>
@@ -37,9 +37,9 @@ export function ReimbursementRequestsList({ requests }: { requests: Array<Reimbu
             <TableBody>
               {requests.map((req) => (
                 <TableRow key={req.id}>
-                  <TableCell>{dayjs(req.createdAt).format("MM/DD/YYYY h:mm a")}</TableCell>
+                  <TableCell>{dayjs(req.createdAt).format("M/DD/YY h:mm a")}</TableCell>
                   {!user.isMember ? <TableCell>{req.user.contact.email}</TableCell> : null}
-                  <TableCell>{req.account.code}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{req.account.code}</TableCell>
                   <TableCell>{formatCentsAsDollars(req.amountInCents)}</TableCell>
                   {!user.isMember ? (
                     <TableCell>

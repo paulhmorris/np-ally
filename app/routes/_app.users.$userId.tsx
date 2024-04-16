@@ -281,7 +281,7 @@ export default function UserDetailsPage() {
               <FormField label="Last name" id="lastName" name="lastName" required />
             </div>
             <input type="hidden" name="id" value={user.id} />
-            {authorizedUser.isAdmin ? (
+            {!authorizedUser.isMember ? (
               <>
                 <FormField label="Username" id="username" name="username" disabled />
                 <FormSelect

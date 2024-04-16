@@ -16,7 +16,7 @@ export function useUser() {
   return {
     ...maybeUser,
     isMember: maybeUser.role === MembershipRole.MEMBER,
-    isAdmin: maybeUser.role === MembershipRole.ADMIN,
+    isAdmin: maybeUser.role === MembershipRole.ADMIN || maybeUser.systemRole === UserRole.SUPERADMIN,
     isSuperAdmin: maybeUser.systemRole === UserRole.SUPERADMIN,
   } as Omit<typeof maybeUser, "role"> & {
     role: MembershipRole;

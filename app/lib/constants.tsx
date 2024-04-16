@@ -1,4 +1,16 @@
 import { Prisma, TransactionItemTypeDirection } from "@prisma/client";
+import {
+  IconAffiliate,
+  IconBuildingBank,
+  IconCoin,
+  IconCreditCard,
+  IconCreditCardPay,
+  IconCreditCardRefund,
+  IconTransfer,
+  IconUserHeart,
+  IconUsers,
+  IconUsersGroup,
+} from "@tabler/icons-react";
 
 export enum AccountType {
   Operating = 1,
@@ -116,30 +128,31 @@ export enum LinearLabelID {
   Improvement = "d7b2166a-61dd-4f25-995d-7288f9c162fc",
 }
 
-interface NavLink {
+export interface AppNavLink {
   name: string;
-  href: string;
+  to: string;
   end: boolean;
+  icon: typeof IconCreditCard;
 }
 
-export const globalNavLinks: ReadonlyArray<NavLink> = [
-  { name: "Transactions", href: "/transactions", end: false },
-  { name: "Contacts", href: "/contacts", end: false },
-  { name: "Engagements", href: "/engagements", end: true },
-  { name: "Add Engagement", href: "/engagements/new", end: false },
-  { name: "Request Reimbursement", href: "/reimbursements/new", end: false },
+export const globalNavLinks: ReadonlyArray<AppNavLink> = [
+  { name: "Transactions", to: "/transactions", end: false, icon: IconCreditCard },
+  { name: "Contacts", to: "/contacts", end: false, icon: IconUsers },
+  { name: "Engagements", to: "/engagements", end: true, icon: IconUserHeart },
+  { name: "Reimbursement", to: "/reimbursements/new", end: false, icon: IconCoin },
 ] as const;
 
-export const userNavLinks: ReadonlyArray<NavLink> = [] as const;
+export const userNavLinks: ReadonlyArray<AppNavLink> = [] as const;
 
-export const adminNavLinks: ReadonlyArray<NavLink> = [
-  { name: "Add Income", href: "/income/new", end: false },
-  { name: "Add Expense", href: "/expense/new", end: false },
-  { name: "Add Transfer", href: "/transfer/new", end: false },
-  { name: "Accounts", href: "/accounts", end: false },
-  { name: "Users", href: "/users", end: false },
-  { name: "Reimbursement Requests", href: "/reimbursements", end: true },
-  { name: "Org Settings", href: "/organization/settings", end: false },
+export const adminNavLinks: ReadonlyArray<AppNavLink> = [
+  { name: "Add Income", to: "/income/new", end: false, icon: IconCreditCardRefund },
+  { name: "Add Expense", to: "/expense/new", end: false, icon: IconCreditCardPay },
+  { name: "Add Transfer", to: "/transfer/new", end: false, icon: IconTransfer },
+  { name: "Accounts", to: "/accounts", end: false, icon: IconBuildingBank },
+  { name: "Users", to: "/users", end: false, icon: IconUsersGroup },
+  { name: "Reimbursements", to: "/reimbursements", end: true, icon: IconCoin },
+  // { name: "Receipts", to: "/receipts", end: true, icon: IconReceipt },
+  { name: "Organization", to: "/organization/settings", end: false, icon: IconAffiliate },
 ] as const;
 
-export const superAdminNavLinks: ReadonlyArray<NavLink> = [] as const;
+export const superAdminNavLinks: ReadonlyArray<AppNavLink> = [] as const;

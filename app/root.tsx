@@ -10,6 +10,7 @@ import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Notifications } from "~/components/notifications";
+import { GlobalLoader } from "~/components/ui/global-loader";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { themeSessionResolver } from "~/lib/session.server";
@@ -43,7 +44,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       include: {
         contact: true,
         contactAssignments: true,
-        memberships: true,
+        memberships: {
+          include: {
+            org: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -133,6 +143,7 @@ function App() {
         <Analytics debug={false} />
         <Outlet />
         <Notifications />
+        <GlobalLoader />
         <ScrollRestoration />
         <script
           dangerouslySetInnerHTML={{

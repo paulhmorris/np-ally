@@ -1,19 +1,19 @@
-import { useNavigation } from "@remix-run/react";
-import { IconLoader } from "@tabler/icons-react";
-import { useSpinDelay } from "spin-delay";
-
-import { cn } from "~/lib/utils";
+import { useFetchers, useNavigation } from "@remix-run/react";
+import NProgress from "nprogress";
+import { useEffect } from "react";
 
 export function GlobalLoader() {
   const navigation = useNavigation();
-  const showSpinner = useSpinDelay(navigation.state !== "idle");
+  const fetchers = useFetchers();
 
-  return (
-    <IconLoader
-      className={cn(
-        showSpinner ? "animate-spin opacity-100" : "opacity-0",
-        "ml-2 text-muted-foreground transition-opacity",
-      )}
-    />
-  );
+  useEffect(() => {
+    const fetchersIdle = fetchers.every((f) => f.state === "idle");
+    if (navigation.state === "idle" && fetchersIdle) {
+      NProgress.done();
+    } else {
+      NProgress.start();
+    }
+  }, [navigation.state, fetchers]);
+
+  return null;
 }
