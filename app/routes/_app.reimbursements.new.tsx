@@ -1,4 +1,4 @@
-import { ReimbursementRequestStatus } from "@prisma/client";
+import { Prisma, ReimbursementRequestStatus } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -20,8 +20,10 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
+import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
@@ -78,30 +80,56 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { receiptIds, ...data } = result.data;
 
-  const reimbursementRequest = await db.reimbursementRequest.create({
-    data: {
-      ...data,
-      orgId,
-      userId: user.id,
-      status: ReimbursementRequestStatus.PENDING,
-      receipts:
-        receiptIds.length > 0
-          ? {
-              connect: receiptIds.map((id) => ({ id })),
-            }
-          : undefined,
-    },
-  });
+  try {
+    const rr = await db.reimbursementRequest.create({
+      data: {
+        ...data,
+        orgId,
+        userId: user.id,
+        status: ReimbursementRequestStatus.PENDING,
+        receipts:
+          receiptIds.length > 0
+            ? {
+                connect: receiptIds.map((id) => ({ id })),
+              }
+            : undefined,
+      },
+      include: {
+        receipts: true,
+      },
+    });
 
-  await reimbursementRequestJob.invoke({
-    reimbursementRequestId: reimbursementRequest.id,
-  });
+    await reimbursementRequestJob.invoke({
+      reimbursementRequestId: rr.id,
+    });
 
-  return toast.redirect(request, `/dashboards/${user.isMember ? "staff" : "admin"}`, {
-    type: "success",
-    title: "Reimbursement request submitted",
-    description: "Your request will be processed as soon as possible.",
-  });
+    return toast.redirect(request, `/dashboards/${user.isMember ? "staff" : "admin"}`, {
+      type: "success",
+      title: "Reimbursement request submitted",
+      description: "Your request will be processed as soon as possible.",
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return toast.json(
+        request,
+        { message: getPrismaErrorText(error) },
+        { type: "error", title: "Database Error", description: getPrismaErrorText(error) },
+        { status: 500 },
+      );
+    }
+    return toast.json(
+      request,
+      { message: "An unknown error occurred" },
+      {
+        type: "error",
+        title: "An unknown error occurred",
+        description: error instanceof Error ? error.message : "",
+      },
+      { status: 500 },
+    );
+  }
 };
 
 export default function NewReimbursementPage() {
@@ -113,12 +141,10 @@ export default function NewReimbursementPage() {
       <PageHeader title="New Reimbursement Request" />
       <PageContainer>
         <h2 id="receipts-label" className="mb-1 font-bold">
-          Upload Receipt
+          Upload Receipts
         </h2>
         <FileUploader />
-        <p className="mt-1 text-xs text-muted-foreground">
-          After uploading, your files will appear in the dropdown below.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">After uploading, your files will appear below.</p>
         <Separator className="my-8" />
 
         <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-2xl">
@@ -156,22 +182,26 @@ export default function NewReimbursementPage() {
             />
           </div>
           <fieldset>
-            <legend className="mb-2 text-sm text-muted-foreground">Select receipts to attach to this request.</legend>
+            <legend className="mb-2 text-sm font-medium">Select receipts to attach to this request.</legend>
             <div className="flex flex-col gap-y-4 sm:gap-2.5">
-              {receipts.map((r) => {
-                return (
-                  <Label key={r.id} className="inline-flex cursor-pointer flex-wrap items-center gap-1.5">
-                    <Checkbox name="receiptIds" value={r.id} aria-label={r.title} defaultChecked={false} />
-                    <span>{r.title}</span>
-                    <span className="ml-6 text-xs text-muted-foreground sm:ml-auto">
-                      uploaded {dayjs(r.createdAt).format("MM/DD/YY h:mma")}
-                    </span>
-                    {!user.isMember ? (
-                      <span className="text-xs text-muted-foreground">by {r.user.contact.email}</span>
-                    ) : null}
-                  </Label>
-                );
-              })}
+              {receipts.length > 0 ? (
+                receipts.map((r) => {
+                  return (
+                    <Label key={r.id} className="inline-flex cursor-pointer flex-wrap items-center gap-1.5">
+                      <Checkbox name="receiptIds" value={r.id} aria-label={r.title} defaultChecked={false} />
+                      <span>{r.title}</span>
+                      <span className="ml-6 text-xs text-muted-foreground sm:ml-auto">
+                        uploaded {dayjs(r.createdAt).format("MM/DD/YY h:mma")}
+                      </span>
+                      {!user.isMember ? (
+                        <span className="text-xs text-muted-foreground">by {r.user.contact.email}</span>
+                      ) : null}
+                    </Label>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-destructive">No receipts uploaded.</p>
+              )}
             </div>
           </fieldset>
           <Callout variant="warning">
