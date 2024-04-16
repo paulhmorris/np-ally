@@ -9,74 +9,77 @@ import { Label } from "~/components/ui/label";
 export function FileUploader() {
   const navigate = useNavigate();
 
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<Array<File>>([]);
   const [uploadStatus, setUploadStatus] = useState({
     uploading: false,
     success: false,
-    error: "",
+    message: "",
   });
-  async function handleFileUpload(e: React.FormEvent<HTMLFormElement>) {
+
+  async function handleFilesUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     try {
-      setUploadStatus((s) => ({ ...s, error: "" }));
-      if (!file) {
-        setUploadStatus((s) => ({ ...s, error: "No file selected." }));
+      setUploadStatus((s) => s);
+      if (files.length === 0) {
+        setUploadStatus((s) => ({ ...s, message: "No file selected." }));
         return;
       }
 
       setUploadStatus((s) => ({ ...s, uploading: true }));
 
       // Get presigned URL
-      const response = await fetch("/resources/get-upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, contentType: file.type }),
-      });
-      if (!response.ok) {
-        setUploadStatus(() => ({ uploading: false, success: false, error: "Error getting upload URL." }));
-        return;
-      }
+      let uploadedFilesCount = 0;
+      for (const file of files) {
+        const response = await fetch("/resources/get-upload-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+        });
+        if (!response.ok) {
+          throw new Error(`Error retrieving Amazon S3 URL for ${file.name}. Please contact support.`);
+        }
 
-      const { signedUrl, s3Key } = (await response.json()) as { signedUrl: string; s3Key: string };
+        const { signedUrl, s3Key } = (await response.json()) as { signedUrl: string; s3Key: string };
 
-      // Upload file to bucket
-      const uploadResponse = await fetch(signedUrl, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
+        // Upload file to bucket
+        const uploadResponse = await fetch(signedUrl, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type,
+          },
+        });
 
-      if (!uploadResponse.ok) {
-        setUploadStatus(() => ({ uploading: false, success: false, error: "Error uploading file." }));
-        return;
-      }
+        if (!uploadResponse.ok) {
+          throw new Error(`Error uploading ${file.name}. Please contact support.`);
+        }
 
-      // Save receipt to database
-      const receiptResponse = await fetch("/resources/receipts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: file.name, s3Key }),
-      });
+        // Save receipt to database
+        const receiptUpload = await fetch("/resources/receipts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: file.name, s3Key }),
+        });
 
-      if (!receiptResponse.ok) {
-        setUploadStatus(() => ({
-          uploading: false,
-          success: false,
-          error: "Error saving receipt. Your file was uploaded.",
-        }));
-        return;
+        if (!receiptUpload.ok) {
+          throw new Error(`Error saving ${file.name}. Please contact support.`);
+        }
+
+        uploadedFilesCount++;
       }
 
       navigate(".", { replace: true });
-      setUploadStatus((s) => ({ ...s, success: true, error: "" }));
-      setFile(null);
+      setUploadStatus((s) => ({
+        ...s,
+        success: true,
+        message: `Uploaded ${uploadedFilesCount} out of ${files.length} selected files.`,
+      }));
+      setFiles([]);
     } catch (error) {
       setUploadStatus(() => ({
         uploading: false,
         success: false,
-        error:
+        message:
           error instanceof Error
             ? error.message.toLowerCase().includes("failed to fetch")
               ? "Network error. Please file a bug report."
@@ -84,7 +87,7 @@ export function FileUploader() {
             : "Unknown error",
       }));
     } finally {
-      setUploadStatus((s) => ({ ...s, uploading: false }));
+      setUploadStatus((s) => s);
     }
   }
 
@@ -92,9 +95,9 @@ export function FileUploader() {
     <>
       <form
         method="post"
-        onSubmit={handleFileUpload}
+        onSubmit={handleFilesUpload}
         encType="multipart/form-data"
-        className="flex items-start gap-4"
+        className="flex flex-wrap items-start gap-2 sm:gap-4"
         aria-describedby="receipts-label upload-error"
       >
         <div className="flex h-10 w-auto items-center">
@@ -111,22 +114,23 @@ export function FileUploader() {
             onChange={(e) => {
               const files = e.target.files;
               if (files) {
-                setFile(files[0]);
+                setFiles(Array.from(files));
               }
             }}
+            multiple
           />
         </div>
         {uploadStatus.success ? (
           <div className="flex h-10 items-center gap-1 text-success">
-            <span className="text-sm font-medium">Success!</span>
+            <span className="text-sm font-medium">{uploadStatus.message}</span>
             <IconCircleCheckFilled className="h-5 w-5" />
           </div>
         ) : (
           <Button
-            disabled={uploadStatus.uploading || !file}
+            disabled={uploadStatus.uploading || !files}
             variant="outline"
             type="submit"
-            className="flex w-auto items-center gap-2 shadow-none"
+            className="flex w-full items-center gap-2 shadow-none sm:w-auto"
           >
             {uploadStatus.uploading ? (
               <IconLoader className="h-4 w-4 animate-spin" />
@@ -139,9 +143,9 @@ export function FileUploader() {
           </Button>
         )}
       </form>
-      {uploadStatus.error ? (
-        <p className="mt-0.5 text-xs font-medium text-destructive" role="alert" id="upload-error">
-          {uploadStatus.error}
+      {uploadStatus.message && !uploadStatus.success ? (
+        <p className={"mt-0.5 text-xs font-medium text-destructive"} role="alert" id="upload-error">
+          {uploadStatus.message}
         </p>
       ) : null}
     </>

@@ -116,7 +116,7 @@ export default function NewReimbursementPage() {
         </h2>
         <FileUploader />
         <p className="mt-1 text-xs text-muted-foreground">
-          After uploading, your file will appear in the dropdown below.
+          After uploading, your files will appear in the dropdown below.
         </p>
         <Separator className="my-8" />
 
