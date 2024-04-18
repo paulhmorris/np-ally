@@ -49,6 +49,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
           include: { contact: true },
         },
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     }),
     db.announcement.findFirst({
       where: {
