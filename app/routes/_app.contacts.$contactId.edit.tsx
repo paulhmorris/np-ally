@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -22,8 +22,9 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
-import { forbidden, notFound } from "~/lib/responses.server";
+import { forbidden, getPrismaErrorText, notFound, serverError } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { UpdateContactSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
@@ -131,77 +132,91 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  // Users can only edit their assigned contacts and themselves
-  if (user.isMember && formData.id !== user.contactId) {
-    const assignment = await db.contactAssigment.findUnique({
-      where: {
-        orgId,
-        contactId_userId: {
-          contactId: formData.id,
-          userId: user.id,
-        },
-      },
-    });
-    if (!assignment) {
-      throw forbidden({ message: "You do not have permission to edit this contact." });
-    }
-  }
-
-  // Users can't change their contact type
-  if (user.isMember) {
-    if (formData.typeId !== user.contact.typeId) {
-      return forbidden({ message: "You do not have permission to change your contact type." });
-    }
-  }
-
-  // Verify email is unique
-  if (formData.email) {
-    const existingContact = await db.contact.findUnique({
-      where: {
-        email_orgId: {
-          email: formData.email,
+  try {
+    // Users can only edit their assigned contacts and themselves
+    if (user.isMember && formData.id !== user.contactId) {
+      const assignment = await db.contactAssigment.findUnique({
+        where: {
           orgId,
-        },
-      },
-    });
-
-    if (existingContact && existingContact.id !== formData.id) {
-      return validationError({
-        fieldErrors: {
-          email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
+          contactId_userId: {
+            contactId: formData.id,
+            userId: user.id,
+          },
         },
       });
+      if (!assignment) {
+        throw forbidden({ message: "You do not have permission to edit this contact." });
+      }
     }
-  }
 
-  const contact = await db.contact.update({
-    where: { id: formData.id, orgId },
-    data: {
-      ...formData,
-      assignedUsers: {
-        // Rebuild the assigned users list
-        deleteMany: {},
-        create: assignedUserIds ? assignedUserIds.map((userId) => ({ userId, orgId })) : undefined,
+    // Users can't change their contact type
+    if (user.isMember) {
+      if (formData.typeId !== user.contact.typeId) {
+        return forbidden({ message: "You do not have permission to change your contact type." });
+      }
+    }
+
+    // Verify email is unique
+    if (formData.email) {
+      const existingContact = await db.contact.findUnique({
+        where: {
+          email_orgId: {
+            email: formData.email,
+            orgId,
+          },
+        },
+      });
+
+      if (existingContact && existingContact.id !== formData.id) {
+        return validationError({
+          fieldErrors: {
+            email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
+          },
+        });
+      }
+    }
+
+    const contact = await db.contact.update({
+      where: { id: formData.id, orgId },
+      data: {
+        ...formData,
+        assignedUsers: {
+          // Rebuild the assigned users list
+          deleteMany: {},
+          create: assignedUserIds ? assignedUserIds.map((userId) => ({ userId, orgId })) : undefined,
+        },
+        address: address
+          ? {
+              upsert: {
+                create: { ...address, orgId },
+                update: { ...address, orgId },
+              },
+            }
+          : undefined,
       },
-      address: address
-        ? {
-            upsert: {
-              create: { ...address, orgId },
-              update: { ...address, orgId },
-            },
-          }
-        : undefined,
-    },
-    include: {
-      address: true,
-    },
-  });
+      include: {
+        address: true,
+      },
+    });
 
-  return toast.redirect(request, `/contacts/${contact.id}`, {
-    type: "success",
-    title: "Contact updated",
-    description: `${contact.firstName} ${contact.lastName} was updated successfully.`,
-  });
+    return toast.redirect(request, `/contacts/${contact.id}`, {
+      type: "success",
+      title: "Contact updated",
+      description: `${contact.firstName} ${contact.lastName} was updated successfully.`,
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      const message = getPrismaErrorText(error);
+      return toast.json(
+        request,
+        { message: `An error occurred: ${message}` },
+        { type: "error", description: message, title: "Error updating contact" },
+      );
+    }
+    throw serverError("An error occurred while updating the contact. Please try again.");
+  }
 };
 
 export default function EditContactPage() {
