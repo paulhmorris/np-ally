@@ -1,4 +1,4 @@
-import { MembershipRole } from "@prisma/client";
+import { MembershipRole, Prisma } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -18,7 +18,9 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
+import { getPrismaErrorText, handlePrismaError, serverError } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { NewContactSchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
@@ -31,40 +33,49 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireUser(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const contactTypes = await db.contactType.findMany({
-    where: {
-      AND: [
-        { OR: [{ orgId }, { orgId: null }] },
-        // Members can't create staff contacts
-        user.isMember ? { id: { notIn: [ContactType.Staff] } } : {},
-      ],
-    },
-  });
-  const usersWhoCanBeAssigned = await db.user.findMany({
-    where: {
-      memberships: {
-        some: {
-          orgId,
-          role: { in: [MembershipRole.ADMIN, MembershipRole.MEMBER] },
+  try {
+    const contactTypes = await db.contactType.findMany({
+      where: {
+        AND: [
+          { OR: [{ orgId }, { orgId: null }] },
+          // Members can't create staff contacts
+          user.isMember ? { id: { notIn: [ContactType.Staff] } } : {},
+        ],
+      },
+    });
+    const usersWhoCanBeAssigned = await db.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            orgId,
+            role: { in: [MembershipRole.ADMIN, MembershipRole.MEMBER] },
+          },
         },
       },
-    },
-    select: {
-      id: true,
-      contact: {
-        select: {
-          firstName: true,
-          lastName: true,
-          email: true,
+      select: {
+        id: true,
+        contact: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  return typedjson({
-    contactTypes,
-    usersWhoCanBeAssigned,
-  });
+    return typedjson({
+      contactTypes,
+      usersWhoCanBeAssigned,
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw handlePrismaError(error);
+    }
+    throw serverError("An error occurred while loading the page. Please try again.");
+  }
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -78,50 +89,56 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { address, assignedUserIds, ...formData } = result.data;
 
-  // Verify email is unique
-  if (formData.email) {
-    const existingContact = await db.contact.findUnique({
-      where: {
-        email_orgId: {
-          email: formData.email,
-          orgId,
+  try {
+    // Verify email is unique
+    if (formData.email) {
+      const existingContact = await db.contact.findUnique({
+        where: {
+          email_orgId: {
+            email: formData.email,
+            orgId,
+          },
         },
+      });
+
+      if (existingContact) {
+        return validationError({
+          fieldErrors: {
+            email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
+          },
+        });
+      }
+    }
+
+    const contact = await db.contact.create({
+      data: {
+        ...formData,
+        orgId,
+        address: address ? { create: { ...address, orgId } } : undefined,
+        assignedUsers: assignedUserIds
+          ? { createMany: { data: assignedUserIds.map((userId) => ({ userId, orgId })) } }
+          : undefined,
       },
     });
 
-    if (existingContact) {
-      return validationError({
-        fieldErrors: {
-          email: `A contact with this email already exists - ${existingContact.firstName} ${existingContact.lastName}`,
-        },
-      });
+    return toast.redirect(request, `/contacts/${contact.id}`, {
+      type: "success",
+      title: "Contact created",
+      description: `${contact.firstName} ${contact.lastName} was created successfully.`,
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      const message = getPrismaErrorText(error);
+      return toast.json(
+        request,
+        { message: `An error occurred: ${message}` },
+        { type: "error", description: message, title: "Error creating contact" },
+      );
     }
+    throw serverError("An error occurred while creating the contact. Please try again.");
   }
-
-  const contact = await db.contact.create({
-    data: {
-      ...formData,
-      orgId,
-      address: address
-        ? {
-            create: { ...address, orgId },
-          }
-        : undefined,
-      assignedUsers: assignedUserIds
-        ? {
-            createMany: {
-              data: assignedUserIds.map((userId) => ({ userId, orgId })),
-            },
-          }
-        : undefined,
-    },
-  });
-
-  return toast.redirect(request, `/contacts/${contact.id}`, {
-    type: "success",
-    title: "Contact created",
-    description: `${contact.firstName} ${contact.lastName} was created successfully.`,
-  });
 };
 
 export default function NewContactPage() {
