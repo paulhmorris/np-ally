@@ -38,6 +38,7 @@ export const reimbursementRequestJob = trigger.defineJob({
               id: true,
               name: true,
               host: true,
+              subdomain: true,
               replyToEmail: true,
               administratorEmail: true,
             },
@@ -64,6 +65,11 @@ export const reimbursementRequestJob = trigger.defineJob({
 
     // Get presigned URLs for all receipts and save them for a week
     await io.runTask("save presigned urls", async () => {
+      if (!rr.receipts.length) {
+        await io.logger.info("No receipts to update");
+        return;
+      }
+
       if (
         rr.receipts.some((r) => !r.s3Url || (r.s3UrlExpiry && new Date(r.s3UrlExpiry).getTime() < new Date().getTime()))
       ) {
@@ -72,7 +78,7 @@ export const reimbursementRequestJob = trigger.defineJob({
             !receipt.s3Url ||
             (receipt.s3UrlExpiry && new Date(receipt.s3UrlExpiry).getTime() < new Date().getTime())
           ) {
-            console.info(`Generating url for ${receipt.title}`);
+            await io.logger.info(`Generating url for ${receipt.title}`);
             const url = await Bucket.getGETPresignedUrl(receipt.s3Key);
             return db.receipt.update({
               where: { id: receipt.id, orgId: rr.org?.id },
@@ -88,7 +94,7 @@ export const reimbursementRequestJob = trigger.defineJob({
       await io.logger.info("All receipts have valid presigned URLs");
     });
 
-    const url = new URL("/dashboards/admin", `https://${rr.org.host}`);
+    const url = new URL("/dashboards/admin", `https://${rr.org.subdomain ? rr.org.subdomain + "." : ""}${rr.org.host}`);
     const { contact } = rr.user;
 
     await io.resend.emails.send("send-email", {

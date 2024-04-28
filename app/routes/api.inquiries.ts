@@ -28,6 +28,11 @@ export const validator = withZod(
 
 export async function action({ request }: ActionFunctionArgs) {
   const user = await SessionService.requireUser(request);
+  const org = await SessionService.getOrg(request);
+
+  if (!org) {
+    throw typedjson({ success: false, message: "Organization not found" }, { status: 400 });
+  }
 
   if (request.method !== "POST") {
     throw typedjson({ success: false, message: "Method Not Allowed" }, { status: 405 });
@@ -50,8 +55,8 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const { data, error } = await sendEmail({
-    from: "Alliance 436 <no-reply@alliance436.org>",
-    to: "accounts@alliance436.org",
+    from: `${org.name} <${org.replyToEmail}@${org.host}>`,
+    to: `${org.inquiriesEmail}@${org.host}`,
     subject: "New Inquiry",
     html: `
       <p>Hi there, there's a new inquiry from ${user.username}:</p>
