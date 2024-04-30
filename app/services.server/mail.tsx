@@ -31,7 +31,7 @@ export async function sendPasswordResetEmail({
   orgId: OrgId;
 }) {
   const org = await db.organization.findUniqueOrThrow({ where: { id: orgId } });
-  const url = new URL("/passwords/new", `https://${org.host}`);
+  const url = new URL("/passwords/new", `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`);
   url.searchParams.set("token", token);
   url.searchParams.set("isReset", "true");
 
@@ -64,7 +64,7 @@ export async function sendPasswordSetupEmail({
   orgId: OrgId;
 }) {
   const org = await db.organization.findUniqueOrThrow({ where: { id: orgId } });
-  const url = new URL("/passwords/new", `https://${org.host}`);
+  const url = new URL("/passwords/new", `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`);
   url.searchParams.set("token", token);
 
   try {

@@ -24,6 +24,7 @@ export const notifySubscribersJob = trigger.defineJob({
         select: {
           name: true,
           host: true,
+          subdomain: true,
           replyToEmail: true,
         },
       });
@@ -37,7 +38,7 @@ export const notifySubscribersJob = trigger.defineJob({
       };
     }
 
-    const url = new URL("/", `https://${org.host}`);
+    const url = new URL("/", `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`);
 
     await io.resend.emails.send("send-email", {
       from: `${org.name} <${org.replyToEmail}@${org.host}>`,

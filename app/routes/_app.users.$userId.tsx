@@ -230,7 +230,7 @@ export default function UserDetailsPage() {
               type="submit"
               formId="reset-password-form"
               name="_action"
-              value={hasPassword ? "reset" : "submit"}
+              value={hasPassword ? "reset" : "setup"}
             >
               <span>Send Password {hasPassword ? "Reset" : "Setup"}</span>
               {!hasPassword ? <IconLockPlus className="size-4" /> : null}
@@ -325,7 +325,7 @@ export default function UserDetailsPage() {
         </ValidatedForm>
         <div className="mt-4 max-w-lg">
           {user.contactAssignments.length > 0 ? (
-            <Card className="bg-transparent flex-1 basis-48">
+            <Card className="flex-1 basis-48 bg-transparent">
               <CardHeader>
                 <CardTitle>Contact Assignments</CardTitle>
                 <CardDescription>
