@@ -24,7 +24,8 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const url = new URL(request.url);
-  let org = await db.organization.findUnique({ where: { host: url.hostname } });
+  const host = url.hostname.split(".").slice(-2).join(".");
+  let org = await db.organization.findUnique({ where: { host } });
 
   // If the reset is initiated from a non-org domain, use backup NP Ally Org
   if (!org) {
