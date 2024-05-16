@@ -9,7 +9,6 @@ const serverEnvValidation = z.object({
   // Remix
   NODE_ENV: z.enum(["development", "production", "test"]),
   SESSION_SECRET: z.string().min(16),
-  SITE_URL: z.string().url().optional(),
 
   // Resend
   RESEND_API_KEY: z.string().startsWith("re_"),
