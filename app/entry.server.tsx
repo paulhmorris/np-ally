@@ -3,10 +3,10 @@ import { PassThrough } from "node:stream";
 import type { EntryContext } from "@remix-run/node";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
-import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 
 export function handleError(error: any, { request }: { request: Request }) {
@@ -21,10 +21,10 @@ export function handleError(error: any, { request }: { request: Request }) {
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   sampleRate: 1,
-  tracesSampleRate: 0.25,
+  tracesSampleRate: 0.5,
   environment: process.env.VERCEL_ENV,
   enabled: process.env.NODE_ENV === "production",
-  integrations: [new Sentry.Integrations.Prisma({ client: db })],
+  integrations: [nodeProfilingIntegration(), Sentry.prismaIntegration()],
 });
 
 const ABORT_DELAY = 5_000;
