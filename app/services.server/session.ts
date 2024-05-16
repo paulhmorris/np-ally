@@ -111,7 +111,9 @@ class Session implements ISessionService {
     const orgId = await this.getOrgId(request);
     if (!orgId) {
       const originURL = new URL(request.url);
-      // console.log("----> session.ts:114 Setting redirect to choose-org... ");
+      if (originURL.pathname === "/") {
+        return;
+      }
       const returnUrl = new URL("/choose-org", originURL.origin);
       returnUrl.searchParams.set("redirectTo", originURL.pathname);
       throw redirect(returnUrl.toString());
@@ -128,7 +130,7 @@ class Session implements ISessionService {
     return userId;
   }
 
-  public async requireUserByRole(request: Request, allowedRoles?: Array<MembershipRole>) {
+  public async requireUser(request: Request, allowedRoles?: Array<MembershipRole>) {
     const defaultAllowedRoles: Array<MembershipRole> = [MembershipRole.MEMBER, MembershipRole.ADMIN];
     const userId = await this.requireUserId(request);
     const orgId = await this.requireOrgId(request);
@@ -203,12 +205,8 @@ class Session implements ISessionService {
     throw unauthorized({ user });
   }
 
-  async requireUser(request: Request) {
-    return this.requireUserByRole(request);
-  }
-
   async requireAdmin(request: Request) {
-    return this.requireUserByRole(request, ["ADMIN"]);
+    return this.requireUser(request, ["ADMIN"]);
   }
 
   async createUserSession({

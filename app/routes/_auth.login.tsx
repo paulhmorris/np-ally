@@ -11,7 +11,6 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { FormField } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
 import { safeRedirect } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
@@ -68,8 +67,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  Sentry.setUser({ id: user.id, username: user.username });
-
   // If the user has a default membership or only one org, we can just log them in to that org
   const defaultMembership = user.memberships.find((m) => m.isDefault);
   if (user.memberships.length === 1 || defaultMembership) {
@@ -108,13 +105,22 @@ export default function LoginPage() {
     <AuthCard>
       <h1 className="text-4xl font-extrabold">Login</h1>
       <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
-        <FormField label="Email" id="email" name="email" type="email" autoComplete="email" required />
+        <FormField
+          label="Email"
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          defaultValue={process.env.NODE_ENV === "development" ? "paul@remix.run" : ""}
+          required
+        />
         <FormField
           label="Password"
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
+          defaultValue={process.env.NODE_ENV === "development" ? "password" : ""}
           required
         />
 
