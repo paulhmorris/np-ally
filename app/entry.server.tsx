@@ -19,7 +19,7 @@ export function handleError(error: any, { request }: { request: Request }) {
 }
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: "https://f18051d71458f411f51af7ca0308b1cb@o4505496663359488.ingest.us.sentry.io/4506395673886720",
   sampleRate: 1,
   tracesSampleRate: 0.5,
   environment: process.env.VERCEL_ENV,
