@@ -128,10 +128,10 @@ export default function OrganizationSettings() {
                 label="Reply-to Email"
                 name="replyToEmail"
                 defaultValue={org.replyToEmail}
-                description="All emails will be sent from this address"
+                description="All emails will be sent from this address, e.g. 'no-reply'"
               />
               <FormField
-                label="Administrator Email"
+                label="Requests Email"
                 name="administratorEmail"
                 defaultValue={org.administratorEmail ?? ""}
                 description="Receives reimbursement request notifications"

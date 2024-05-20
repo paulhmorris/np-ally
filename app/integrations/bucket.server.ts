@@ -13,10 +13,10 @@ class BucketStorageClient {
   constructor() {
     this.s3Client = new S3Client({
       region: "auto",
-      endpoint: process.env.AWS_BUCKET_URL,
+      endpoint: process.env.R2_BUCKET_URL,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyId: process.env.R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
       },
     });
   }
@@ -28,7 +28,7 @@ class BucketStorageClient {
   }: GetPresignedUrlParams): Promise<{ url: string; key: string }> {
     const key = encodeURIComponent(`${Date.now()}_${fileName}`);
     const command = new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME,
+      Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
       ContentType: contentType,
       Metadata: { userId },
@@ -40,7 +40,7 @@ class BucketStorageClient {
 
   async getGETPresignedUrl(key: string): Promise<string> {
     const command = new GetObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME,
+      Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
     });
 

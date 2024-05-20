@@ -5,8 +5,9 @@ import { validationError } from "remix-validated-form";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 
+import { sendEmail } from "~/integrations/email.server";
+import { Sentry } from "~/integrations/sentry";
 import { toast } from "~/lib/toast.server";
-import { sendEmail } from "~/services.server/mail";
 import { SessionService } from "~/services.server/session";
 
 export const validator = withZod(
@@ -54,33 +55,38 @@ export async function action({ request }: ActionFunctionArgs) {
     });
   }
 
-  const { data, error } = await sendEmail({
-    from: `${org.name} <${org.replyToEmail}@${org.host}>`,
-    to: `${org.inquiriesEmail}@${org.host}`,
-    subject: "New Inquiry",
-    html: `
-      <p>Hi there, there's a new inquiry from ${user.username}:</p>
-      <br />
-      <p>Name: ${name}</p>
-      <p>Preferred contact method: ${method}</p>
-      ${email ? `<p>Email: ${email}</p>` : ""}
-      ${phone ? `<p>Phone: ${phone}</p>` : ""}
-      <p>Message: ${message}</p>
-    `,
-  });
+  try {
+    const { messageId } = await sendEmail({
+      from: `${org.name} <${org.replyToEmail}@${org.host}>`,
+      to: `${org.inquiriesEmail}@${org.host}`,
+      subject: "New Inquiry",
+      html: `
+        <p>Hi there, there's a new inquiry from ${user.username}:</p>
+        <br />
+        <p>Name: ${name}</p>
+        <p>Preferred contact method: ${method}</p>
+        ${email ? `<p>Email: ${email}</p>` : ""}
+        ${phone ? `<p>Phone: ${phone}</p>` : ""}
+        <p>Message: ${message}</p>
+      `,
+    });
 
-  if (error) {
+    return toast.json(
+      request,
+      { success: true, messageId },
+      { type: "success", title: "Inquiry sent", description: "We'll be in touch soon!" },
+    );
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
     return toast.json(
       request,
       { success: false, message: JSON.stringify(error) },
-      { type: "error", title: "Error sending email", description: "Please try again" },
-      { status: 500 },
+      {
+        type: "error",
+        title: "Error sending email",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+      },
     );
   }
-
-  return toast.json(
-    request,
-    { success: true, emailId: data?.data?.id },
-    { type: "success", title: "Inquiry sent", description: "We'll be in touch soon!" },
-  );
 }

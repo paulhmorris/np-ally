@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { MembershipRole, UserRole } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { Link, useFetcher } from "@remix-run/react";
@@ -283,7 +283,13 @@ export default function UserDetailsPage() {
             <input type="hidden" name="id" value={user.id} />
             {!authorizedUser.isMember ? (
               <>
-                <FormField label="Username" id="username" name="username" disabled />
+                <FormField
+                  label="Username"
+                  id="username"
+                  name="username"
+                  disabled={authorizedUser.role === MembershipRole.MEMBER}
+                  required
+                />
                 <FormSelect
                   required
                   disabled={isYou}

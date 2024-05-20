@@ -3,7 +3,7 @@ import { Body, Button, Container, Head, Html, Preview, Section, Text } from "@re
 interface WelcomeEmailProps {
   url: string;
   orgName: string;
-  userFirstname: string;
+  userFirstname: string | null;
 }
 
 export function WelcomeEmail({ userFirstname, orgName, url }: WelcomeEmailProps) {
@@ -13,7 +13,7 @@ export function WelcomeEmail({ userFirstname, orgName, url }: WelcomeEmailProps)
       <Preview>You&apos;re invited to join the {orgName} portal</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Text style={paragraph}>Hi {userFirstname},</Text>
+          <Text style={paragraph}>Hi{userFirstname ? " " + userFirstname : ""},</Text>
           <Text style={paragraph}>
             Welcome to the {orgName} portal! We&apos;re excited to have you on board. To get started, click the button
             below and set a password.
