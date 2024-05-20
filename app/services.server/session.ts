@@ -112,7 +112,7 @@ class Session implements ISessionService {
     if (!orgId) {
       const originURL = new URL(request.url);
       if (originURL.pathname === "/") {
-        return;
+        throw redirect("/login");
       }
       const returnUrl = new URL("/choose-org", originURL.origin);
       returnUrl.searchParams.set("redirectTo", originURL.pathname);

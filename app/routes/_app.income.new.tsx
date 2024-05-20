@@ -95,6 +95,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ...rest,
       },
       select: {
+        amountInCents: true,
         account: {
           select: {
             code: true,
@@ -129,7 +130,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       const key = nanoid();
-      await notifySubscribersJob.invoke({ to: email, orgId }, { idempotencyKey: key });
+      await notifySubscribersJob.invoke(
+        { to: email, orgId, accountName: transaction.account.code, amountInCents: transaction.amountInCents },
+        { idempotencyKey: key },
+      );
     }
 
     return toast.redirect(request, `/accounts/${transaction.account.id}`, {

@@ -1,8 +1,10 @@
 import { cronTrigger } from "@trigger.dev/sdk";
 
+import { EngagementReminderEmail } from "emails/engagement-reminder";
 import { db } from "~/integrations/prisma.server";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
 import { ContactType } from "~/lib/constants";
+import { CreateEmailOptions } from "~/services.server/mail";
 
 const DAYS_CUTOFF = 30;
 
@@ -68,60 +70,51 @@ export const engagementReminderJob = trigger.defineJob({
 
     type Accumulator = Record<
       string,
-      { user: Record<string, string>; contacts: Array<{ firstName: string; lastName: string }> }
+      { user: { firstName: string; email: string }; contacts: Array<{ firstName: string; lastName: string }> }
     >;
-    // eslint-disable-next-line @typescript-eslint/require-await
-    const emails = await io.runTask("prepare-emails", async () => {
-      // Transform db data into a map of unique user emails with an array of their contacts.
-      const temp = assignments.reduce((acc: Accumulator, curr) => {
-        if (!curr.user.contact.email || (!curr.contact.firstName && !curr.contact.lastName)) {
-          return acc;
-        }
-
-        const userEmail = curr.user.contact.email;
-
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!acc[userEmail]) {
-          acc[userEmail] = {
-            user: {
-              ...(curr.user.contact as { firstName: string; email: string }),
-            },
-            contacts: [],
-          };
-        }
-
-        acc[userEmail].contacts.push(curr.contact as { firstName: string; lastName: string });
-
+    const temp = assignments.reduce((acc: Accumulator, curr) => {
+      if (!curr.user.contact.email || (!curr.contact.firstName && !curr.contact.lastName)) {
         return acc;
-      }, {});
+      }
 
-      // Convert the map into an array of emails.
-      const emails = Object.values(temp).map((u) => {
-        return {
-          from: "Alliance 436 <no-reply@alliance436.org>",
-          to: u.user.email,
-          subject: "Contact Reminder",
-          html: `Hi ${u.user.firstName}, your contact${u.contacts.length === 1 ? "" : "s"} <br /><br />${u.contacts
-            .map((c) => `<span style="font-weight:bold;">${c.firstName} ${c.lastName}</span>`)
-            .join(
-              "<br />",
-            )}<br /><br />${u.contacts.length === 1 ? "has" : "have"} not been contacted in at least 30 days. This is a friendly reminder to reach out to them.`,
+      const userEmail = curr.user.contact.email;
+
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!acc[userEmail]) {
+        acc[userEmail] = {
+          user: {
+            ...(curr.user.contact as { firstName: string; email: string }),
+          },
+          contacts: [],
         };
-      });
-      return emails;
+      }
+
+      acc[userEmail].contacts.push(curr.contact as { firstName: string; lastName: string });
+
+      return acc;
+    }, {});
+
+    // Convert the map into an array of emails.
+    const mappedEmails: Array<CreateEmailOptions> = Object.values(temp).map(({ user, contacts }) => {
+      return {
+        from: "Alliance 436 <no-reply@alliance436.org>",
+        to: user.email,
+        subject: "Contact Reminder",
+        react: <EngagementReminderEmail contacts={contacts} userFirstName={user.firstName} />,
+      };
     });
 
-    if (emails.length > 90) {
+    if (mappedEmails.length > 90) {
       await io.logger.warn(
         "Resend only supports up to 100 emails per batch. Please return to this code and add batch splitting.",
       );
     }
 
-    await io.resend.batch.send("send-emails", [...emails]);
+    await io.resend.batch.send("send-emails", [...mappedEmails]);
 
     return {
       success: true,
-      count: emails.length,
+      count: mappedEmails.length,
     };
   },
 });

@@ -1,6 +1,7 @@
 import type { Organization, PasswordReset, ReimbursementRequestStatus, User } from "@prisma/client";
 import { render } from "@react-email/render";
 
+import { PasswordResetEmail } from "emails/password-reset";
 import { sendEmail } from "~/integrations/email.server";
 import { db } from "~/integrations/prisma.server";
 import { resend } from "~/integrations/resend.server";
@@ -27,17 +28,14 @@ export async function sendPasswordResetEmail({
   url.searchParams.set("token", token);
   url.searchParams.set("isReset", "true");
 
+  const html = render(<PasswordResetEmail url={url.toString()} />);
+
   try {
     const data = await sendEmail({
       from: `${org.name} <${org.replyToEmail}@${org.host}>`,
       to: email,
       subject: "Reset Your Password",
-      html: `
-        <p>Hi there,</p>
-        <p>Someone requested a password reset for your ${org.name} account. If this was you, please click the link below to reset your password. The link will expire in 15 minutes.</p>
-        <p><a style="color:#976bff" href="${url.toString()}" target="_blank">Reset Password</a></p>
-        <p>If you did not request a password reset, you can safely ignore this email.</p>
-        `,
+      html,
     });
     return { data };
   } catch (error) {

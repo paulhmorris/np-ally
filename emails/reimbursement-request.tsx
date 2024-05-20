@@ -1,44 +1,44 @@
 import { Body, Button, Container, Head, Html, Preview, Section, Text } from "@react-email/components";
 
+import { formatCentsAsDollars } from "~/lib/utils";
+
 interface Props {
   url: string;
-  orgName: string;
-  userFirstname: string | null;
+  accountName: string;
+  amountInCents: number;
+  requesterName: string | null;
 }
 
-export function WelcomeEmail({ userFirstname, orgName, url }: Props) {
+export function ReimbursementRequestEmail({ requesterName, amountInCents, accountName, url }: Props) {
   return (
     <Html>
       <Head />
-      <Preview>You&apos;re invited to join the {orgName} portal</Preview>
+      <Preview>Someone has requested a reimbursement.</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Text style={paragraph}>Hi{userFirstname ? " " + userFirstname : ""},</Text>
           <Text style={paragraph}>
-            Welcome to the {orgName} portal! We&apos;re excited to have you on board. To get started, click the button
-            below and set a password.
+            There&apos;s a new reimbursement request for {formatCentsAsDollars(amountInCents)} from {requesterName} for
+            account {accountName}. Please log in to review and respond to the request.
           </Text>
           <Section style={btnContainer}>
             <Button style={button} href={url}>
-              Get started
+              Log In
             </Button>
           </Section>
-          <Text style={paragraph}>
-            The link will expire in 15 minutes. You can request a new link from your administrator at any time.
-          </Text>
         </Container>
       </Body>
     </Html>
   );
 }
 
-WelcomeEmail.PreviewProps = {
-  userFirstname: "Paul",
-  orgName: "Non Profit Ally",
+ReimbursementRequestEmail.PreviewProps = {
+  requesterName: "Paul",
   url: "https://np-ally.org",
+  accountName: "3001-PM",
+  amountInCents: 1534,
 } as Props;
 
-export default WelcomeEmail;
+export default ReimbursementRequestEmail;
 
 const main = {
   backgroundColor: "#ffffff",
