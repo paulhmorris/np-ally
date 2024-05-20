@@ -2,6 +2,7 @@ import type { Organization, PasswordReset, ReimbursementRequestStatus, User } fr
 import { render } from "@react-email/render";
 
 import { PasswordResetEmail } from "emails/password-reset";
+import ReimbursementRequestUpdateEmail from "emails/reimbursement-request-update";
 import { sendEmail } from "~/integrations/email.server";
 import { db } from "~/integrations/prisma.server";
 import { resend } from "~/integrations/resend.server";
@@ -90,15 +91,14 @@ export async function sendReimbursementRequestUpdateEmail({
 }) {
   try {
     const org = await db.organization.findUniqueOrThrow({ where: { id: orgId } });
+    const url = new URL("/", `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`).toString();
+    const html = render(<ReimbursementRequestUpdateEmail status={status} note={note} url={url} />);
+
     const data = await sendEmail({
       from: `${org.name} <${org.replyToEmail}@${org.host}>`,
       to: email,
       subject: `Reimbursement Request ${capitalize(status)}`,
-      html: `
-          <p>Hi there,</p>
-          <p>Your reimbursement request has been ${capitalize(status)}.</p>
-          ${note ? `<p>Administrator note: ${note}</p>` : ""}
-        `,
+      html,
     });
     return { data };
   } catch (error) {
