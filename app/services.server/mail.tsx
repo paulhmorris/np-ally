@@ -2,7 +2,7 @@ import type { Organization, PasswordReset, ReimbursementRequestStatus, User } fr
 import { render } from "@react-email/render";
 
 import { PasswordResetEmail } from "emails/password-reset";
-import ReimbursementRequestUpdateEmail from "emails/reimbursement-request-update";
+import { ReimbursementRequestUpdateEmail } from "emails/reimbursement-request-update";
 import { sendEmail } from "~/integrations/email.server";
 import { db } from "~/integrations/prisma.server";
 import { resend } from "~/integrations/resend.server";

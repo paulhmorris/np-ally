@@ -13,8 +13,9 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { AccountBalanceCard } from "~/components/users/balance-card";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { AccountType } from "~/lib/constants";
-import { notFound, unauthorized } from "~/lib/responses.server";
+import { unauthorized } from "~/lib/responses.server";
 import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -33,35 +34,57 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw unauthorized("You are not authorized to view this account.");
   }
 
-  const account = await db.account.findUnique({
-    where: { id: params.accountId, orgId },
-    include: {
-      type: true,
-      user: {
-        include: { contact: true },
-      },
-      org: true,
-      transactions: {
-        include: {
-          contact: true,
+  try {
+    const account = await db.account.findUniqueOrThrow({
+      where: { id: params.accountId, orgId },
+      select: {
+        id: true,
+        code: true,
+        description: true,
+        type: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
-        orderBy: { date: "desc" },
+        user: {
+          include: { contact: true },
+        },
+        org: true,
+        transactions: {
+          select: {
+            id: true,
+            date: true,
+            amountInCents: true,
+            description: true,
+            contact: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+          orderBy: { date: "desc" },
+        },
       },
-    },
-  });
+    });
 
-  if (!account) throw notFound({ message: "Account not found" });
+    const total = await db.transaction.aggregate({
+      where: { accountId: account.id },
+      _sum: { amountInCents: true },
+    });
 
-  const total = await db.transaction.aggregate({
-    where: { accountId: account.id },
-    _sum: { amountInCents: true },
-  });
-
-  return typedjson({
-    total: total._sum.amountInCents,
-    account,
-    ...setFormDefaults("account-form", { ...account }),
-  });
+    return typedjson({
+      total: total._sum.amountInCents,
+      account,
+      ...setFormDefaults("account-form", { ...account }),
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    throw error;
+  }
 };
 
 export default function AccountDetailsPage() {
@@ -90,7 +113,7 @@ export default function AccountDetailsPage() {
               {account.user.contact.firstName} {account.user.contact.lastName}
             </Badge>
           </Link>
-        ) : account.typeId === AccountType.Ministry ? (
+        ) : account.type.id === AccountType.Ministry ? (
           <Link to={`/accounts/${account.id}/edit`}>
             <Badge variant="secondary">
               <div>
