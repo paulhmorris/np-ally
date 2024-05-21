@@ -11,9 +11,8 @@ import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { SessionService } from "~/services.server/session";
-
-export const meta: MetaFunction = () => [{ title: "Contacts" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
@@ -22,37 +21,45 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const onlyMine = new URL(request.url).searchParams.get("mine") === "true";
 
   // Only show a user's assigned contacts
-  if (onlyMine) {
-    const contacts = await db.contact.findMany({
-      where: {
-        orgId,
-        OR: [
-          {
-            assignedUsers: {
-              some: {
-                userId: user.id,
+  try {
+    if (onlyMine) {
+      const contacts = await db.contact.findMany({
+        where: {
+          orgId,
+          OR: [
+            {
+              assignedUsers: {
+                some: {
+                  userId: user.id,
+                },
               },
             },
-          },
-          {
-            user: {
-              id: user.id,
+            {
+              user: {
+                id: user.id,
+              },
             },
-          },
-        ],
-      },
+          ],
+        },
+        include: { type: true },
+      });
+      return typedjson({ contacts });
+    }
+
+    const contacts = await db.contact.findMany({
+      where: { orgId },
       include: { type: true },
+      orderBy: { createdAt: "desc" },
     });
     return typedjson({ contacts });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    throw error;
   }
-
-  const contacts = await db.contact.findMany({
-    where: { orgId },
-    include: { type: true },
-    orderBy: { createdAt: "desc" },
-  });
-  return typedjson({ contacts });
 }
+
+export const meta: MetaFunction = () => [{ title: "Contacts" }];
 
 export default function ContactIndexPage() {
   const { contacts } = useTypedLoaderData<typeof loader>();
