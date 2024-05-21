@@ -1,41 +1,21 @@
-import { MembershipRole, UserRole } from "@prisma/client";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import type { MetaFunction } from "@remix-run/react";
-import { Link, useFetcher } from "@remix-run/react";
-import { withZod } from "@remix-validated-form/with-zod";
+import { LoaderFunctionArgs } from "@remix-run/node";
+import { Link, MetaFunction, NavLink, Outlet, useFetcher } from "@remix-run/react";
 import { IconAddressBook, IconBuildingBank, IconKey, IconLockPlus, IconUserCircle } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
+import { ValidatedForm, setFormDefaults } from "remix-validated-form";
 import invariant from "tiny-invariant";
-import { z } from "zod";
 
-import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { ButtonGroup } from "~/components/ui/button-group";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { FormField, FormSelect } from "~/components/ui/form";
-import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
-import { forbidden, notFound } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Sentry } from "~/integrations/sentry";
+import { forbidden } from "~/lib/responses.server";
+import { cn } from "~/lib/utils";
 import { passwordResetValidator } from "~/routes/resources.reset-password";
 import { SessionService } from "~/services.server/session";
-
-const validator = withZod(
-  z.object({
-    id: z.string().cuid(),
-    firstName: z.string().min(1, { message: "First name is required" }),
-    lastName: z.string().min(1, { message: "Last name is required" }),
-    username: z.string().email({ message: "Invalid email address" }).optional(),
-    role: z.nativeEnum(UserRole),
-    accountId: z.string().optional(),
-  }),
-);
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const authorizedUser = await SessionService.requireUser(request);
@@ -47,153 +27,69 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw forbidden({ message: "You do not have permission to view this page" });
   }
 
-  const accounts = await db.account.findMany({
-    where: {
-      orgId,
-      OR: [{ user: null }, { user: { id: params.userId } }],
-    },
-    orderBy: { code: "asc" },
-  });
+  try {
+    const accounts = await db.account.findMany({
+      where: {
+        orgId,
+        OR: [{ user: null }, { user: { id: params.userId } }],
+      },
+      orderBy: { code: "asc" },
+    });
 
-  const userWithPassword = await db.user.findUnique({
-    where: {
-      id: params.userId,
-      memberships: {
-        some: { orgId },
-      },
-    },
-    include: {
-      contactAssignments: {
-        include: {
-          contact: true,
+    const userWithPassword = await db.user.findUniqueOrThrow({
+      where: {
+        id: params.userId,
+        memberships: {
+          some: { orgId },
         },
       },
-      password: true,
-      account: {
-        select: {
-          id: true,
-          code: true,
-          description: true,
+      include: {
+        contactAssignments: {
+          include: {
+            contact: true,
+          },
         },
-      },
-      contact: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          type: {
-            select: {
-              name: true,
+        password: true,
+        account: {
+          select: {
+            id: true,
+            code: true,
+            description: true,
+          },
+        },
+        contact: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            type: {
+              select: {
+                name: true,
+              },
             },
           },
         },
       },
-    },
-  });
-  if (!userWithPassword) throw notFound({ message: "User not found" });
+    });
 
-  const { password: _password, ...userWithoutPassword } = userWithPassword;
+    const { password: _password, ...userWithoutPassword } = userWithPassword;
 
-  return typedjson({
-    accounts,
-    user: userWithoutPassword,
-    hasPassword: !!_password,
-    ...setFormDefaults("user-form", {
-      ...userWithPassword,
-      ...userWithPassword.contact,
-      accountId: userWithPassword.account?.id,
-    }),
-  });
-};
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const authorizedUser = await SessionService.requireUser(request);
-  const orgId = await SessionService.requireOrgId(request);
-
-  const result = await validator.validate(await request.formData());
-  if (result.error) {
-    return validationError(result.error);
+    return typedjson({
+      accounts,
+      user: userWithoutPassword,
+      hasPassword: !!_password,
+      ...setFormDefaults("user-form", {
+        ...userWithPassword,
+        ...userWithPassword.contact,
+        accountId: userWithPassword.account?.id,
+      }),
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    throw error;
   }
-
-  const { username, role, id, accountId, ...contact } = result.data;
-
-  const userToBeUpdated = await db.user.findUnique({ where: { id } });
-  if (!userToBeUpdated) {
-    throw notFound({ message: "User not found" });
-  }
-
-  if (authorizedUser.isMember) {
-    // Users can only edit themselves
-    if (authorizedUser.id !== id) {
-      return toast.json(
-        request,
-        { message: "You do not have permission to edit this user." },
-        {
-          type: "warning",
-          title: "Permission denied",
-          description: "You do not have permission to edit this user.",
-        },
-        { status: 403 },
-      );
-    }
-
-    // Users can't edit their role, username, or assigned account
-    if (
-      role !== userToBeUpdated.role ||
-      username !== userToBeUpdated.username ||
-      accountId !== userToBeUpdated.accountId
-    ) {
-      return toast.json(
-        request,
-        { message: "You do not have permission to edit this field." },
-        {
-          type: "warning",
-          title: "Permission denied",
-          description: "You do not have permission to edit this field.",
-        },
-        { status: 403 },
-      );
-    }
-  }
-
-  if (authorizedUser.systemRole !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
-    return toast.json(
-      request,
-      { message: "You do not have permission to create a Super Admin." },
-      {
-        type: "warning",
-        title: "Permission denied",
-        description: "You do not have permission to create a Super Admin.",
-      },
-      { status: 403 },
-    );
-  }
-
-  const updatedUser = await db.user.update({
-    where: {
-      id,
-      memberships: {
-        some: { orgId },
-      },
-    },
-    data: {
-      role,
-      username,
-      account: accountId ? { connect: { id: accountId } } : { disconnect: true },
-      contact: {
-        update: {
-          ...contact,
-        },
-      },
-    },
-  });
-
-  return toast.json(
-    request,
-    { user: updatedUser },
-    { type: "success", title: "User updated", description: "Great job." },
-  );
 };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -206,9 +102,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
   },
 ];
 
-export default function UserDetailsPage() {
+const links = [{ label: "Profile", to: "profile" }];
+
+export default function UserDetailsLayout() {
   const authorizedUser = useUser();
-  const { user, hasPassword, accounts } = useTypedLoaderData<typeof loader>();
+  const { user, hasPassword } = useTypedLoaderData<typeof loader>();
   const fetcher = useFetcher();
 
   const isYou = authorizedUser.id === user.id;
@@ -216,7 +114,7 @@ export default function UserDetailsPage() {
   return (
     <>
       <PageHeader title={`${user.contact.firstName}${user.contact.lastName ? " " + user.contact.lastName : ""}`}>
-        <div className="flex items-center gap-2">
+        <div className="mt-2 flex items-center gap-2">
           <ValidatedForm
             id="reset-password-form"
             fetcher={fetcher}
@@ -238,6 +136,7 @@ export default function UserDetailsPage() {
           </ValidatedForm>
         </div>
       </PageHeader>
+
       <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-1">
         <Badge variant="outline" className="capitalize">
           <div>
@@ -274,89 +173,40 @@ export default function UserDetailsPage() {
       </div>
 
       <PageContainer>
-        <ValidatedForm id="user-form" validator={validator} method="post" className="sm:max-w-md">
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <FormField label="First name" id="firstName" name="firstName" required />
-              <FormField label="Last name" id="lastName" name="lastName" required />
-            </div>
-            <input type="hidden" name="id" value={user.id} />
-            {!authorizedUser.isMember ? (
-              <>
-                <FormField
-                  label="Username"
-                  id="username"
-                  name="username"
-                  disabled={authorizedUser.role === MembershipRole.MEMBER}
-                  required
-                />
-                <FormSelect
-                  required
-                  disabled={isYou}
-                  description={isYou ? "You cannot edit your own role." : ""}
-                  name="role"
-                  label="Role"
-                  placeholder="Select a role"
-                >
-                  <SelectItem value="USER">User</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  {authorizedUser.isSuperAdmin ? <SelectItem value="SUPERADMIN">Super Admin</SelectItem> : null}
-                </FormSelect>
-              </>
-            ) : (
-              <>
-                <input type="hidden" name="username" value={user.username} />
-                <input type="hidden" name="role" value={user.role} />
-              </>
-            )}
-            {!authorizedUser.isMember ? (
-              <FormSelect
-                name="accountId"
-                label="Linked Account"
-                placeholder="Select an account"
-                defaultValue={user.account?.id}
-                description="Link this user to an account. They will be able to see this account and all related transactions."
-                options={accounts.map((a) => ({ label: `${a.code} - ${a.description}`, value: a.id }))}
-              />
-            ) : (
-              <input type="hidden" name="accountId" value={user.account?.id} />
-            )}
-            <ButtonGroup>
-              <SubmitButton>Save</SubmitButton>
-              <Button type="reset" variant="outline">
-                Reset
-              </Button>
-            </ButtonGroup>
-          </div>
-        </ValidatedForm>
-        <div className="mt-4 max-w-lg">
-          {user.contactAssignments.length > 0 ? (
-            <Card className="flex-1 basis-48 bg-transparent">
-              <CardHeader>
-                <CardTitle>Contact Assignments</CardTitle>
-                <CardDescription>
-                  {isYou ? "You" : "This user"} will receive regular reminders to engage with these Contacts.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul>
-                  {user.contactAssignments.map((a) => (
-                    <li key={a.id}>
-                      <Link to={`/contacts/${a.contactId}`} className="text-sm font-medium text-primary">
-                        {a.contact.firstName} {a.contact.lastName}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+        <ul className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-muted p-1 text-muted-foreground">
+          {links.map((link) => (
+            <li key={link.to}>
+              <NavLink
+                className={({ isActive }) =>
+                  cn(
+                    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                    isActive ? "bg-background text-foreground shadow-sm" : "hover:bg-background/50",
+                  )
+                }
+                to={link.to}
+              >
+                <span>{link.label}</span>
+              </NavLink>
+            </li>
+          ))}
+          {isYou ? (
+            <NavLink
+              className={({ isActive }) =>
+                cn(
+                  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                  isActive ? "bg-background text-foreground shadow-sm" : "hover:bg-background/50",
+                )
+              }
+              to="password"
+            >
+              <span>Password</span>
+            </NavLink>
           ) : null}
+        </ul>
+        <div className="pt-4">
+          <Outlet />
         </div>
       </PageContainer>
     </>
   );
-}
-
-export function ErrorBoundary() {
-  return <ErrorComponent />;
 }

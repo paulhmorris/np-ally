@@ -5,6 +5,7 @@ import { typedjson } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { AuthCard } from "~/components/auth/auth-card";
 import { ErrorComponent } from "~/components/error-component";
 import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
@@ -162,35 +163,33 @@ export default function NewPassword() {
   const isReset = searchParams.get("isReset") === "true";
 
   return (
-    <div className="grid h-full place-items-center">
-      <div className="max-w-lg px-8">
-        <h1 className="text-4xl font-extrabold">Set a new password.</h1>
-        <ValidatedForm id="password-form" validator={validator} method="post" className="mt-4 space-y-4">
-          <input type="hidden" name="token" value={searchParams.get("token") ?? ""} />
-          <input type="hidden" name="isReset" value={String(isReset)} />
-          {isReset ? (
-            <FormField
-              label="Old password"
-              name="oldPassword"
-              type="password"
-              autoComplete="current-password"
-              required={isReset}
-            />
-          ) : (
-            <input type="hidden" name="oldPassword" value="" />
-          )}
-          <FormField label="New Password" name="newPassword" type="password" autoComplete="new-password" required />
+    <AuthCard>
+      <h1 className="text-3xl font-extrabold">Set a new password.</h1>
+      <ValidatedForm id="password-form" validator={validator} method="post" className="mt-4 space-y-4">
+        <input type="hidden" name="token" value={searchParams.get("token") ?? ""} />
+        <input type="hidden" name="isReset" value={String(isReset)} />
+        {isReset ? (
           <FormField
-            label="Confirm New Password"
-            name="confirmation"
+            label="Old password"
+            name="oldPassword"
             type="password"
-            autoComplete="new-password"
-            required
+            autoComplete="current-password"
+            required={isReset}
           />
-          <SubmitButton>{isReset ? "Reset" : "Create"} Password</SubmitButton>
-        </ValidatedForm>
-      </div>
-    </div>
+        ) : (
+          <input type="hidden" name="oldPassword" value="" />
+        )}
+        <FormField label="New Password" name="newPassword" type="password" autoComplete="new-password" required />
+        <FormField
+          label="Confirm New Password"
+          name="confirmation"
+          type="password"
+          autoComplete="new-password"
+          required
+        />
+        <SubmitButton>{isReset ? "Reset" : "Create"} Password</SubmitButton>
+      </ValidatedForm>
+    </AuthCard>
   );
 }
 
