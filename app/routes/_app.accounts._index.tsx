@@ -10,6 +10,7 @@ import { PageContainer } from "~/components/page-container";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "Accounts" }];
@@ -33,18 +34,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const accounts = await db.account.findMany({
-    where: { orgId },
-    select: accountsIndexSelect,
-    orderBy: { code: "asc" },
-  });
+  try {
+    const accounts = await db.account.findMany({
+      where: { orgId },
+      select: accountsIndexSelect,
+      orderBy: { code: "asc" },
+    });
 
-  const accountsWithBalance = accounts.map((account) => {
-    const balance = account.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
-    return { ...account, balance };
-  });
+    const accountsWithBalance = accounts.map((account) => {
+      const balance = account.transactions.reduce((acc, transaction) => acc + transaction.amountInCents, 0);
+      return { ...account, balance };
+    });
 
-  return typedjson({ accounts: accountsWithBalance });
+    return typedjson({ accounts: accountsWithBalance });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    throw error;
+  }
 }
 
 export default function AccountsIndexPage() {

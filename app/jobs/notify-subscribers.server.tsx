@@ -1,6 +1,7 @@
 import { invokeTrigger } from "@trigger.dev/sdk";
 import { z } from "zod";
 
+import { IncomeNotificationEmail } from "emails/income-notification";
 import { db } from "~/integrations/prisma.server";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
 
@@ -10,7 +11,9 @@ export const notifySubscribersJob = trigger.defineJob({
   version: "0.0.1",
   trigger: invokeTrigger({
     schema: z.object({
-      to: z.union([z.string(), z.array(z.string())]),
+      to: z.string().email(),
+      accountName: z.string(),
+      amountInCents: z.number(),
       orgId: z.string(),
     }),
   }),
@@ -38,13 +41,41 @@ export const notifySubscribersJob = trigger.defineJob({
       };
     }
 
-    const url = new URL("/", `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`);
+    const user = await io.runTask("get-user", async () => {
+      return db.user.findUnique({
+        where: { username: payload.to },
+        select: {
+          contact: {
+            select: {
+              firstName: true,
+            },
+          },
+        },
+      });
+    });
+
+    if (!user) {
+      await io.logger.error(`No user found with username ${payload.to}`);
+      return {
+        status: "error",
+        message: `No user found with username ${payload.to}`,
+      };
+    }
+
+    const url = new URL("/", `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`).toString();
 
     await io.resend.emails.send("send-email", {
       from: `${org.name} <${org.replyToEmail}@${org.host}>`,
       to: payload.to,
       subject: "You have new income!",
-      html: `You have new income! Check it out on your <a href="${url.toString()}">Dashboard</a>.`,
+      react: (
+        <IncomeNotificationEmail
+          url={url}
+          accountName={payload.accountName}
+          amountInCents={payload.amountInCents}
+          userFirstname={user.contact.firstName}
+        />
+      ),
     });
   },
 });

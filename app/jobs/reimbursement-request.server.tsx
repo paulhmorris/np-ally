@@ -1,10 +1,10 @@
 import { invokeTrigger } from "@trigger.dev/sdk";
 import { z } from "zod";
 
+import { ReimbursementRequestEmail } from "emails/reimbursement-request";
 import { Bucket } from "~/integrations/bucket.server";
 import { db } from "~/integrations/prisma.server";
 import { trigger, triggerResend } from "~/integrations/trigger.server";
-import { formatCentsAsDollars } from "~/lib/utils";
 
 export const reimbursementRequestJob = trigger.defineJob({
   id: "reimbursement-request",
@@ -21,6 +21,11 @@ export const reimbursementRequestJob = trigger.defineJob({
       return db.reimbursementRequest.findUnique({
         where: { id: payload.reimbursementRequestId },
         select: {
+          account: {
+            select: {
+              code: true,
+            },
+          },
           receipts: true,
           amountInCents: true,
           user: {
@@ -94,16 +99,24 @@ export const reimbursementRequestJob = trigger.defineJob({
       await io.logger.info("All receipts have valid presigned URLs");
     });
 
-    const url = new URL("/dashboards/admin", `https://${rr.org.subdomain ? rr.org.subdomain + "." : ""}${rr.org.host}`);
+    const url = new URL(
+      "/dashboards/admin",
+      `https://${rr.org.subdomain ? rr.org.subdomain + "." : ""}${rr.org.host}`,
+    ).toString();
     const { contact } = rr.user;
 
     await io.resend.emails.send("send-email", {
       from: `${rr.org.name} <${rr.org.replyToEmail}@${rr.org.host}>`,
       to: `${rr.org.administratorEmail}@${rr.org.host}`,
       subject: "New Reimbursement Request",
-      html: `There's a new reimbursement request for ${formatCentsAsDollars(rr.amountInCents)} from ${
-        contact.firstName
-      } ${contact.lastName}, View it on the <a href="${url.toString()}">Dashboard</a>.`,
+      react: (
+        <ReimbursementRequestEmail
+          accountName={rr.account.code}
+          amountInCents={rr.amountInCents}
+          url={url}
+          requesterName={`${contact.firstName} ${contact.lastName}`}
+        />
+      ),
     });
   },
 });

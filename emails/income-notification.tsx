@@ -1,44 +1,45 @@
 import { Body, Button, Container, Head, Html, Preview, Section, Text } from "@react-email/components";
 
+import { formatCentsAsDollars } from "~/lib/utils";
+
 interface Props {
   url: string;
-  orgName: string;
+  accountName: string;
+  amountInCents: number;
   userFirstname: string | null;
 }
 
-export function WelcomeEmail({ userFirstname, orgName, url }: Props) {
+export function IncomeNotificationEmail({ userFirstname, amountInCents, accountName, url }: Props) {
   return (
     <Html>
       <Head />
-      <Preview>You&apos;re invited to join the {orgName} portal</Preview>
+      <Preview>New income has been added to your account.</Preview>
       <Body style={main}>
         <Container style={container}>
           <Text style={paragraph}>Hi{userFirstname ? " " + userFirstname : ""},</Text>
           <Text style={paragraph}>
-            Welcome to the {orgName} portal! We&apos;re excited to have you on board. To get started, click the button
-            below and set a password.
+            A transaction of {formatCentsAsDollars(amountInCents)} was just added to account {accountName}. Check it out
+            on your dashboard.
           </Text>
           <Section style={btnContainer}>
             <Button style={button} href={url}>
-              Get started
+              Log In
             </Button>
           </Section>
-          <Text style={paragraph}>
-            The link will expire in 15 minutes. You can request a new link from your administrator at any time.
-          </Text>
         </Container>
       </Body>
     </Html>
   );
 }
 
-WelcomeEmail.PreviewProps = {
+IncomeNotificationEmail.PreviewProps = {
   userFirstname: "Paul",
-  orgName: "Non Profit Ally",
   url: "https://np-ally.org",
+  accountName: "3001-PM",
+  amountInCents: 1534,
 } as Props;
 
-export default WelcomeEmail;
+export default IncomeNotificationEmail;
 
 const main = {
   backgroundColor: "#ffffff",

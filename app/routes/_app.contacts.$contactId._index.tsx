@@ -1,4 +1,4 @@
-import { Engagement } from "@prisma/client";
+import { Engagement, Prisma } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -22,7 +22,7 @@ import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
-import { forbidden, notFound } from "~/lib/responses.server";
+import { forbidden, getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
@@ -33,47 +33,52 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   invariant(params.contactId, "contactId not found");
 
-  const contact = await db.contact.findUnique({
-    where: { id: params.contactId, orgId },
-    include: {
-      user: true,
-      type: true,
-      address: true,
-      engagements: {
-        include: {
-          type: true,
+  try {
+    const contact = await db.contact.findUniqueOrThrow({
+      where: { id: params.contactId, orgId },
+      include: {
+        user: true,
+        type: true,
+        address: true,
+        engagements: {
+          include: {
+            type: true,
+          },
+          orderBy: { date: "desc" },
         },
-        orderBy: { date: "desc" },
-      },
-      assignedUsers: {
-        include: {
-          user: {
-            include: {
-              contact: true,
+        assignedUsers: {
+          include: {
+            user: {
+              include: {
+                contact: true,
+              },
             },
           },
         },
-      },
-      transactions: {
-        where: {
-          date: { gte: dayjs().subtract(90, "d").toDate() },
+        transactions: {
+          where: {
+            date: { gte: dayjs().subtract(90, "d").toDate() },
+          },
+          include: {
+            account: true,
+          },
+          orderBy: { date: "desc" },
         },
-        include: {
-          account: true,
-        },
-        orderBy: { date: "desc" },
       },
-    },
-  });
+    });
 
-  if (!contact) throw notFound({ message: "Contact not found" });
-  const shouldHideTransactions = user.isMember && !contact.assignedUsers.some((a) => a.userId === user.id);
+    const shouldHideTransactions = user.isMember && !contact.assignedUsers.some((a) => a.userId === user.id);
 
-  if (shouldHideTransactions) {
-    return typedjson({ contact: { ...contact, transactions: [] } });
+    if (shouldHideTransactions) {
+      return typedjson({ contact: { ...contact, transactions: [] } });
+    }
+
+    return typedjson({ contact });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    throw error;
   }
-
-  return typedjson({ contact });
 };
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -94,20 +99,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (result.data._action === "delete" && request.method === "DELETE") {
-    const contact = await db.contact.findUnique({
+    const contact = await db.contact.findUniqueOrThrow({
       where: { id: params.contactId, orgId },
       include: {
-        transactions: true,
+        transactions: {
+          select: { id: true },
+        },
       },
     });
-    if (!contact) {
-      return toast.json(
-        request,
-        { success: false },
-        { type: "error", title: "Error deleting contact", description: "Contact not found" },
-        { status: 404 },
-      );
-    }
 
     if (contact.typeId === ContactType.Staff) {
       throw forbidden({ message: "You do not have permission to delete this contact." });
@@ -122,7 +121,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
           title: "Error deleting contact",
           description: "This contact has transactions and cannot be deleted. Check the transactions page.",
         },
-        { status: 400 },
       );
     }
 
@@ -139,17 +137,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
         description: `${contact.firstName} ${contact.lastName} was deleted successfully.`,
       });
     } catch (error) {
-      Sentry.captureException(error);
       console.error(error);
+      Sentry.captureException(error);
+      let message = error instanceof Error ? error.message : "An error occurred while deleting the contact.";
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        message = getPrismaErrorText(error);
+      }
       return toast.json(
         request,
         { success: false },
         {
           type: "error",
           title: "Error deleting contact",
-          description: "An error occurred while deleting the contact.",
+          description: message,
         },
-        { status: 500 },
       );
     }
   }
@@ -222,7 +223,7 @@ export default function ContactDetailsPage() {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <ContactCard contact={contact} />
             {contact.assignedUsers.length > 0 ? (
-              <Card className="bg-transparent flex-1 basis-48">
+              <Card className="flex-1 basis-48 bg-transparent">
                 <CardHeader>
                   <CardTitle>Assigned Users</CardTitle>
                   <CardDescription>These users receive regular reminders to engage with this Contact.</CardDescription>
