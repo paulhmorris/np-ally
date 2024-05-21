@@ -22,10 +22,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
       orgId,
       userId: user.isMember ? user.id : undefined,
     },
-    include: {
-      type: true,
-      contact: true,
-      user: { include: { contact: true } },
+    select: {
+      id: true,
+      type: {
+        select: { name: true },
+      },
+      contact: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      user: {
+        select: {
+          contact: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      },
     },
     orderBy: { date: "desc" },
   });

@@ -14,10 +14,28 @@ export function EngagementsTable({ data }: { data: Array<Engagement> }) {
 }
 
 type Engagement = Prisma.EngagementGetPayload<{
-  include: {
-    type: true;
-    contact: true;
-    user: { include: { contact: true } };
+  select: {
+    id: true;
+    type: {
+      select: { name: true };
+    };
+    contact: {
+      select: {
+        id: true;
+        firstName: true;
+        lastName: true;
+      };
+    };
+    user: {
+      select: {
+        contact: {
+          select: {
+            firstName: true;
+            lastName: true;
+          };
+        };
+      };
+    };
   };
 }>;
 const columns: Array<ColumnDef<Engagement>> = [
@@ -27,7 +45,7 @@ const columns: Array<ColumnDef<Engagement>> = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Contact" />,
     cell: ({ row }) => {
       return (
-        <Link className="font-medium text-primary" to={`/contacts/${row.original.contactId}`}>
+        <Link className="font-medium text-primary" to={`/contacts/${row.original.contact.id}`}>
           <span className="max-w-[500px] truncate font-medium">{row.getValue("contact")}</span>
         </Link>
       );
