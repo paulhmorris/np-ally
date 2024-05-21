@@ -2,29 +2,28 @@ import { Body, Button, Container, Head, Html, Preview, Section, Text } from "@re
 
 interface Props {
   url: string;
-  orgName: string;
-  userFirstname: string | null;
 }
 
-export function WelcomeEmail({ userFirstname, orgName, url }: Props) {
+export function PasswordResetEmail({ url }: Props) {
   return (
     <Html>
       <Head />
-      <Preview>You&apos;re invited to join the {orgName} portal</Preview>
+      <Preview>Someone requested a password reset for your account.</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Text style={paragraph}>Hi{userFirstname ? " " + userFirstname : ""},</Text>
+          <Text style={paragraph}>Hi there,</Text>
           <Text style={paragraph}>
-            Welcome to the {orgName} portal! We&apos;re excited to have you on board. To get started, click the button
-            below and set a password.
+            Someone requested a password reset for your account. If this was you, click the button below to set a new
+            password. If you didn&apos;t request a password reset, you can safely ignore this email.
           </Text>
           <Section style={btnContainer}>
-            <Button style={button} href={url}>
-              Get started
+            <Button style={button} href={url} target="_blank">
+              Reset Your Password
             </Button>
           </Section>
           <Text style={paragraph}>
-            The link will expire in 15 minutes. You can request a new link from your administrator at any time.
+            The link will expire in 15 minutes. You can request a new link from your administrator or from your profile
+            at any time.
           </Text>
         </Container>
       </Body>
@@ -32,13 +31,11 @@ export function WelcomeEmail({ userFirstname, orgName, url }: Props) {
   );
 }
 
-WelcomeEmail.PreviewProps = {
-  userFirstname: "Paul",
-  orgName: "Non Profit Ally",
+PasswordResetEmail.PreviewProps = {
   url: "https://np-ally.org",
 } as Props;
 
-export default WelcomeEmail;
+export default PasswordResetEmail;
 
 const main = {
   backgroundColor: "#ffffff",

@@ -1,4 +1,4 @@
-import { MembershipRole } from "@prisma/client";
+import { MembershipRole, Prisma } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -13,7 +13,9 @@ import { ButtonGroup } from "~/components/ui/button-group";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
+import { Sentry } from "~/integrations/sentry";
 import { AccountType } from "~/lib/constants";
+import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { getAccountTypes } from "~/services.server/account";
 import { SessionService } from "~/services.server/session";
@@ -31,29 +33,39 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const accountTypes = await getAccountTypes(orgId);
-  const users = await db.user.findMany({
-    where: {
-      memberships: {
-        some: {
-          orgId,
-          role: { in: [MembershipRole.MEMBER, MembershipRole.ADMIN] },
+  try {
+    const accountTypes = await getAccountTypes(orgId);
+    const users = await db.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            orgId,
+            role: { in: [MembershipRole.MEMBER, MembershipRole.ADMIN] },
+          },
+        },
+        accountId: null,
+      },
+      select: {
+        id: true,
+        contact: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
         },
       },
-      accountId: null,
-    },
-    include: {
-      contact: true,
-    },
-  });
+    });
 
-  return typedjson({
-    users,
-    accountTypes,
-  });
+    return typedjson({
+      users,
+      accountTypes,
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    throw error;
+  }
 };
-
-export const meta: MetaFunction = () => [{ title: "Edit Account" }];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await SessionService.requireAdmin(request);
@@ -65,22 +77,38 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const { userId, ...data } = result.data;
-  const account = await db.account.create({
-    data: {
-      ...data,
-      orgId,
-      user: {
-        connect: userId ? { id: userId } : undefined,
+  try {
+    const account = await db.account.create({
+      data: {
+        ...data,
+        orgId,
+        user: {
+          connect: userId ? { id: userId } : undefined,
+        },
       },
-    },
-  });
+    });
 
-  return toast.redirect(request, `/accounts/${account.id}`, {
-    type: "success",
-    title: "Account created",
-    description: "Well done.",
-  });
+    return toast.redirect(request, `/accounts/${account.id}`, {
+      type: "success",
+      title: "Account created",
+      description: "Well done.",
+    });
+  } catch (error) {
+    console.error(error);
+    Sentry.captureException(error);
+    let message = error instanceof Error ? error.message : "An error occurred while creating the account.";
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      message = getPrismaErrorText(error);
+    }
+    return toast.json(
+      request,
+      { success: false },
+      { type: "error", title: "Error creating account", description: message },
+    );
+  }
 };
+
+export const meta: MetaFunction = () => [{ title: "New Account" }];
 
 export default function NewAccountPage() {
   const { users, accountTypes } = useTypedLoaderData<typeof loader>();

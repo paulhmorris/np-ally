@@ -7,7 +7,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeo
   children: React.ReactNode;
 }
 
-const calloutVariants = cva("rounded-md border p-3 text-sm flex items-start gap-3", {
+const calloutVariants = cva("rounded-md border p-3 text-sm flex items-start gap-3 whitespace-pre-wrap", {
   variants: {
     variant: {
       info: "bg-primary/5 border-primary",
@@ -32,7 +32,7 @@ export function Callout({ children, className, variant = "info", ...props }: Pro
   return (
     <div className={cn(calloutVariants({ variant, className }))} {...props}>
       <div className="pt-[1px]">{iconMap[variant ?? "info"]}</div>
-      <p>{children}</p>
+      <div>{children}</div>
     </div>
   );
 }

@@ -6,6 +6,11 @@ import { twMerge } from "tailwind-merge";
 
 const DEFAULT_REDIRECT = "/";
 
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+} & {};
+
 /**
  * This should be used any time the redirect path is user-provided
  * (Like the query string on our login/signup pages). This avoids

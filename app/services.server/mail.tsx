@@ -1,5 +1,9 @@
-import type { Contact, Organization, PasswordReset, ReimbursementRequestStatus } from "@prisma/client";
+import type { Organization, PasswordReset, ReimbursementRequestStatus, User } from "@prisma/client";
+import { render } from "@react-email/render";
 
+import { PasswordResetEmail } from "emails/password-reset";
+import { ReimbursementRequestUpdateEmail } from "emails/reimbursement-request-update";
+import { sendEmail } from "~/integrations/email.server";
 import { db } from "~/integrations/prisma.server";
 import { resend } from "~/integrations/resend.server";
 import { Sentry } from "~/integrations/sentry";
@@ -11,22 +15,12 @@ export type CreateEmailOptions = Parameters<typeof resend.emails.send>[0];
 export type CreateEmailRequestOptions = Parameters<typeof resend.emails.send>[1];
 type OrgId = Organization["id"];
 
-export async function sendEmail(payload: CreateEmailOptions, options?: CreateEmailRequestOptions) {
-  try {
-    const data = await resend.emails.send(payload, options);
-    return { data, error: null };
-  } catch (error) {
-    Sentry.captureException(error);
-    return { data: null, error };
-  }
-}
-
 export async function sendPasswordResetEmail({
   email,
   token,
   orgId,
 }: {
-  email: NonNullable<Contact["email"]>;
+  email: User["username"];
   token: PasswordReset["token"];
   orgId: OrgId;
 }) {
@@ -35,17 +29,14 @@ export async function sendPasswordResetEmail({
   url.searchParams.set("token", token);
   url.searchParams.set("isReset", "true");
 
+  const html = render(<PasswordResetEmail url={url.toString()} />);
+
   try {
-    const data = await resend.emails.send({
+    const data = await sendEmail({
       from: `${org.name} <${org.replyToEmail}@${org.host}>`,
       to: email,
       subject: "Reset Your Password",
-      html: `
-        <p>Hi there,</p>
-        <p>Someone requested a password reset for your ${org.name} account. If this was you, please click the link below to reset your password. The link will expire in 15 minutes.</p>
-        <p><a style="color:#976bff" href="${url.toString()}" target="_blank">Reset Password</a></p>
-        <p>If you did not request a password reset, you can safely ignore this email.</p>
-        `,
+      html,
     });
     return { data };
   } catch (error) {
@@ -59,20 +50,26 @@ export async function sendPasswordSetupEmail({
   token,
   orgId,
 }: {
-  email: NonNullable<Contact["email"]>;
+  email: User["username"];
   token: PasswordReset["token"];
   orgId: OrgId;
 }) {
   const org = await db.organization.findUniqueOrThrow({ where: { id: orgId } });
+  const user = await db.user.findUniqueOrThrow({
+    where: { username: email },
+    select: { contact: { select: { firstName: true } } },
+  });
   const url = new URL("/passwords/new", `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`);
   url.searchParams.set("token", token);
 
+  const html = render(<WelcomeEmail userFirstname={user.contact.firstName} orgName={org.name} url={url.toString()} />);
+
   try {
-    const data = await resend.emails.send({
+    const data = await sendEmail({
       from: `${org.name} <${org.replyToEmail}@${org.host}>`,
       to: email,
       subject: "Setup Your Password",
-      react: <WelcomeEmail userFirstname="Paul" orgName={org.name} url={url.toString()} />,
+      html,
     });
     return { data };
   } catch (error) {
@@ -87,22 +84,21 @@ export async function sendReimbursementRequestUpdateEmail({
   orgId,
   note,
 }: {
-  email: NonNullable<Contact["email"]>;
+  email: User["username"];
   status: ReimbursementRequestStatus;
   orgId: OrgId;
   note?: string;
 }) {
   try {
     const org = await db.organization.findUniqueOrThrow({ where: { id: orgId } });
-    const data = await resend.emails.send({
+    const url = new URL("/", `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`).toString();
+    const html = render(<ReimbursementRequestUpdateEmail status={status} note={note} url={url} />);
+
+    const data = await sendEmail({
       from: `${org.name} <${org.replyToEmail}@${org.host}>`,
       to: email,
       subject: `Reimbursement Request ${capitalize(status)}`,
-      html: `
-          <p>Hi there,</p>
-          <p>Your reimbursement request has been ${capitalize(status)}.</p>
-          ${note ? `<p>Administrator note: ${note}</p>` : ""}
-        `,
+      html,
     });
     return { data };
   } catch (error) {
