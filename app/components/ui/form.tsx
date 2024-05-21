@@ -1,5 +1,5 @@
 import { IconCurrencyDollar } from "@tabler/icons-react";
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useField } from "remix-validated-form";
 
 import { Input } from "~/components/ui/input";
@@ -46,6 +46,7 @@ export function FormField({
 }: FieldProps) {
   const fallbackId = useId();
   const { error, getInputProps } = useField(name, { formId });
+  const [type, setType] = useState(props.type);
 
   const id = props.id ?? fallbackId;
 
@@ -90,11 +91,21 @@ export function FormField({
           props.onBlur?.(e);
         }}
         {...props}
+        type={type}
       />
       {isCurrency ? (
         <span className="pointer-events-none absolute left-2 top-9 text-muted-foreground">
           <IconCurrencyDollar className="h-4 w-4 text-muted-foreground" strokeWidth={2.5} />
         </span>
+      ) : null}
+      {props.type === "password" ? (
+        <button
+          type="button"
+          className="absolute right-0 top-0 rounded p-2 text-xs text-muted-foreground transition hover:underline focus:outline-none focus-visible:ring focus-visible:ring-primary/50"
+          onClick={() => setType((t) => (t === "password" ? "text" : "password"))}
+        >
+          {type === "password" ? "Show" : "Hide"}
+        </button>
       ) : null}
       <FieldDescription id={id} description={description} />
       <FieldError id={id} error={error} />

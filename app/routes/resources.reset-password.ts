@@ -23,12 +23,17 @@ export async function action({ request }: ActionFunctionArgs) {
     return typedjson({ status: 405 });
   }
 
-  const url = new URL(request.url);
-  const host = url.hostname.split(".").slice(-2).join(".");
-
   const result = await passwordResetValidator.validate(await request.formData());
   if (result.error) {
     return validationError(result.error);
+  }
+
+  const url = new URL(request.url);
+  let host = url.hostname.split(".").slice(-2).join(".");
+
+  // Local dev
+  if (host === "localhost" && process.env.NODE_ENV === "development") {
+    host = "alliance436.org";
   }
 
   try {

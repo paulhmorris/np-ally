@@ -32,7 +32,7 @@ export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ inc
               <TableCell>{normalizeEnum(user.role)}</TableCell>
               <TableCell>{new Date(user.createdAt).toLocaleString()}</TableCell>
               <TableCell>
-                <Link to={`/users/${user.id}`} className="font-bold text-primary">
+                <Link to={`/users/${user.id}/profile`} className="font-bold text-primary">
                   View
                 </Link>
               </TableCell>

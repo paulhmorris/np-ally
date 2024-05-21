@@ -103,7 +103,7 @@ export default function LoginPage() {
 
   return (
     <AuthCard>
-      <h1 className="text-4xl font-extrabold">Login</h1>
+      <h1 className="text-3xl font-extrabold">Login</h1>
       <ValidatedForm validator={validator} method="post" className="mt-4 space-y-4">
         <FormField
           label="Email"
@@ -111,7 +111,7 @@ export default function LoginPage() {
           name="email"
           type="email"
           autoComplete="email"
-          defaultValue={process.env.NODE_ENV === "development" ? "paul@remix.run" : ""}
+          defaultValue={process.env.NODE_ENV === "development" ? "paulh.morris@gmail.com" : ""}
           required
         />
         <FormField
