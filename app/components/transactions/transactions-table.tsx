@@ -11,9 +11,25 @@ import { Facet } from "~/components/ui/data-table/data-table-toolbar";
 import { formatCentsAsDollars } from "~/lib/utils";
 
 type Transaction = Prisma.TransactionGetPayload<{
-  include: {
-    contact: true;
-    account: true;
+  select: {
+    id: true;
+    date: true;
+    amountInCents: true;
+    description: true;
+    contact: {
+      select: {
+        id: true;
+        firstName: true;
+        lastName: true;
+      };
+    };
+    account: {
+      select: {
+        id: true;
+        code: true;
+        description: true;
+      };
+    };
   };
 }>;
 
@@ -29,7 +45,7 @@ const columns = [
     cell: ({ row }) => {
       return (
         <div className="max-w-[320px] truncate">
-          <Link to={`/accounts/${row.original.accountId}`} className="font-medium text-primary">
+          <Link to={`/accounts/${row.original.account.id}`} className="font-medium text-primary">
             {row.getValue("account")}
           </Link>
         </div>
@@ -86,7 +102,10 @@ const columns = [
     cell: ({ row }) => {
       return (
         <div>
-          <Link to={`/contacts/${row.original.contactId}`} className="max-w-[500px] truncate font-medium text-primary">
+          <Link
+            to={`/contacts/${row.original.contact?.id}`}
+            className="max-w-[500px] truncate font-medium text-primary"
+          >
             {row.getValue("contact")}
           </Link>
         </div>

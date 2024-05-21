@@ -25,9 +25,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
           }
         : undefined,
     },
-    include: {
-      contact: true,
-      account: true,
+    select: {
+      id: true,
+      date: true,
+      amountInCents: true,
+      description: true,
+      contact: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      account: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
     },
     orderBy: [{ date: "desc" }, { account: { code: "asc" } }],
   });
