@@ -1,7 +1,6 @@
 import "@fontsource-variable/dm-sans/wght.css";
-import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from "@remix-run/react";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from "@remix-run/react";
 import { captureRemixErrorBoundaryError, withSentry } from "@sentry/remix";
 import { Analytics } from "@vercel/analytics/react";
 import { useEffect } from "react";
@@ -17,12 +16,11 @@ import { themeSessionResolver } from "~/lib/session.server";
 import { getGlobalToast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
-import stylesheet from "~/tailwind.css";
+import stylesheet from "~/tailwind.css?url";
 
 // prettier-ignore
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
-  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : [])
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -151,7 +149,6 @@ function App() {
           }}
         />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   );

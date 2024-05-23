@@ -21,7 +21,7 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
-import { notifySubscribersJob } from "~/jobs/notify-subscribers.server";
+import { notifySubscribersJob } from "~/jobs/income-notification.server";
 import { TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
@@ -130,7 +130,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       const key = nanoid();
-      await notifySubscribersJob.invoke(
+      await notifySubscribersJob.trigger(
         { to: email, orgId, accountName: transaction.account.code, amountInCents: transaction.amountInCents },
         { idempotencyKey: key },
       );

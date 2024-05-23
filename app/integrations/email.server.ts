@@ -6,7 +6,7 @@ import { Prettify } from "~/lib/utils";
 
 const client = new SESv2Client({ region: "us-east-1" });
 
-type SendEmailInput = {
+export type SendEmailInput = {
   from: string;
   to: string | Array<string>;
   subject: string;

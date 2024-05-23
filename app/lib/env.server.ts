@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 /* eslint-disable @typescript-eslint/no-namespace */
+import { loadEnv } from "vite";
 import { TypeOf, z } from "zod";
 
 const serverEnvValidation = z.object({
@@ -7,11 +8,7 @@ const serverEnvValidation = z.object({
   CI: z.string().optional(),
 
   // Remix
-  NODE_ENV: z.enum(["development", "production", "test"]),
   SESSION_SECRET: z.string().min(16),
-
-  // Resend
-  RESEND_API_KEY: z.string().startsWith("re_"),
 
   // Cloudflare
   R2_BUCKET_NAME: z.string().min(1),
@@ -63,9 +60,10 @@ declare global {
 
 export function validateEnv(): void {
   try {
+    const env = { ...loadEnv("", process.cwd(), ""), ...process.env };
     console.info("🌎 validating environment variables..");
-    serverEnvValidation.parse(process.env);
-    clientEnvValidation.parse(process.env);
+    serverEnvValidation.parse(env);
+    clientEnvValidation.parse(env);
   } catch (err) {
     if (err instanceof z.ZodError) {
       const { fieldErrors } = err.flatten();
