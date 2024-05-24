@@ -99,9 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    await reimbursementRequestJob.invoke({
-      reimbursementRequestId: rr.id,
-    });
+    await reimbursementRequestJob.trigger({ reimbursementRequestId: rr.id });
 
     return toast.redirect(request, `/dashboards/${user.isMember ? "staff" : "admin"}`, {
       type: "success",
