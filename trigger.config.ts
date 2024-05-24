@@ -12,4 +12,6 @@ export const config: TriggerConfig = {
     Sentry.captureException(error);
   },
   dependenciesToBundle: ["nanoid"],
+  additionalFiles: ["./prisma/schema.prisma"],
+  additionalPackages: ["prisma@5.14.0"],
 };
