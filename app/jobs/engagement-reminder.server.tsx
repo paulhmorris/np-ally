@@ -14,9 +14,6 @@ const DAYS_CUTOFF = 30;
 
 export const reminderTask = schedules.task({
   id: "engagement-reminder",
-  onFailure: async (_, error) => {
-    Sentry.captureException(error);
-  },
   retry: {},
   run: async () => {
     const thirtyDaysAgo = new Date(Date.now() - DAYS_CUTOFF * 24 * 60 * 60 * 1000);
