@@ -33,8 +33,8 @@ jobs:
       - name: Deploy Project Artifacts to Vercel
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Refresh Trigger.dev Jobs
+      - name: Deploy Trigger.dev
         env:
-          TRIGGER_ENDPOINT_HOOK: ${{ secrets.TRIGGER_ENDPOINT_HOOK_STAGING }}
+          TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
         run: |
-          curl -X POST $TRIGGER_ENDPOINT_HOOK
+          npx trigger.dev@3.0.0-beta.33 deploy --env staging
