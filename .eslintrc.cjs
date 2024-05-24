@@ -94,13 +94,6 @@ module.exports = {
       plugins: ["markdown"],
     },
 
-    // Jest/Vitest
-    {
-      extends: ["plugin:vitest/recommended", "plugin:testing-library/react", "prettier"],
-      files: ["test/**/*.test.{js,jsx,ts,tsx}"],
-      excludedFiles: ["test/e2e/*"],
-    },
-
     // Playwright
     {
       files: ["test/e2e/*.ts"],
