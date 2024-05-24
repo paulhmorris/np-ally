@@ -71,7 +71,7 @@ export function UserMenu() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link className="cursor-pointer" to={`/users/${user.id}`}>
+              <Link className="cursor-pointer" to={`/users/${user.id}/profile`}>
                 Profile
               </Link>
             </DropdownMenuItem>
