@@ -18,6 +18,7 @@ Sentry.init({
       useEffect,
       useLocation,
       useMatches,
+      enableInp: true,
     }),
     Sentry.replayIntegration(),
   ],
