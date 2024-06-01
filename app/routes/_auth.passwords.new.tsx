@@ -14,7 +14,7 @@ import { unauthorized } from "~/lib/responses.server";
 import { sessionStorage } from "~/lib/session.server";
 import { toast } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
-import { hashPassword, verifyLogin } from "~/services.server/auth";
+import { hashPassword } from "~/services.server/auth";
 import { expirePasswordReset, getPasswordResetByToken } from "~/services.server/password";
 import { SessionService } from "~/services.server/session";
 
@@ -22,24 +22,15 @@ const validator = withZod(
   z
     .object({
       token: z.string(),
-      isReset: z.string().transform((val) => val === "true"),
-      oldPassword: z.string().min(8, "Password must be at least 8 characters").or(z.literal("")),
       newPassword: z.string().min(8, "Password must be at least 8 characters"),
       confirmation: z.string().min(8, "Password must be at least 8 characters"),
     })
-    .superRefine(({ oldPassword, newPassword, confirmation, isReset }, ctx) => {
+    .superRefine(({ newPassword, confirmation }, ctx) => {
       if (newPassword !== confirmation) {
         ctx.addIssue({
           code: "custom",
           message: "Passwords must match",
           path: ["confirmation"],
-        });
-      }
-      if (isReset && !oldPassword) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Old password is required",
-          path: ["oldPassword"],
         });
       }
     }),
@@ -75,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Check token
-  const { oldPassword, newPassword, token } = result.data;
+  const { newPassword, token } = result.data;
   const reset = await getPasswordResetByToken(token);
   if (!reset) {
     return toast.json(request, {}, { type: "error", title: "Token not found", description: "Please try again." });
@@ -108,45 +99,18 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  // Reset flow
   const hashedPassword = await hashPassword(newPassword);
-  if (isReset) {
-    // Check old password is correct
-    const user = await verifyLogin({ username: userFromToken.username, password: oldPassword });
-    if (!user) {
-      return validationError({
-        fieldErrors: {
-          oldPassword: "Incorrect password",
-        },
-      });
-    }
-
-    // Reset password
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        password: {
-          upsert: {
-            create: { hash: hashedPassword },
-            update: { hash: hashedPassword },
-          },
+  await db.user.update({
+    where: { id: userFromToken.id },
+    data: {
+      password: {
+        upsert: {
+          create: { hash: hashedPassword },
+          update: { hash: hashedPassword },
         },
       },
-    });
-  } else {
-    // Setup flow
-    await db.user.update({
-      where: { id: userFromToken.id },
-      data: {
-        password: {
-          upsert: {
-            create: { hash: hashedPassword },
-            update: { hash: hashedPassword },
-          },
-        },
-      },
-    });
-  }
+    },
+  });
 
   // Use token
   await expirePasswordReset(token);
@@ -167,18 +131,6 @@ export default function NewPassword() {
       <h1 className="text-3xl font-extrabold">Set a new password.</h1>
       <ValidatedForm id="password-form" validator={validator} method="post" className="mt-4 space-y-4">
         <input type="hidden" name="token" value={searchParams.get("token") ?? ""} />
-        <input type="hidden" name="isReset" value={String(isReset)} />
-        {isReset ? (
-          <FormField
-            label="Old password"
-            name="oldPassword"
-            type="password"
-            autoComplete="current-password"
-            required={isReset}
-          />
-        ) : (
-          <input type="hidden" name="oldPassword" value="" />
-        )}
         <FormField label="New Password" name="newPassword" type="password" autoComplete="new-password" required />
         <FormField
           label="Confirm New Password"
