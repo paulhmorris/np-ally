@@ -8,18 +8,30 @@ export const CheckboxSchema = z
   .transform((val) => val === "on")
   .or(z.undefined());
 
-export const CurrencySchema = z.coerce
-  .number({ invalid_type_error: "Must be a number", required_error: "Amount required" })
-  .multipleOf(0.01, { message: "Must be multiple of $0.01" })
-  .nonnegative({ message: "Must be greater than $0.00" })
-  .max(99_999, { message: "Must be less than $100,000" })
-  .transform((dollars) => Math.round(dollars * 100));
+export const CurrencySchema = z.preprocess(
+  (v) => (typeof v === "string" && v[0] === "$" ? v.slice(1) : v),
+  z.coerce
+    .number({ invalid_type_error: "Must be a number", required_error: "Amount required" })
+    .multipleOf(0.01, { message: "Must be multiple of $0.01" })
+    .nonnegative({ message: "Must be greater than $0.00" })
+    .max(99_999, { message: "Must be less than $100,000" })
+    .transform((dollars) => Math.round(dollars * 100)),
+);
 
 export const TransactionItemSchema = z.object({
   typeId: z.coerce.number().pipe(z.nativeEnum(TransactionItemType, { invalid_type_error: "Invalid type" })),
   methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod, { invalid_type_error: "Invalid method" })),
   amountInCents: CurrencySchema,
   description: z.string().optional(),
+});
+
+export const TransactionSchema = z.object({
+  date: z.coerce.date(),
+  description: z.string().optional(),
+  accountId: z.string().cuid({ message: "Account required" }),
+  contactId: z.string().optional(),
+  transactionItems: z.array(TransactionItemSchema),
+  receiptIds: zfd.repeatableOfType(z.string().cuid().optional()),
 });
 
 export const AddressSchema = z.object({

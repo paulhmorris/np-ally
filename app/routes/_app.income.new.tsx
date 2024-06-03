@@ -6,7 +6,6 @@ import { IconPlus } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
-import { z } from "zod";
 
 import { PageHeader } from "~/components/common/page-header";
 import { ReceiptSelector } from "~/components/common/receipt-selector";
@@ -27,21 +26,12 @@ import { TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
-import { CheckboxSchema, TransactionItemSchema } from "~/models/schemas";
+import { CheckboxSchema, TransactionSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
 import { SessionService } from "~/services.server/session";
 import { generateTransactionItems, getTransactionItemMethods } from "~/services.server/transaction";
 
-const validator = withZod(
-  z.object({
-    date: z.coerce.date(),
-    description: z.string().optional(),
-    shouldNotifyUser: CheckboxSchema,
-    accountId: z.string().cuid({ message: "Account required" }),
-    contactId: z.string().optional(),
-    transactionItems: z.array(TransactionItemSchema),
-  }),
-);
+const validator = withZod(TransactionSchema.extend({ shouldNotifyUser: CheckboxSchema }));
 
 export const meta: MetaFunction = () => [{ title: "Add Income" }];
 
@@ -94,7 +84,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (result.error) {
     return validationError(result.error);
   }
-  const { transactionItems, shouldNotifyUser, contactId, ...rest } = result.data;
+  const { transactionItems, shouldNotifyUser, contactId, receiptIds, ...rest } = result.data;
   try {
     const { transactionItems: trxItems, totalInCents } = await generateTransactionItems(transactionItems, orgId);
 
@@ -104,6 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         amountInCents: totalInCents,
         transactionItems: { createMany: { data: trxItems } },
         orgId,
+        receipts: receiptIds.length > 0 ? { connect: receiptIds.map((id) => ({ id })) } : undefined,
         ...rest,
       },
       select: {

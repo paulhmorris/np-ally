@@ -89,9 +89,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               }
             : undefined,
       },
-      include: {
-        receipts: true,
-      },
+      select: { id: true },
     });
 
     await reimbursementRequestJob.trigger({ reimbursementRequestId: rr.id });

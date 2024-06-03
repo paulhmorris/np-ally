@@ -130,8 +130,11 @@ export function FileUploadModal() {
           setOpen(value);
         }}
         title="Upload Files"
-        description="After uploading, the files will be available to attach to reimbursement requests and transactions."
+        description="After uploading, your files will be available to attach to reimbursement requests and transactions."
       >
+        <p className="text-sm text-muted-foreground">
+          If you don&apos;t see your file right away, please refresh the page.
+        </p>
         <p className="text-sm text-muted-foreground">Images or PDF. 5MB max.</p>
         <fetcher.Form method="post" encType="multipart/form-data">
           <button

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import { IconExternalLink } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
@@ -19,9 +20,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
-import { forbidden, getPrismaErrorText, notFound } from "~/lib/responses.server";
+import { forbidden } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars } from "~/lib/utils";
+import { generateS3Urls } from "~/services.server/receipt";
 import { SessionService } from "~/services.server/session";
 
 const validator = withZod(z.object({ _action: z.literal("delete") }));
@@ -32,41 +34,72 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   try {
-    const transaction = await db.transaction.findUnique({
+    const trx = await db.transaction.findUniqueOrThrow({
       where: { id: params.transactionId, orgId },
-      include: {
+      select: {
+        id: true,
+        date: true,
+        description: true,
+        amountInCents: true,
+        contactId: true,
         account: {
-          include: {
-            user: true,
+          select: {
+            id: true,
+            code: true,
+            description: true,
+            user: {
+              select: {
+                id: true,
+              },
+            },
           },
         },
-        contact: true,
+        receipts: {
+          select: {
+            id: true,
+            s3Key: true,
+            s3Url: true,
+            s3UrlExpiry: true,
+            title: true,
+          },
+        },
+        contact: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
         transactionItems: {
-          include: {
-            type: true,
-            method: true,
+          select: {
+            id: true,
+            description: true,
+            amountInCents: true,
+            type: {
+              select: {
+                name: true,
+              },
+            },
+            method: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
     });
-    if (user.isMember && transaction?.account.user?.id !== user.id) {
+
+    if (user.isMember && trx.account.user?.id !== user.id) {
       throw forbidden({ message: "You do not have permission to view this transaction" });
     }
-    if (!transaction) throw notFound({ message: "Transaction not found" });
 
-    return typedjson({ transaction });
+    trx.receipts = await generateS3Urls(trx.receipts);
+    return typedjson({ transaction: trx });
   } catch (error) {
     console.error(error);
     Sentry.captureException(error);
-    let message = error instanceof Error ? error.message : "";
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      message = getPrismaErrorText(error);
-    }
-    return toast.redirect(request, "/transactions", {
-      type: "error",
-      title: "Error loading transaction",
-      description: message,
-    });
+    throw error;
   }
 };
 
@@ -122,7 +155,7 @@ export default function TransactionDetailsPage() {
             <dl className="divide-y divide-muted">
               <DetailItem label="Id" value={transaction.id} />
               <DetailItem label="Account">
-                <Link to={`/accounts/${transaction.accountId}`} className="font-medium text-primary">
+                <Link to={`/accounts/${transaction.account.id}`} className="font-medium text-primary">
                   {`${transaction.account.code}`} - {transaction.account.description}
                 </Link>
               </DetailItem>
@@ -136,6 +169,39 @@ export default function TransactionDetailsPage() {
                 </DetailItem>
               ) : null}
               {transaction.description ? <DetailItem label="Description" value={transaction.description} /> : null}
+              {transaction.receipts.length > 0 ? (
+                <div className="items-center py-1.5 text-sm sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <dt className="self-start font-semibold capitalize">Receipts</dt>
+                  <dd className="col-span-2 text-muted-foreground">
+                    {transaction.receipts.length > 0 ? (
+                      transaction.receipts.map((receipt) => {
+                        if (!receipt.s3Url) {
+                          return (
+                            <span key={receipt.id} className="text-muted-foregrounded-none block">
+                              {receipt.title} (Link missing or broken - try refreshing)
+                            </span>
+                          );
+                        }
+
+                        return (
+                          <a
+                            key={receipt.id}
+                            href={receipt.s3Url}
+                            className="flex items-center gap-1.5 font-medium text-primary"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <span>{receipt.title}</span>
+                            <IconExternalLink className="size-3.5" aria-hidden="true" />
+                          </a>
+                        );
+                      })
+                    ) : (
+                      <span className="text-muted-foreground">None</span>
+                    )}
+                  </dd>
+                </div>
+              ) : null}
             </dl>
           </div>
 

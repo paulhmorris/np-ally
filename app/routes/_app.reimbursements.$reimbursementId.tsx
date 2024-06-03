@@ -17,15 +17,15 @@ import { Callout } from "~/components/ui/callout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
-import { Bucket } from "~/integrations/bucket.server";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
-import { getPrismaErrorText, notFound } from "~/lib/responses.server";
+import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { capitalize, formatCentsAsDollars } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
 import { sendReimbursementRequestUpdateEmail } from "~/services.server/mail";
+import { generateS3Urls } from "~/services.server/receipt";
 import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -43,7 +43,7 @@ const validator = withZod(
     accountId: z.string().optional(),
     amount: CurrencySchema,
     note: z.string().max(2000).optional(),
-    _action: z.nativeEnum(ReimbursementRequestStatus).or(z.literal("REOPEN")),
+    _action: z.nativeEnum(ReimbursementRequestStatus),
   }),
 );
 
@@ -53,39 +53,51 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   invariant(params.reimbursementId, "reimbursementId not found");
 
-  const rr = await db.reimbursementRequest.findUnique({
+  const rr = await db.reimbursementRequest.findUniqueOrThrow({
     where: { id: params.reimbursementId, orgId },
-    include: {
-      user: { include: { contact: true } },
-      account: true,
-      receipts: true,
-      method: true,
+    select: {
+      id: true,
+      date: true,
+      status: true,
+      vendor: true,
+      accountId: true,
+      description: true,
+      amountInCents: true,
+      user: {
+        select: {
+          username: true,
+          contact: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      },
+      account: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+      receipts: {
+        select: {
+          id: true,
+          s3Key: true,
+          s3Url: true,
+          s3UrlExpiry: true,
+          title: true,
+        },
+      },
+      method: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 
-  if (!rr) {
-    throw notFound("Reimbursement request not found");
-  }
-
-  // Get presigned URLs for all receipts and save them for a week
-  if (
-    rr.receipts.some((r) => !r.s3Url || (r.s3UrlExpiry && new Date(r.s3UrlExpiry).getTime() < new Date().getTime()))
-  ) {
-    const updatePromises = rr.receipts.map(async (receipt) => {
-      if (!receipt.s3Url || (receipt.s3UrlExpiry && new Date(receipt.s3UrlExpiry).getTime() < new Date().getTime())) {
-        console.info(`Generating url for ${receipt.title}`);
-        const url = await Bucket.getGETPresignedUrl(receipt.s3Key);
-        rr.receipts = rr.receipts.map((r) => (r.id === receipt.id ? { ...r, s3Url: url } : r));
-        return db.receipt.update({
-          where: { id: receipt.id, orgId },
-          data: { s3Url: url, s3UrlExpiry: new Date(Date.now() + 6.5 * 24 * 60 * 60 * 1000) },
-        });
-      }
-    });
-
-    await Promise.all(updatePromises);
-  }
-
+  rr.receipts = await generateS3Urls(rr.receipts);
   const accounts = await db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } });
 
   return typedjson({ reimbursementRequest: rr, accounts });
@@ -104,7 +116,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const { _action, amount, accountId, note, id } = result.data;
 
   // Reopen
-  if (_action === "REOPEN") {
+  if (_action === ReimbursementRequestStatus.PENDING) {
     const rr = await db.reimbursementRequest.update({
       where: { id, orgId },
       data: { status: ReimbursementRequestStatus.PENDING },
@@ -359,12 +371,14 @@ export default function ReimbursementRequestPage() {
 
           <CardFooter>
             <ValidatedForm
+              id="reimbursement-request"
               method="post"
               validator={validator}
               className="flex w-full"
               defaultValues={{ accountId: rr.accountId, amount: rr.amountInCents / 100.0 }}
             >
               <input type="hidden" name="id" value={rr.id} />
+              <input type="hidden" name="amount" value={rr.amountInCents} />
               {rr.status === ReimbursementRequestStatus.PENDING ? (
                 <fieldset>
                   <legend>
@@ -409,7 +423,7 @@ export default function ReimbursementRequestPage() {
                   </div>
                 </fieldset>
               ) : (
-                <Button name="_action" value="REOPEN" variant="outline" className="ml-auto">
+                <Button name="_action" value={ReimbursementRequestStatus.PENDING} variant="outline" className="ml-auto">
                   Reopen
                 </Button>
               )}

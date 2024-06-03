@@ -90,14 +90,22 @@ export default function OrganizationSettings() {
         <dd className="col-span-2 text-muted-foreground">
           {org.name} &lt;{org.replyToEmail}@{org.host}&gt;
         </dd>
-        <dt className="font-semibold capitalize">Reimbursement recipient</dt>
-        <dd className="col-span-2 text-muted-foreground">
-          {org.administratorEmail}@{org.host}
-        </dd>
-        <dt className="font-semibold capitalize">Inquiries recipient</dt>
-        <dd className="col-span-2 text-muted-foreground">
-          {org.inquiriesEmail}@{org.host}
-        </dd>
+        {org.administratorEmail ? (
+          <>
+            <dt className="font-semibold capitalize">Reimbursement recipient</dt>
+            <dd className="col-span-2 text-muted-foreground">
+              {org.administratorEmail}@{org.host}
+            </dd>
+          </>
+        ) : null}
+        {org.inquiriesEmail ? (
+          <>
+            <dt className="font-semibold capitalize">Inquiries recipient</dt>
+            <dd className="col-span-2 text-muted-foreground">
+              {org.inquiriesEmail}@{org.host}
+            </dd>
+          </>
+        ) : null}
       </div>
       <PageContainer>
         <ValidatedForm validator={schema} className="space-y-4 sm:max-w-md" method="post">
