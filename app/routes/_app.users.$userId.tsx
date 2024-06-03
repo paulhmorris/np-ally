@@ -5,8 +5,8 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults } from "remix-validated-form";
 import invariant from "tiny-invariant";
 
+import { PageHeader } from "~/components/common/page-header";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";

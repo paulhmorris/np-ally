@@ -170,6 +170,7 @@ model Transaction {
   contact          Contact?          @relation(fields: [contactId], references: [id])
   contactId        String?
   transactionItems TransactionItem[]
+  receipts         Receipt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -256,6 +257,7 @@ model Receipt {
   user                  User                   @relation(fields: [userId], references: [id])
   userId                String
   reimbursementRequests ReimbursementRequest[]
+  transactions          Transaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

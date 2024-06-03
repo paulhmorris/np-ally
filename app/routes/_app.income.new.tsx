@@ -8,10 +8,11 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
 import { z } from "zod";
 
+import { PageHeader } from "~/components/common/page-header";
+import { ReceiptSelector } from "~/components/common/receipt-selector";
 import { ContactDropdown } from "~/components/contacts/contact-dropdown";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -45,10 +46,10 @@ const validator = withZod(
 export const meta: MetaFunction = () => [{ title: "Add Income" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await SessionService.requireAdmin(request);
+  const user = await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
+  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts] = await Promise.all([
     db.contact.findMany({ where: { orgId }, include: { type: true } }),
     getContactTypes(orgId),
     db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
@@ -61,6 +62,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         ],
       },
     }),
+    db.receipt.findMany({
+      // Admins can see all receipts, users can only see their own
+      where: {
+        orgId,
+        userId: user.isMember ? user.id : undefined,
+        reimbursementRequests: { none: {} },
+      },
+      include: { user: { select: { contact: { select: { email: true } } } } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
   return typedjson({
     contacts,
@@ -68,6 +79,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     accounts,
     transactionItemMethods,
     transactionItemTypes,
+    receipts,
     ...setFormDefaults("income-form", {
       transactionItems: [{ id: nanoid() }],
     }),
@@ -157,7 +169,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AddIncomePage() {
-  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes } =
+  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts } =
     useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "income-form" });
 
@@ -175,7 +187,7 @@ export default function AddIncomePage() {
                 <FormField
                   name="description"
                   label="Description"
-                  description="Will be shown on transaction tables and reports"
+                  description="Shown on transaction tables and reports"
                 />
               </div>
               <FormSelect
@@ -232,7 +244,7 @@ export default function AddIncomePage() {
                           <FormField
                             name={`${fieldPrefix}.description`}
                             label="Description"
-                            description="Will only be shown in transaction details and reports"
+                            description="Only shown in transaction details and reports"
                           />
                         </fieldset>
                       </CardContent>
@@ -262,6 +274,7 @@ export default function AddIncomePage() {
               <span>Add item</span>
             </Button>
             <Separator className="my-4" />
+            <ReceiptSelector receipts={receipts} />
             <div>
               <div>
                 <Label className="mb-2 inline-flex cursor-pointer items-center gap-2">

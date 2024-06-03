@@ -10,6 +10,7 @@ node_modules
 
 .sentryclirc
 .vercel
+.trigger
 /test-results/
 /playwright-report/
 /playwright

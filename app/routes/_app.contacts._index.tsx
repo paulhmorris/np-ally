@@ -3,10 +3,10 @@ import { Form, Link, useSearchParams, useSubmit } from "@remix-run/react";
 import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
+import { PageHeader } from "~/components/common/page-header";
 import { ContactsTable } from "~/components/contacts/contacts-table";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";

@@ -5,9 +5,9 @@ import { IconPlus } from "@tabler/icons-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import { AccountsTable } from "~/components/accounts/accounts-table";
+import { PageHeader } from "~/components/common/page-header";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";

@@ -55,7 +55,7 @@ export const reimbursementRequestJob = task({
       };
     }
 
-    if (!rr.org || !rr.org.host || !rr.org.replyToEmail || !rr.org.administratorEmail) {
+    if (!rr.org.host || !rr.org.replyToEmail || !rr.org.administratorEmail) {
       logger.error(`No org found for request with id ${payload.reimbursementRequestId}`);
       return {
         status: "error",
@@ -77,7 +77,7 @@ export const reimbursementRequestJob = task({
           logger.info(`Generating url for ${receipt.title}`);
           const url = await Bucket.getGETPresignedUrl(receipt.s3Key);
           return db.receipt.update({
-            where: { id: receipt.id, orgId: rr.org?.id },
+            where: { id: receipt.id, orgId: rr.org.id },
             data: { s3Url: url, s3UrlExpiry: new Date(Date.now() + 6.5 * 24 * 60 * 60 * 1000) },
           });
         }

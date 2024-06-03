@@ -20,7 +20,7 @@ import stylesheet from "~/tailwind.css?url";
 
 // prettier-ignore
 export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: stylesheet },
+  { rel: "stylesheet", href: stylesheet, as: "style" },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

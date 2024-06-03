@@ -16,7 +16,7 @@ export function FileUploader() {
     message: "",
   });
 
-  async function handleFilesUpload(e: React.FormEvent<HTMLFormElement>) {
+  async function handleFilesUpload(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.preventDefault();
     try {
       setUploadStatus((s) => s);
@@ -93,16 +93,10 @@ export function FileUploader() {
 
   return (
     <>
-      <form
-        method="post"
-        onSubmit={handleFilesUpload}
-        encType="multipart/form-data"
-        className="flex flex-wrap items-start gap-2 sm:gap-4"
-        aria-describedby="receipts-label upload-error"
-      >
+      <div className="flex flex-wrap items-start gap-2 sm:gap-4">
         <div className="flex h-10 w-auto items-center">
           <Label htmlFor="file" className="sr-only">
-            Receipt
+            Files
           </Label>
           <Input
             id="file"
@@ -127,9 +121,10 @@ export function FileUploader() {
           </div>
         ) : (
           <Button
+            onClick={handleFilesUpload}
             disabled={uploadStatus.uploading || !files}
             variant="outline"
-            type="submit"
+            type="button"
             className="flex w-full items-center gap-2 shadow-none sm:w-auto"
           >
             {uploadStatus.uploading ? (
@@ -142,7 +137,7 @@ export function FileUploader() {
             )}
           </Button>
         )}
-      </form>
+      </div>
       {uploadStatus.message && !uploadStatus.success ? (
         <p className={"mt-0.5 text-xs font-medium text-destructive"} role="alert" id="upload-error">
           {uploadStatus.message}
