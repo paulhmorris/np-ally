@@ -1,6 +1,6 @@
 import { Prisma, ReimbursementRequestStatus } from "@prisma/client";
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { Link, MetaFunction } from "@remix-run/react";
+import { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { IconExternalLink } from "@tabler/icons-react";
 import dayjs from "dayjs";
@@ -75,6 +75,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       if (!receipt.s3Url || (receipt.s3UrlExpiry && new Date(receipt.s3UrlExpiry).getTime() < new Date().getTime())) {
         console.info(`Generating url for ${receipt.title}`);
         const url = await Bucket.getGETPresignedUrl(receipt.s3Key);
+        rr.receipts = rr.receipts.map((r) => (r.id === receipt.id ? { ...r, s3Url: url } : r));
         return db.receipt.update({
           where: { id: receipt.id, orgId },
           data: { s3Url: url, s3UrlExpiry: new Date(Date.now() + 6.5 * 24 * 60 * 60 * 1000) },
@@ -324,29 +325,29 @@ export default function ReimbursementRequestPage() {
                 </>
               ) : null}
 
-              <dt className="font-semibold capitalize">Receipts</dt>
+              <dt className="self-start font-semibold capitalize">Receipts</dt>
               <dd className="col-span-2 text-muted-foreground">
                 {rr.receipts.length > 0 ? (
                   rr.receipts.map((receipt) => {
                     if (!receipt.s3Url) {
                       return (
-                        <span key={receipt.id} className="text-muted-foreground">
+                        <span key={receipt.id} className="text-muted-foregrounded-none block">
                           {receipt.title} (Link missing or broken - try refreshing)
                         </span>
                       );
                     }
 
                     return (
-                      <Link
+                      <a
                         key={receipt.id}
-                        to={receipt.s3Url}
+                        href={receipt.s3Url}
                         className="flex items-center gap-1.5 font-medium text-primary"
                         target="_blank"
                         rel="noreferrer"
                       >
                         <span>{receipt.title}</span>
-                        <IconExternalLink className="size-3.5" />
-                      </Link>
+                        <IconExternalLink className="size-3.5" aria-hidden="true" />
+                      </a>
                     );
                   })
                 ) : (
@@ -360,7 +361,7 @@ export default function ReimbursementRequestPage() {
             <ValidatedForm
               method="post"
               validator={validator}
-              className="mt-8 flex w-full"
+              className="flex w-full"
               defaultValues={{ accountId: rr.accountId, amount: rr.amountInCents / 100.0 }}
             >
               <input type="hidden" name="id" value={rr.id} />
@@ -384,7 +385,7 @@ export default function ReimbursementRequestPage() {
                       }))}
                     />
                     <FormTextarea
-                      label="Public Note"
+                      label="Public note"
                       name="note"
                       maxLength={2000}
                       description="This note will appear on the the transaction and/or be sent to the requester."
