@@ -35,7 +35,9 @@ async function seed() {
     prisma.transactionItemMethod.deleteMany(),
   ]);
 
-  const org = await prisma.organization.create({ data: { name: "Alliance 436" } });
+  const org = await prisma.organization.create({
+    data: { name: "Alliance 436", host: "alliance436.org", subdomain: "admin", replyToEmail: "no-reply" },
+  });
 
   await prisma.$transaction([
     prisma.transactionItemType.createMany({ data: transactionItemTypes.map((t) => ({ ...t, orgId: org.id })) }),

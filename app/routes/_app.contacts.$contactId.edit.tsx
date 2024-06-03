@@ -8,11 +8,11 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 
+import { PageHeader } from "~/components/common/page-header";
 import { AddressForm } from "~/components/contacts/address-fields";
 import { ContactFields } from "~/components/contacts/contact-fields";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Callout } from "~/components/ui/callout";

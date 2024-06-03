@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 
+import { PageHeader } from "~/components/common/page-header";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { TransactionsTable } from "~/components/transactions/transactions-table";
 import { db } from "~/integrations/prisma.server";
 import { SessionService } from "~/services.server/session";

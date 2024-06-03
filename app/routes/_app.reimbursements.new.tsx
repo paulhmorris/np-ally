@@ -2,23 +2,18 @@ import { Prisma, ReimbursementRequestStatus } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import dayjs from "dayjs";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 
+import { PageHeader } from "~/components/common/page-header";
+import { ReceiptSelector } from "~/components/common/receipt-selector";
 import { ErrorComponent } from "~/components/error-component";
-import { FileUploader } from "~/components/file-uploader";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { Callout } from "~/components/ui/callout";
-import { Checkbox } from "~/components/ui/checkbox";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
-import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
@@ -32,13 +27,13 @@ import { getTransactionItemMethods } from "~/services.server/transaction";
 
 const validator = withZod(
   z.object({
-    date: z.coerce.date(),
+    date: z.coerce.date({ message: "Invalid date", required_error: "Date required" }),
     vendor: z.string().optional(),
     description: z.string().optional(),
     amountInCents: CurrencySchema,
-    accountId: z.string().cuid(),
+    accountId: z.string().cuid("Invalid account"),
     receiptIds: zfd.repeatableOfType(z.string().cuid().optional()),
-    methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod)),
+    methodId: z.coerce.number().pipe(z.nativeEnum(TransactionItemMethod, { message: "Invalid method" })),
   }),
 );
 
@@ -94,14 +89,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               }
             : undefined,
       },
-      include: {
-        receipts: true,
-      },
+      select: { id: true },
     });
 
-    await reimbursementRequestJob.invoke({
-      reimbursementRequestId: rr.id,
-    });
+    await reimbursementRequestJob.trigger({ reimbursementRequestId: rr.id });
 
     return toast.redirect(request, `/dashboards/${user.isMember ? "staff" : "admin"}`, {
       type: "success",
@@ -134,19 +125,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function NewReimbursementPage() {
   const { receipts, methods, accounts } = useTypedLoaderData<typeof loader>();
-  const user = useUser();
 
   return (
     <>
       <PageHeader title="New Reimbursement Request" />
       <PageContainer>
-        <h2 id="receipts-label" className="mb-1 font-bold">
-          Upload Receipts
-        </h2>
-        <FileUploader />
-        <p className="mt-1 text-xs text-muted-foreground">After uploading, your files will appear below.</p>
-        <Separator className="my-8" />
-
         <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-2xl">
           <FormField name="vendor" label="Vendor" />
           <FormTextarea name="description" label="Description" />
@@ -181,29 +164,7 @@ export default function NewReimbursementPage() {
               }))}
             />
           </div>
-          <fieldset>
-            <legend className="mb-2 text-sm font-medium">Select receipts to attach to this request.</legend>
-            <div className="flex flex-col gap-y-4 sm:gap-2.5">
-              {receipts.length > 0 ? (
-                receipts.map((r) => {
-                  return (
-                    <Label key={r.id} className="inline-flex cursor-pointer flex-wrap items-center gap-1.5">
-                      <Checkbox name="receiptIds" value={r.id} aria-label={r.title} defaultChecked={false} />
-                      <span>{r.title}</span>
-                      <span className="ml-6 text-xs text-muted-foreground sm:ml-auto">
-                        uploaded {dayjs(r.createdAt).format("MM/DD/YY h:mma")}
-                      </span>
-                      {!user.isMember ? (
-                        <span className="text-xs text-muted-foreground">by {r.user.contact.email}</span>
-                      ) : null}
-                    </Label>
-                  );
-                })
-              ) : (
-                <p className="text-sm text-destructive">No receipts uploaded.</p>
-              )}
-            </div>
-          </fieldset>
+          <ReceiptSelector receipts={receipts} />
           <Callout variant="warning">
             High quality images of itemized receipts are required. Please allow two weeks for processing.
           </Callout>

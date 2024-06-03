@@ -6,12 +6,12 @@ import { IconPlus } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
-import { z } from "zod";
 
+import { PageHeader } from "~/components/common/page-header";
+import { ReceiptSelector } from "~/components/common/receipt-selector";
 import { ContactDropdown } from "~/components/contacts/contact-dropdown";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { FormField, FormSelect } from "~/components/ui/form";
@@ -22,28 +22,20 @@ import { Sentry } from "~/integrations/sentry";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { toast } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
-import { TransactionItemSchema } from "~/models/schemas";
+import { TransactionSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
 import { SessionService } from "~/services.server/session";
 import { generateTransactionItems, getTransactionItemMethods } from "~/services.server/transaction";
 
-const validator = withZod(
-  z.object({
-    date: z.coerce.date(),
-    description: z.string().optional(),
-    accountId: z.string().cuid({ message: "Account required" }),
-    contactId: z.string().optional(),
-    transactionItems: z.array(TransactionItemSchema),
-  }),
-);
+const validator = withZod(TransactionSchema);
 
 export const meta: MetaFunction = () => [{ title: "Add Expense" }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await SessionService.requireAdmin(request);
+  const user = await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes] = await Promise.all([
+  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts] = await Promise.all([
     db.contact.findMany({ where: { orgId }, include: { type: true } }),
     getContactTypes(orgId),
     db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
@@ -54,6 +46,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         direction: TransactionItemTypeDirection.OUT,
       },
     }),
+    db.receipt.findMany({
+      // Admins can see all receipts, users can only see their own
+      where: {
+        orgId,
+        userId: user.isMember ? user.id : undefined,
+        reimbursementRequests: { none: {} },
+        transactions: { none: {} },
+      },
+      include: { user: { select: { contact: { select: { email: true } } } } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   return typedjson({
@@ -62,6 +65,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     transactionItemTypes,
     contacts,
     contactTypes,
+    receipts,
     ...setFormDefaults("expense-form", {
       transactionItems: [{ id: nanoid() }],
     }),
@@ -76,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (result.error) {
     return validationError(result.error);
   }
-  const { transactionItems, contactId, ...rest } = result.data;
+  const { transactionItems, contactId, receiptIds, ...rest } = result.data;
 
   try {
     const { transactionItems: trxItems, totalInCents } = await generateTransactionItems(transactionItems, orgId);
@@ -86,6 +90,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         amountInCents: totalInCents,
         transactionItems: { createMany: { data: trxItems } },
         orgId,
+        receipts: receiptIds.length > 0 ? { connect: receiptIds.map((id) => ({ id })) } : undefined,
         ...rest,
       },
       select: {
@@ -119,7 +124,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AddExpensePage() {
-  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes } =
+  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts } =
     useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "expense-form" });
 
@@ -224,6 +229,7 @@ export default function AddExpensePage() {
               <span>Add item</span>
             </Button>
             <Separator />
+            <ReceiptSelector receipts={receipts} />
             <SubmitButton disabled={items.length === 0}>Submit Expense</SubmitButton>
           </div>
         </ValidatedForm>

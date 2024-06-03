@@ -1,15 +1,16 @@
 node_modules
 
+.cache/
+.trigger
 /build
 /public/build
-.env
+.env*
 
-/cypress/screenshots
-/cypress/videos
 /postgres-data
 
 .sentryclirc
 .vercel
+.trigger
 /test-results/
 /playwright-report/
 /playwright

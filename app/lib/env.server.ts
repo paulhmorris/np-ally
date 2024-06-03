@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 /* eslint-disable @typescript-eslint/no-namespace */
+import { loadEnv } from "vite";
 import { TypeOf, z } from "zod";
 
 const serverEnvValidation = z.object({
@@ -7,11 +8,7 @@ const serverEnvValidation = z.object({
   CI: z.string().optional(),
 
   // Remix
-  NODE_ENV: z.enum(["development", "production", "test"]),
   SESSION_SECRET: z.string().min(16),
-
-  // Resend
-  RESEND_API_KEY: z.string().startsWith("re_"),
 
   // Cloudflare
   R2_BUCKET_NAME: z.string().min(1),
@@ -30,16 +27,10 @@ const serverEnvValidation = z.object({
   LINEAR_API_KEY: z.string().min(1).startsWith("lin_api_"),
 
   // Trigger.dev
-  TRIGGER_API_KEY: z.string().startsWith("tr_"),
-  TRIGGER_API_URL: z.string().url(),
+  TRIGGER_SECRET_KEY: z.string().startsWith("tr_"),
 
   // Playwright
   PLAYWRIGHT_TEST_BASE_URL: z.string().url().optional(),
-});
-
-const clientEnvValidation = z.object({
-  // Trigger.dev
-  TRIGGER_PUBLIC_API_KEY: z.string().startsWith("pk_"),
 });
 
 const deploymentPublicEnvValidation = z.object({
@@ -51,21 +42,20 @@ const deploymentPublicEnvValidation = z.object({
 declare global {
   // Server side
   namespace NodeJS {
-    interface ProcessEnv
-      extends TypeOf<typeof serverEnvValidation & typeof clientEnvValidation & typeof deploymentPublicEnvValidation> {}
+    interface ProcessEnv extends TypeOf<typeof serverEnvValidation & typeof deploymentPublicEnvValidation> {}
   }
 
   // Client side
   interface Window {
-    ENV: TypeOf<typeof clientEnvValidation & typeof deploymentPublicEnvValidation>;
+    ENV: TypeOf<typeof deploymentPublicEnvValidation>;
   }
 }
 
 export function validateEnv(): void {
   try {
+    const env = { ...loadEnv("", process.cwd(), ""), ...process.env };
     console.info("🌎 validating environment variables..");
-    serverEnvValidation.parse(process.env);
-    clientEnvValidation.parse(process.env);
+    serverEnvValidation.parse(env);
   } catch (err) {
     if (err instanceof z.ZodError) {
       const { fieldErrors } = err.flatten();

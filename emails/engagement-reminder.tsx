@@ -2,7 +2,12 @@ import { Body, Container, Head, Html, Preview, Text } from "@react-email/compone
 
 interface Props {
   userFirstName: string;
-  contacts: Array<{ firstName: string; lastName: string }>;
+  contacts: Array<{
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    org: { name: string; host: string; replyToEmail: string };
+  }>;
 }
 
 export function EngagementReminderEmail({ userFirstName, contacts }: Props) {
@@ -19,7 +24,7 @@ export function EngagementReminderEmail({ userFirstName, contacts }: Props) {
           </Text>
           <ul>
             {contacts.map((contact) => (
-              <li key={contact.firstName + contact.lastName}>
+              <li key={contact.id}>
                 {contact.firstName} {contact.lastName}
               </li>
             ))}
@@ -34,8 +39,18 @@ EngagementReminderEmail.PreviewProps = {
   url: "https://np-ally.org",
   userFirstName: "Paul",
   contacts: [
-    { firstName: "John", lastName: "Doe" },
-    { firstName: "Jane", lastName: "Smith" },
+    {
+      id: "abc123",
+      firstName: "John",
+      lastName: "Doe",
+      org: { name: "Test Org", host: "test.org", replyToEmail: "no-reply" },
+    },
+    {
+      id: "abc124",
+      firstName: "Jane",
+      lastName: "Smith",
+      org: { name: "Test Org", host: "test.org", replyToEmail: "no-reply" },
+    },
   ],
 } as Props;
 

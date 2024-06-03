@@ -8,13 +8,13 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
+import { PageHeader } from "~/components/common/page-header";
 import { ContactCard } from "~/components/contacts/contact-card";
 import { ContactEngagementsTable } from "~/components/contacts/contact-engagements-table";
 import { RecentTransactionsTable } from "~/components/contacts/recent-donations-table";
 import { ErrorComponent } from "~/components/error-component";
 import { ConfirmDestructiveModal } from "~/components/modals/confirm-destructive-modal";
 import { PageContainer } from "~/components/page-container";
-import { PageHeader } from "~/components/page-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";

@@ -114,3 +114,11 @@ export function isArray(value: unknown): value is Array<unknown> {
 export function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 }
+
+export function constructOrgMailFrom(org: { name: string; replyToEmail: string; host: string }) {
+  return `${org.name} <${org.replyToEmail}@${org.host}>`;
+}
+
+export function constructOrgURL(path: string, org: { subdomain: string | null; host: string }) {
+  return new URL(path, `https://${org.subdomain ? org.subdomain + "." : ""}${org.host}`);
+}

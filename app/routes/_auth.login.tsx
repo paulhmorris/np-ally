@@ -70,7 +70,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // If the user has a default membership or only one org, we can just log them in to that org
   const defaultMembership = user.memberships.find((m) => m.isDefault);
   if (user.memberships.length === 1 || defaultMembership) {
-    console.info("Setting session orgId to", defaultMembership?.orgId ?? user.memberships[0].orgId);
     return SessionService.createUserSession({
       request,
       userId: user.id,
