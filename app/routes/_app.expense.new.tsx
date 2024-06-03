@@ -52,6 +52,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         orgId,
         userId: user.isMember ? user.id : undefined,
         reimbursementRequests: { none: {} },
+        transactions: { none: {} },
       },
       include: { user: { select: { contact: { select: { email: true } } } } },
       orderBy: { createdAt: "desc" },
