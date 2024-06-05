@@ -2,7 +2,8 @@ import { vitePlugin as remix } from "@remix-run/dev";
 import { installGlobals } from "@remix-run/node";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { vercelPreset } from "@vercel/remix/vite";
-import { defineConfig } from "vite";
+import morgan from "morgan";
+import { ViteDevServer, defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const isVercel = process.env.VERCEL === "1";
@@ -20,6 +21,7 @@ export default defineConfig({
     port: 3000,
   },
   plugins: [
+    morganPlugin(),
     tsconfigPaths(),
     remix({
       ...(isVercel && { presets: [vercelPreset()] }),
@@ -38,3 +40,14 @@ export default defineConfig({
     sourcemap: !!process.env.CI,
   },
 });
+
+function morganPlugin() {
+  return {
+    name: "morgan-plugin",
+    configureServer(server: ViteDevServer) {
+      return () => {
+        server.middlewares.use(morgan("tiny"));
+      };
+    },
+  };
+}

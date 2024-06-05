@@ -64,7 +64,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         title: "Warning",
         description: "From and To accounts must be different.",
       },
-      { status: 400 },
     );
   }
 

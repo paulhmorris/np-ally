@@ -228,6 +228,7 @@ class Session implements ISessionService {
       session.set(this.ORGANIZATION_SESSION_KEY, orgId);
     }
     return redirect(redirectTo, {
+      status: 201,
       headers: {
         "Set-Cookie": await sessionStorage.commitSession(session, {
           maxAge: remember

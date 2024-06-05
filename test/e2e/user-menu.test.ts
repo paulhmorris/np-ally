@@ -40,6 +40,7 @@ test.describe("User menu", () => {
   test("should toggle theme", async ({ page }) => {
     await page.goto("/dashboards/admin");
     await expect(page).toHaveURL("/dashboards/admin");
+    await page.getByRole("button", { name: /open user menu/i }).click();
     await page.getByRole("button", { name: /toggle theme/i }).click();
     await expect(page.locator("html")).toHaveClass(/dark/);
     await page.getByRole("button", { name: /toggle theme/i }).click();

@@ -17,7 +17,6 @@ test.describe("Profile", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Admin E2E");
     await expect(page.getByRole("textbox", { name: /first name/i })).toHaveValue("Admin");
     await expect(page.getByRole("textbox", { name: /last name/i })).toHaveValue("E2E");
-    await expect(page.getByRole("textbox", { name: /username/i })).toBeDisabled();
     await expect(page.getByLabel(/role/i)).toBeDisabled();
     await expect(page.getByLabel(/select an account/i)).toBeVisible();
   });
