@@ -3,7 +3,7 @@ import { test as teardown } from "@playwright/test";
 import db from "test/e2e/helpers/db";
 
 teardown("delete test data", async ({}) => {
-  const [memberships, users, contacts, trxItems, trx] = await db.$transaction([
+  const [memberships, users, contacts, trxItems, trx, accounts, org] = await db.$transaction([
     db.membership.deleteMany({ where: { user: { username: { contains: "e2e-" } } } }),
     db.user.deleteMany({ where: { username: { contains: "e2e-" } } }),
     db.contact.deleteMany({ where: { email: { contains: "e2e-" } } }),
@@ -19,5 +19,7 @@ teardown("delete test data", async ({}) => {
     contacts: contacts.count,
     transactionItems: trxItems.count,
     transactions: trx.count,
+    accounts: accounts.count,
+    organizations: org.count,
   });
 });

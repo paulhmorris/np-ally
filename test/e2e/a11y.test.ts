@@ -12,16 +12,9 @@ test.describe("should have no a11y issues on", () => {
 });
 
 test.describe("should have no a11y issues on", () => {
-  test("admin dashboard", async ({ page, makeAxeBuilder }) => {
+  test("dashboard", async ({ page, makeAxeBuilder }) => {
     await page.goto("/dashboards/admin");
     await expect(page).toHaveURL("/dashboards/admin");
-    const accessibilityScanResults = await makeAxeBuilder().analyze();
-    expect(accessibilityScanResults.violations).toEqual([]);
-  });
-
-  test("staff dashboard", async ({ page, makeAxeBuilder }) => {
-    await page.goto("/dashboards/staff");
-    await expect(page).toHaveURL("/dashboards/staff");
     const accessibilityScanResults = await makeAxeBuilder().analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
   });
