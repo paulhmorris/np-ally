@@ -76,7 +76,10 @@ app.use(express.static("public", { maxAge: "1h" }));
 const createHandler = vite ? createRequestHandler : wrapExpressCreateRequestHandler(createRequestHandler);
 const handlerBuild = vite
   ? () => vite.ssrLoadModule("virtual:remix/server-build") as Promise<ServerBuild>
-  : ((await import("./build/server/index.js")) as unknown as ServerBuild);
+  : // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - this is a dynamic import
+    // eslint-disable-next-line import/no-unresolved
+    ((await import("./build/server/index.js")) as unknown as ServerBuild);
 
 app.all("*", createHandler({ build: handlerBuild }));
 
