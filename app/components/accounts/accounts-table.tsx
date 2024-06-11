@@ -33,7 +33,9 @@ const columns = [
     cell: ({ row }) => {
       return (
         <div className="max-w-[100px]">
-          <span className="truncate font-medium tabular-nums">{formatCentsAsDollars(row.getValue("balance"))}</span>
+          <span className="sentry-mask truncate font-medium tabular-nums">
+            {formatCentsAsDollars(row.getValue("balance"))}
+          </span>
         </div>
       );
     },

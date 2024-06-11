@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { IconReceipt2 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 
-import { FileUploadModal } from "~/components/modals/file-upload-modal";
+import { FileUploader } from "~/components/common/file-uploader";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { useUser } from "~/hooks/useUser";
@@ -27,7 +27,7 @@ export function ReceiptSelector({
   const user = useUser();
   return (
     <div className="space-y-2">
-      <FileUploadModal />
+      <FileUploader />
       <fieldset>
         {receipts.length > 0 ? <legend className="mb-2 text-sm font-medium">Attach Files</legend> : null}
         <div className="flex flex-col gap-y-4 sm:gap-2.5">

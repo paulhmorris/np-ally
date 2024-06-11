@@ -20,7 +20,8 @@ Sentry.init({
       useMatches,
       enableInp: true,
     }),
-    Sentry.replayIntegration(),
+    Sentry.replayIntegration({ maskAllText: false }),
+    Sentry.captureConsoleIntegration({ levels: ["error"] }),
   ],
 });
 

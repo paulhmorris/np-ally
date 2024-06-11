@@ -28,7 +28,7 @@ export function AccountBalanceCard({
         {code ? <CardDescription>{code}</CardDescription> : null}
       </CardHeader>
       <CardContent>
-        <p className="text-4xl font-bold">{formatCentsAsDollars(totalCents)}</p>
+        <p className="sentry-mask text-4xl font-bold">{formatCentsAsDollars(totalCents)}</p>
       </CardContent>
       {accountId ? (
         <CardFooter>
