@@ -77,7 +77,7 @@ const columns = [
     cell: ({ row }) => {
       return (
         <div className="max-w-[100px]">
-          <span className="truncate font-medium tabular-nums">{row.getValue("amountInCents")}</span>
+          <span className="sentry-mask truncate font-medium tabular-nums">{row.getValue("amountInCents")}</span>
         </div>
       );
     },

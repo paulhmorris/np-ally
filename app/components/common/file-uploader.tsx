@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Sentry } from "~/integrations/sentry";
 
 export function FileUploader() {
   const navigate = useNavigate();
@@ -76,6 +77,7 @@ export function FileUploader() {
       }));
       setFiles([]);
     } catch (error) {
+      Sentry.captureException(error);
       setUploadStatus(() => ({
         uploading: false,
         success: false,

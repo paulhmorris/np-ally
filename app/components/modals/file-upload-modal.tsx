@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import { DrawerDialog, DrawerDialogFooter } from "~/components/ui/drawer-dialog";
+import { Sentry } from "~/integrations/sentry";
 import { cn } from "~/lib/utils";
 
 type UploadState = {
@@ -102,6 +103,7 @@ export function FileUploadModal() {
         message: `Uploaded ${uploadedFilesCount} out of ${files.length} file${files.length === 1 ? "" : "s"}.`,
       }));
     } catch (error) {
+      Sentry.captureException(error);
       setUploadStatus(() => ({
         status: "error",
         message:
