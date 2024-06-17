@@ -120,13 +120,26 @@ export async function action({ request }: ActionFunctionArgs) {
     const rr = await db.reimbursementRequest.update({
       where: { id, orgId },
       data: { status: ReimbursementRequestStatus.PENDING },
+      select: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+    await sendReimbursementRequestUpdateEmail({
+      email: rr.user.username,
+      status: _action,
+      orgId,
+      note,
     });
     return toast.json(
       request,
       { reimbursementRequest: rr },
       {
         type: "info",
-        title: "Reimbursement Request reopened",
+        title: "The reimbursement request has been reopened and the requester will be notified.",
         description: "",
       },
     );
@@ -265,13 +278,13 @@ export async function action({ request }: ActionFunctionArgs) {
     orgId,
     note,
   });
-  const normalizedAction = _action === ReimbursementRequestStatus.REJECTED ? "Rejected" : "Voided";
+  const normalizedAction = _action === ReimbursementRequestStatus.REJECTED ? "rejected" : "voided";
   return toast.json(
     request,
     { reimbursementRequest: rr },
     {
       type: "success",
-      title: `Reimbursement Request ${normalizedAction}`,
+      title: `Reimbursement request ${normalizedAction}`,
       description: `The reimbursement request has been ${normalizedAction} and the requester will be notified.`,
     },
   );
@@ -357,8 +370,8 @@ export default function ReimbursementRequestPage() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        <span>{receipt.title}</span>
-                        <IconExternalLink className="size-3.5" aria-hidden="true" />
+                        <span className="truncate">{receipt.title}</span>
+                        <IconExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
                       </a>
                     );
                   })
@@ -378,7 +391,6 @@ export default function ReimbursementRequestPage() {
               defaultValues={{ accountId: rr.accountId, amount: rr.amountInCents / 100.0 }}
             >
               <input type="hidden" name="id" value={rr.id} />
-              <input type="hidden" name="amount" value={rr.amountInCents} />
               {rr.status === ReimbursementRequestStatus.PENDING ? (
                 <fieldset>
                   <legend>
@@ -423,9 +435,17 @@ export default function ReimbursementRequestPage() {
                   </div>
                 </fieldset>
               ) : (
-                <Button name="_action" value={ReimbursementRequestStatus.PENDING} variant="outline" className="ml-auto">
-                  Reopen
-                </Button>
+                <>
+                  <input type="hidden" name="amount" value={rr.amountInCents} />
+                  <Button
+                    name="_action"
+                    value={ReimbursementRequestStatus.PENDING}
+                    variant="outline"
+                    className="ml-auto"
+                  >
+                    Reopen
+                  </Button>
+                </>
               )}
             </ValidatedForm>
           </CardFooter>
