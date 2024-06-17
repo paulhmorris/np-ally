@@ -24,6 +24,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
     select: {
       id: true,
+      date: true,
       type: {
         select: { name: true },
       },

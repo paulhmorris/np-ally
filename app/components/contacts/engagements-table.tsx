@@ -19,6 +19,7 @@ type Engagement = Prisma.EngagementGetPayload<{
     type: {
       select: { name: true };
     };
+    date: true;
     contact: {
       select: {
         id: true;
