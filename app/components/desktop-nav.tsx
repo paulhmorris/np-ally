@@ -8,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { GlobalLoader } from "~/components/ui/global-loader";
 import { Separator } from "~/components/ui/separator";
 import { UserMenu } from "~/components/user-menu";
 import { useUser } from "~/hooks/useUser";
@@ -66,9 +65,6 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
         </div>
       )}
       <ul className="relative mt-8 space-x-0 space-y-1">
-        <div className="absolute -top-6 left-0.5">
-          <GlobalLoader />
-        </div>
         <DesktopNavLink
           to={user.isMember ? "/dashboards/staff" : "/dashboards/admin"}
           name="Home"
@@ -118,7 +114,7 @@ function DesktopNavLink({ to, name, end, icon: Icon }: AppNavLink) {
         className={({ isActive }) =>
           cn(
             "flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-            isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted",
+            isActive ? "bg-primary/5 text-primary" : "text-muted-foreground hover:bg-muted",
           )
         }
       >

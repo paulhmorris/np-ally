@@ -54,7 +54,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       request,
       { success: false },
       { type: "error", title: "Error deleting engagement", description: "Invalid request" },
-      { status: 400 },
     );
   }
 

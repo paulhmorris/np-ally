@@ -13,5 +13,5 @@ export const config: TriggerConfig = {
   },
   dependenciesToBundle: ["nanoid"],
   additionalFiles: ["./prisma/schema.prisma"],
-  additionalPackages: ["prisma@5.14.0"],
+  additionalPackages: ["prisma@5.15.0"],
 };

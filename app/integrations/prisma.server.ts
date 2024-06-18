@@ -1,6 +1,8 @@
-/* eslint-disable no-console */
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
 import invariant from "tiny-invariant";
+import ws from "ws";
 
 // Borrowed & modified from https://github.com/jenseng/abuse-the-platform/blob/main/app/utils/singleton.ts
 // Thanks @jenseng!
@@ -17,17 +19,11 @@ function getPrismaClient() {
   const { DATABASE_URL } = process.env;
   invariant(typeof DATABASE_URL === "string", "DATABASE_URL env var not set");
 
-  const databaseUrl = new URL(DATABASE_URL);
-  const client = new PrismaClient({
-    datasources: {
-      db: {
-        url: databaseUrl.toString(),
-      },
-    },
-  });
-  // connect eagerly
+  neonConfig.webSocketConstructor = ws;
+  const pool = new Pool({ connectionString: DATABASE_URL, ...neonConfig });
+  const adapter = new PrismaNeon(pool);
+  const client = new PrismaClient({ adapter });
   void client.$connect();
-
   return client;
 }
 

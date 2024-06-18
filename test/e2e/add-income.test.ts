@@ -1,18 +1,18 @@
 import { faker } from "@faker-js/faker";
 import { expect, test } from "@playwright/test";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
+import utc from "dayjs/plugin/utc.js";
 
 import { formatCurrency, getToday } from "~/lib/utils";
 
 dayjs.extend(utc);
 
 test.use({ storageState: "playwright/.auth/admin.json" });
+
 test.describe("Add Income", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/income/new");
   });
-
   test("should not add income with all empty fields", async ({ page }) => {
     await page.getByRole("button", { name: /submit/i }).click();
 
