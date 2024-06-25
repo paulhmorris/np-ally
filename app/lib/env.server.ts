@@ -54,8 +54,9 @@ declare global {
 export function validateEnv(): void {
   try {
     const env = { ...loadEnv("", process.cwd(), ""), ...process.env };
-    console.info("🌎 validating environment variables..");
+    console.info("🌎 validating environment variables...");
     serverEnvValidation.parse(env);
+    console.info("🌎 environment variables are valid");
   } catch (err) {
     if (err instanceof z.ZodError) {
       const { fieldErrors } = err.flatten();

@@ -7,8 +7,11 @@ import type { EntryContext } from "@vercel/remix";
 import { handleRequest } from "@vercel/remix";
 
 import { Sentry } from "~/integrations/sentry";
+import { validateEnv } from "~/lib/env.server";
 
 const ABORT_DELAY = 5_000;
+
+validateEnv();
 
 Sentry.init({
   dsn: "https://f18051d71458f411f51af7ca0308b1cb@o4505496663359488.ingest.us.sentry.io/4506395673886720",
