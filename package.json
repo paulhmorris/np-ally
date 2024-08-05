@@ -8,7 +8,7 @@
     "build": "remix vite:build",
     "start": "PORT=3000 remix-serve ./build/server/index.js",
     "email": "email dev --port 3001",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && patch-package",
     "start:mocks": "cross-env NODE_ENV=production tsx ./server.ts",
     "test": "vitest",
     "pretest:e2e:run": "npm run build"
@@ -66,6 +66,7 @@
     "express": "^4.19.2",
     "nanoid": "^5.0.7",
     "nprogress": "^0.2.0",
+    "patch-package": "^8.0.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
