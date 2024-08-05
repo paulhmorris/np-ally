@@ -17,6 +17,7 @@
     "@aws-sdk/client-s3": "^3.588.0",
     "@aws-sdk/client-sesv2": "^3.588.0",
     "@aws-sdk/s3-request-presigner": "^3.588.0",
+    "@chronicstone/typed-xlsx": "^0.2.16",
     "@fontsource-variable/dm-sans": "^5.0.6",
     "@isaacs/express-prometheus-middleware": "^1.2.1",
     "@linear/sdk": "^12.0.0",

@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 
@@ -26,7 +27,7 @@ export const TransactionItemSchema = z.object({
 });
 
 export const TransactionSchema = z.object({
-  date: z.coerce.date(),
+  date: z.coerce.date().transform((d) => dayjs(d).startOf("day").toDate()),
   description: z.string().optional(),
   accountId: z.string().cuid({ message: "Account required" }),
   contactId: z.string().optional(),

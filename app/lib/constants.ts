@@ -6,6 +6,7 @@ import {
   IconCreditCard,
   IconCreditCardPay,
   IconCreditCardRefund,
+  IconFileSpreadsheet,
   IconTransfer,
   IconUserHeart,
   IconUsers,
@@ -153,6 +154,7 @@ export const adminNavLinks: ReadonlyArray<AppNavLink> = [
   { name: "Reimbursements", to: "/reimbursements", end: true, icon: IconCoin },
   // { name: "Receipts", to: "/receipts", end: true, icon: IconReceipt },
   { name: "Organization", to: "/organization/settings", end: false, icon: IconAffiliate },
+  { name: "Reports", to: "/reports", end: true, icon: IconFileSpreadsheet },
 ] as const;
 
 export const superAdminNavLinks: ReadonlyArray<AppNavLink> = [] as const;
