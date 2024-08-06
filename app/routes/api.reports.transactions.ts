@@ -43,6 +43,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
       id: true,
       amountInCents: true,
+      description: true,
       method: {
         select: {
           name: true,
@@ -55,6 +56,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
       transaction: {
         select: {
+          id: true,
           date: true,
           description: true,
           amountInCents: true,
@@ -66,6 +68,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           },
           contact: {
             select: {
+              organizationName: true,
               firstName: true,
               lastName: true,
             },
@@ -86,11 +89,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const org = transactionItems[0].org;
 
   const schema = ExcelSchemaBuilder.create<(typeof transactionItems)[0]>()
-    .column("ID", { key: "id" })
-    .column("Description", { key: "transaction.description" })
-    .column("Total", {
-      cellStyle: { numFmt: "" },
-      key: "transaction.amountInCents",
+    .column("Transaction ID", { key: "transaction.id" })
+    .column("Transaction Description", { key: "transaction.description" })
+    .column("Item Description", { key: "description" })
+    .column("Amount", {
+      key: "amountInCents",
       transform: (a) => (a ? a / 100 : 0),
     })
     .column("Method", { key: "method.name" })
@@ -98,7 +101,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .column("Date", { key: "transaction.date" })
     .column("Account Code", { key: "transaction.account.code" })
     .column("Account Description", { key: "transaction.account.description" })
-    .column("Contact", { key: "transaction.contact", transform: (c) => `${c?.firstName} ${c?.lastName}` })
+    .column("Contact", {
+      key: "transaction.contact",
+      transform: (c) => (c && c.organizationName ? c.organizationName : c ? `${c.firstName} ${c.lastName}` : "N/A"),
+    })
     .build();
 
   const file = ExcelBuilder.create()

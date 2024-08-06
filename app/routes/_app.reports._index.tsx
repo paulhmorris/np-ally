@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => {
 
 export default function AdminReports() {
   const isClient = useIsClient();
-  const [startDate, setStartDate] = useState(dayjs().subtract(1, "month").format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState(dayjs().subtract(3, "month").format("YYYY-MM-DD"));
   const [endDate, setEndDate] = useState(dayjs().format("YYYY-MM-DD"));
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
