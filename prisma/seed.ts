@@ -2,6 +2,7 @@
 import { faker } from "@faker-js/faker";
 import { MembershipRole, PrismaClient, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import dayjs from "dayjs";
 
 import {
   ContactType,
@@ -215,7 +216,7 @@ async function seed() {
     await db.transaction.create({
       data: {
         amountInCents: faker.number.int({ min: 100, max: 100_000 }),
-        date: faker.date.past(),
+        date: dayjs(faker.date.past()).startOf("day").toDate(),
         description: faker.lorem.word(),
         accountId: account.id,
         contactId: donorContact.id,

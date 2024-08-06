@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import dayjs from "dayjs";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
@@ -20,7 +21,7 @@ import { getTransactionItemMethods } from "~/services.server/transaction";
 
 const validator = withZod(
   z.object({
-    date: z.coerce.date(),
+    date: z.coerce.date().transform((d) => dayjs(d).startOf("day").toDate()),
     description: z.string().optional(),
     fromAccountId: z.string().cuid({ message: "From Account required" }),
     toAccountId: z.string().cuid({ message: "To Account required" }),

@@ -6,6 +6,8 @@ export function ErrorComponent() {
   const isRouteError = isRouteErrorResponse(error);
   captureRemixErrorBoundaryError(error);
 
+  console.error(error);
+
   const title = isRouteError ? error.statusText : "Unknown Error";
   let description = "An unknown error occurred.";
 

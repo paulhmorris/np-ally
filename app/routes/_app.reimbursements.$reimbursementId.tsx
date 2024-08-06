@@ -211,7 +211,7 @@ export async function action({ request }: ActionFunctionArgs) {
             accountId,
             amountInCents: amount * -1,
             description: note || "Approved reimbursement request",
-            date: new Date(),
+            date: dayjs().startOf("day").toDate(),
             transactionItems: {
               create: {
                 orgId,

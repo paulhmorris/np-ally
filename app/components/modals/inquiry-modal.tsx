@@ -2,6 +2,7 @@ import { useFetcher } from "@remix-run/react";
 import { IconLoader } from "@tabler/icons-react";
 import { useEffect } from "react";
 import { ValidatedForm } from "remix-validated-form";
+import { useIsClient } from "usehooks-ts";
 
 import { Button } from "~/components/ui/button";
 import { DialogFooter } from "~/components/ui/dialog";
@@ -15,12 +16,17 @@ export function NewInquiryModal({ open, onOpenChange }: { open: boolean; onOpenC
   const user = useUser();
   const fetcher = useFetcher<{ success: boolean }>();
   const isSubmitting = fetcher.state !== "idle";
+  const isClient = useIsClient();
 
   useEffect(() => {
     if (fetcher.data && !isSubmitting && fetcher.data.success) {
       onOpenChange(false);
     }
   }, [fetcher.data, isSubmitting, onOpenChange]);
+
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <DrawerDialog

@@ -3,7 +3,7 @@
 
 import { RemixServer } from "@remix-run/react";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
-import type { EntryContext } from "@vercel/remix";
+import type { ActionFunctionArgs, EntryContext, LoaderFunctionArgs } from "@vercel/remix";
 import { handleRequest } from "@vercel/remix";
 
 import { Sentry } from "~/integrations/sentry";
@@ -20,7 +20,12 @@ Sentry.init({
   integrations: [nodeProfilingIntegration(), Sentry.prismaIntegration()],
 });
 
-export const handleError = Sentry.sentryHandleError;
+export const handleError = (error: unknown, { request }: LoaderFunctionArgs | ActionFunctionArgs) => {
+  if (!request.signal.aborted) {
+    console.error(error);
+  }
+  return Sentry.sentryHandleError;
+};
 
 export default function (
   request: Request,
