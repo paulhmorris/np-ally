@@ -85,14 +85,14 @@ export const reimbursementRequestJob = task({
 
       const results = await Promise.all(updatePromises);
       logger.info(`Updated ${results.length} receipts with presigned URLs`);
-      return;
+    } else {
+      logger.info("All receipts have valid presigned URLs");
     }
-    logger.info("All receipts have valid presigned URLs");
 
     const url = constructOrgURL("/dashboards/admin", rr.org).toString();
     const { contact } = rr.user;
 
-    await sendEmail({
+    const email = await sendEmail({
       from: constructOrgMailFrom(rr.org),
       to: `${rr.org.administratorEmail}@${rr.org.host}`,
       subject: "New Reimbursement Request",
@@ -105,5 +105,6 @@ export const reimbursementRequestJob = task({
         />,
       ),
     });
+    logger.info(`Email sent to ${rr.org.administratorEmail}@${rr.org.host} with id ${email.messageId}`);
   },
 });
