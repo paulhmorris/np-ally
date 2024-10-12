@@ -24,6 +24,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
       alternateEmail: true,
       phone: true,
       alternatePhone: true,
+      type: {
+        select: {
+          name: true,
+        },
+      },
       org: {
         select: {
           name: true,
@@ -58,6 +63,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const schema = ExcelSchemaBuilder.create<(typeof _contacts)[0] & { accounts: string }>()
     .column("Transaction ID", { key: "id" })
+    .column("Type", { key: "type.name" })
     .column("First Name", { key: "firstName" })
     .column("Last Name", { key: "lastName" })
     .column("Email", { key: "email" })
