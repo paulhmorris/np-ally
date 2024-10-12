@@ -5,7 +5,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { IconPlus } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
+import { setFormDefaults, useFieldArray, ValidatedForm, validationError } from "remix-validated-form";
 
 import { PageHeader } from "~/components/common/page-header";
 import { ReceiptSelector } from "~/components/common/receipt-selector";
@@ -24,7 +24,7 @@ import { Sentry } from "~/integrations/sentry";
 import { notifySubscribersJob } from "~/jobs/income-notification.server";
 import { TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { CheckboxSchema, TransactionSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
@@ -121,11 +121,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (shouldNotifyUser) {
       const email = transaction.account.user?.contact.email;
       if (!email) {
-        return toast.json(
-          request,
+        return Toasts.jsonWithError(
           { message: "Error notifying subscribers" },
           {
-            type: "error",
             title: "Error notifying subscribers",
             description: "We couldn't find the account for this transaction. Please contact support.",
           },
@@ -140,8 +138,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
-    return toast.redirect(request, `/accounts/${transaction.account.id}`, {
-      type: "success",
+    return Toasts.redirectWithSuccess(`/accounts/${transaction.account.id}`, {
       title: "Success",
       description: `Income of ${formatCentsAsDollars(totalInCents)} added to account ${transaction.account.code}`,
     });
@@ -152,11 +149,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       description = getPrismaErrorText(error);
     }
-    return toast.redirect(request, "/expense/new", {
-      type: "error",
-      title: "Error creating expense",
-      description,
-    });
+    return Toasts.jsonWithError({ success: false }, { title: "Error creating expense", description });
   }
 };
 

@@ -23,7 +23,7 @@ import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
 import { forbidden, getPrismaErrorText } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
 
@@ -90,10 +90,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const validator = withZod(z.object({ _action: z.enum(["delete"]) }));
   const result = await validator.validate(await request.formData());
   if (result.error) {
-    return toast.json(
-      request,
+    return Toasts.jsonWithError(
       { success: false },
-      { type: "error", title: "Error deleting contact", description: "Invalid request" },
+      { title: "Error deleting contact", description: "Invalid request" },
     );
   }
 
@@ -113,11 +112,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 
     if (contact.transactions.length > 0) {
-      return toast.json(
-        request,
+      return Toasts.jsonWithError(
         { success: false },
         {
-          type: "error",
           title: "Error deleting contact",
           description: "This contact has transactions and cannot be deleted. Check the transactions page.",
         },
@@ -131,8 +128,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         db.address.deleteMany({ where: { contactId: contact.id, orgId } }),
         db.contact.delete({ where: { id: contact.id, orgId } }),
       ]);
-      return toast.redirect(request, "/contacts", {
-        type: "success",
+      return Toasts.redirectWithSuccess("/contacts", {
         title: "Contact deleted",
         description: `${contact.firstName} ${contact.lastName} was deleted successfully.`,
       });
@@ -143,15 +139,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         message = getPrismaErrorText(error);
       }
-      return toast.json(
-        request,
-        { success: false },
-        {
-          type: "error",
-          title: "Error deleting contact",
-          description: message,
-        },
-      );
+      return Toasts.jsonWithError({ success: false }, { title: "Error deleting contact", description: message });
     }
   }
 }

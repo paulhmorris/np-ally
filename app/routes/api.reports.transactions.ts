@@ -4,7 +4,7 @@ import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 import { db } from "~/integrations/prisma.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
 export const TransactionsReportSchema = z.object({
@@ -79,8 +79,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 
   if (!transactionItems.length) {
-    return toast.redirect(request, "/reports", {
-      type: "error",
+    return Toasts.redirectWithError("/reports", {
       title: "No transactions found",
       description: `No transactions found from ${startDate} to ${endDate}. Update your date filters.`,
     });

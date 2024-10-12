@@ -13,7 +13,7 @@ import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { TransactionItemType } from "~/lib/constants";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
@@ -57,14 +57,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { fromAccountId, toAccountId, amountInCents, description, ...rest } = result.data;
 
   if (fromAccountId === toAccountId) {
-    return toast.json(
-      request,
+    return Toasts.jsonWithWarning(
       { message: "From and To accounts must be different." },
-      {
-        type: "warning",
-        title: "Warning",
-        description: "From and To accounts must be different.",
-      },
+      { title: "Warning", description: "From and To accounts must be different." },
     );
   }
 
@@ -76,14 +71,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const fromAccountBalanceInCents = fromAccountBalance._sum.amountInCents ?? 0;
 
   if (amountInCents > fromAccountBalanceInCents) {
-    return toast.json(
-      request,
+    return Toasts.jsonWithWarning(
       { message: "Insufficient funds in from account." },
-      {
-        type: "warning",
-        title: "Warning",
-        description: "Insufficient funds in from account.",
-      },
+      { title: "Warning", description: "Insufficient funds in from account." },
     );
   }
 
@@ -124,8 +114,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }),
   ]);
 
-  return toast.redirect(request, `/accounts/${toAccountId}`, {
-    type: "success",
+  return Toasts.redirectWithSuccess(`/accounts/${toAccountId}`, {
     title: "Success",
     description: `Transfer completed successfully.`,
   });

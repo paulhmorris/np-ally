@@ -13,7 +13,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { Linear } from "~/integrations/linear.server";
 import { Sentry } from "~/integrations/sentry";
 import { LinearLabelID, LinearTeamID } from "~/lib/constants";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
@@ -52,8 +52,7 @@ export async function action({ request }: ActionFunctionArgs) {
     Sentry.captureException(issueRequest);
   }
 
-  return toast.redirect(request, user.isMember ? "/dashboards/staff" : "/dashboards/admin", {
-    type: "success",
+  return Toasts.redirectWithSuccess(user.isMember ? "/dashboards/staff" : "/dashboards/admin", {
     title: "Request Sent",
     description: "An issue has been created on our board.",
   });

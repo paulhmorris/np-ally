@@ -13,7 +13,7 @@ import { GlobalLoader } from "~/components/ui/global-loader";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { themeSessionResolver } from "~/lib/session.server";
-import { getGlobalToast } from "~/lib/toast.server";
+import { getToast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
 import stylesheet from "~/tailwind.css?url";
@@ -28,9 +28,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return redirect("/maintenance", { status: 307 });
   }
 
-  const session = await SessionService.getSession(request);
-  const userId = await SessionService.getUserId(request);
   const org = await SessionService.getOrg(request);
+  const { toast, headers } = await getToast(request);
+  const userId = await SessionService.getUserId(request);
   const { getTheme } = await themeSessionResolver(request);
 
   let user;
@@ -81,18 +81,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return typedjson(
     {
       user,
+      toast,
       theme: getTheme(),
-      serverToast: getGlobalToast(session),
       ENV: {
         VERCEL_URL: process.env.VERCEL_URL,
         VERCEL_ENV: process.env.VERCEL_ENV,
       },
     },
-    {
-      headers: {
-        "Set-Cookie": await SessionService.commitSession(session),
-      },
-    },
+    { headers },
   );
 };
 

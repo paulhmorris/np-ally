@@ -11,7 +11,7 @@ dayjs.extend(utc);
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { getPrismaErrorText } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
 export const validator = withZod(
@@ -67,11 +67,9 @@ export async function action({ request }: ActionFunctionArgs) {
           expiresAt: expiry?.toDate(),
         },
       });
-      return toast.json(
-        request,
+      return Toasts.jsonWithSuccess(
         { success: true },
         {
-          type: "success",
           title: "Announcement Created",
           description: `The announcement is now visible to all users and admins${announcement.expiresAt ? " and will expire at " + dayjs(announcement.expiresAt).utc().format("M/D/YY h:mm a") : "."}`,
         },
@@ -99,11 +97,9 @@ export async function action({ request }: ActionFunctionArgs) {
           expiresAt: expiry ? expiry.toDate() : null,
         },
       });
-      return toast.json(
-        request,
+      return Toasts.jsonWithSuccess(
         { success: true },
         {
-          type: "success",
           title: "Announcement Updated",
           description: `The announcement is now visible to all users and admins${announcement.expiresAt ? " and will expire at " + dayjs(announcement.expiresAt).utc().format("M/D/YY h:mm a") : "."}`,
         },
@@ -119,29 +115,16 @@ export async function action({ request }: ActionFunctionArgs) {
           expiresAt: dayjs().subtract(7, "day").toDate(),
         },
       });
-      return toast.json(
-        request,
+      return Toasts.jsonWithInfo(
         { success: true },
-        {
-          type: "info",
-          title: "Announcement Expired",
-          description: "The announcement is no longer visible to users or admins.",
-        },
+        { title: "Announcement Expired", description: "The announcement is no longer visible to users or admins." },
       );
     }
   } catch (error) {
     console.error(error);
     Sentry.captureException(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return toast.json(
-        request,
-        { success: false },
-        {
-          type: "error",
-          title: "Error",
-          description: getPrismaErrorText(error),
-        },
-      );
+      return Toasts.jsonWithError({ success: false }, { title: "Error", description: getPrismaErrorText(error) });
     }
   }
 }

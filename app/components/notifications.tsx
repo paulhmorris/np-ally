@@ -15,8 +15,8 @@ export function Notifications() {
   const [theme] = useTheme();
   const data = useTypedRouteLoaderData<typeof loader>("root");
   useEffect(() => {
-    if (!data?.serverToast) return;
-    const { title, type, ...rest } = data.serverToast;
+    if (!data?.toast) return;
+    const { title, type, ...rest } = data.toast;
     switch (type) {
       case "success": {
         toast.success(title, {
@@ -47,7 +47,6 @@ export function Notifications() {
         });
         break;
       }
-      case "normal":
       default: {
         toast(title, rest);
         break;

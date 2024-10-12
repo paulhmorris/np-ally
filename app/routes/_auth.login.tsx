@@ -11,7 +11,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { FormField } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { safeRedirect } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
 import { verifyLogin } from "~/services.server/auth";
@@ -56,12 +56,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (user.memberships.length === 0) {
-    return toast.json(
-      request,
+    return Toasts.jsonWithError(
       { message: "You are not a member of any organizations. Please contact your administrator." },
       {
         title: "Error",
-        type: "error",
         description: "You are not a member of any organizations. Please contact your administrator.",
       },
     );

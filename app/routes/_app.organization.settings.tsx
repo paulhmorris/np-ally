@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { MetaFunction, useLoaderData } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
@@ -14,7 +14,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { handlePrismaError, serverError } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
 const schema = withZod(
@@ -56,10 +56,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     await db.organization.update({ where: { id: orgId }, data: result.data });
-    return toast.redirect(request, "/organization/settings", {
-      type: "success",
-      title: "Organization settings updated",
-    });
+    return Toasts.redirectWithSuccess("/organization/settings", { title: "Organization settings updated" });
   } catch (error) {
     console.error(error);
     Sentry.captureException(error);

@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
+import { setFormDefaults, ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
@@ -16,7 +16,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { AccountType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { getAccountTypes } from "~/services.server/account";
 import { SessionService } from "~/services.server/session";
 
@@ -96,8 +96,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     },
   });
 
-  return toast.redirect(request, `/accounts/${result.data.id}`, {
-    type: "success",
+  return Toasts.redirectWithSuccess(`/accounts/${result.data.id}`, {
     title: "Account updated",
     description: "Great job.",
   });

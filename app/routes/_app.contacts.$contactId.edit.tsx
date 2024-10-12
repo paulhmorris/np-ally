@@ -5,7 +5,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { IconAddressBook, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
+import { setFormDefaults, ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 
 import { PageHeader } from "~/components/common/page-header";
@@ -25,7 +25,7 @@ import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
 import { forbidden, getPrismaErrorText, notFound, serverError } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { UpdateContactSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
 import { SessionService } from "~/services.server/session";
@@ -199,8 +199,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    return toast.redirect(request, `/contacts/${contact.id}`, {
-      type: "success",
+    return Toasts.redirectWithSuccess(`/contacts/${contact.id}`, {
       title: "Contact updated",
       description: `${contact.firstName} ${contact.lastName} was updated successfully.`,
     });
@@ -209,10 +208,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     Sentry.captureException(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       const message = getPrismaErrorText(error);
-      return toast.json(
-        request,
+      return Toasts.jsonWithError(
         { message: `An error occurred: ${message}` },
-        { type: "error", description: message, title: "Error updating contact" },
+        { description: message, title: "Error updating contact" },
       );
     }
     throw serverError("An error occurred while updating the contact. Please try again.");

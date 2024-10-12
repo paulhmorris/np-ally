@@ -16,7 +16,7 @@ import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { AccountType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { getAccountTypes } from "~/services.server/account";
 import { SessionService } from "~/services.server/session";
 
@@ -88,8 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    return toast.redirect(request, `/accounts/${account.id}`, {
-      type: "success",
+    return Toasts.redirectWithSuccess(`/accounts/${account.id}`, {
       title: "Account created",
       description: "Well done.",
     });
@@ -100,11 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       message = getPrismaErrorText(error);
     }
-    return toast.json(
-      request,
-      { success: false },
-      { type: "error", title: "Error creating account", description: message },
-    );
+    return Toasts.jsonWithError({ success: false }, { title: "Error creating account", description: message });
   }
 };
 

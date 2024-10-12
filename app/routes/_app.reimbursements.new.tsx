@@ -19,7 +19,7 @@ import { Sentry } from "~/integrations/sentry";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
@@ -94,8 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     await reimbursementRequestJob.trigger({ reimbursementRequestId: rr.id });
 
-    return toast.redirect(request, `/dashboards/${user.isMember ? "staff" : "admin"}`, {
-      type: "success",
+    return Toasts.redirectWithSuccess(`/dashboards/${user.isMember ? "staff" : "admin"}`, {
       title: "Reimbursement request submitted",
       description: "Your request will be processed as soon as possible.",
     });
@@ -103,22 +102,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     console.error(error);
     Sentry.captureException(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return toast.json(
-        request,
+      return Toasts.jsonWithError(
         { message: getPrismaErrorText(error) },
-        { type: "error", title: "Database Error", description: getPrismaErrorText(error) },
-        { status: 500 },
+        { title: "Database Error", description: getPrismaErrorText(error) },
       );
     }
-    return toast.json(
-      request,
+    return Toasts.jsonWithError(
       { message: "An unknown error occurred" },
-      {
-        type: "error",
-        title: "An unknown error occurred",
-        description: error instanceof Error ? error.message : "",
-      },
-      { status: 500 },
+      { title: "An unknown error occurred", description: error instanceof Error ? error.message : "" },
     );
   }
 };

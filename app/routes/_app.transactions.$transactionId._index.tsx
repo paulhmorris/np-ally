@@ -21,7 +21,7 @@ import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { forbidden } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars } from "~/lib/utils";
 import { generateS3Urls } from "~/services.server/receipt";
 import { SessionService } from "~/services.server/session";
@@ -117,8 +117,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const { transactionId } = params;
 
   const trx = await db.transaction.delete({ where: { id: transactionId, orgId }, include: { account: true } });
-  return toast.redirect(request, "/transactions", {
-    type: "success",
+  return Toasts.redirectWithSuccess("/transactions", {
     title: "Transaction deleted",
     description: `The transaction of ${formatCentsAsDollars(trx.amountInCents, 2)} on account ${
       trx.account.code

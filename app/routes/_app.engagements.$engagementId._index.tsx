@@ -15,7 +15,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { db } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
 export const meta: MetaFunction = () => [{ title: "View Engagement" }];
@@ -50,10 +50,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const validator = withZod(z.object({ _action: z.literal("delete") }));
   const result = await validator.validate(await request.formData());
   if (result.error) {
-    return toast.json(
-      request,
+    return Toasts.jsonWithError(
       { success: false },
-      { type: "error", title: "Error deleting engagement", description: "Invalid request" },
+      { title: "Error deleting engagement", description: "Invalid request" },
     );
   }
 
@@ -66,31 +65,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     // Users can only delete their own engagements
     if (user.isMember) {
       if (engagement.userId !== user.id) {
-        return toast.json(
-          request,
+        return Toasts.jsonWithError(
           { success: false },
-          {
-            type: "error",
-            title: "Error deleting engagement",
-            description: "You do not have permission to delete this engagement.",
-          },
-          { status: 403 },
+          { title: "Error deleting engagement", description: "You do not have permission to delete this engagement." },
         );
       }
     }
 
     await db.engagement.delete({ where: { id: Number(params.engagementId), orgId } });
-    return toast.redirect(request, "/engagements", {
-      type: "success",
+    return Toasts.redirectWithSuccess("/engagements", {
       title: "Engagement deleted",
       description: "The engagement has been deleted",
     });
   } catch (error) {
-    return toast.json(
-      request,
+    return Toasts.jsonWithError(
       { success: false },
-      { type: "error", title: "Error deleting engagement", description: "An error occurred" },
-      { status: 500 },
+      { title: "Error deleting engagement", description: "An error occurred" },
     );
   }
 };
