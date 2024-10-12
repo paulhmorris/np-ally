@@ -16,7 +16,16 @@ export function ContactFields({ contactTypes }: { contactTypes: Array<ContactTyp
         <FormField label="Last name" id="lastName" name="lastName" placeholder="Donor" />
       </div>
       <FormField label="Email" id="email" name="email" placeholder="joe@donor.com" />
+      <FormField label="Alternate Email" id="email" name="alternateEmail" placeholder="joe2@donor.com" />
       <FormField label="Phone" id="phone" name="phone" placeholder="8885909724" inputMode="numeric" maxLength={10} />
+      <FormField
+        label="Alternate Phone"
+        id="phone"
+        name="alternatePhone"
+        placeholder="8885909724"
+        inputMode="numeric"
+        maxLength={10}
+      />
       <FormSelect
         required
         disabled={shouldDisableTypeSelection}

@@ -118,7 +118,7 @@ function App() {
   }, [user]);
 
   return (
-    <html lang="en" className={cn("h-full", theme)}>
+    <html lang="en" className={cn("h-full", theme || "light")}>
       <head>
         <meta charSet="utf-8" />
         <meta name="robots" content="noindex" />

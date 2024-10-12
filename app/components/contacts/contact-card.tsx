@@ -66,15 +66,39 @@ export function ContactCard({ contact }: { contact: Contact }) {
               </dd>
             </div>
           ) : null}
-          <div className="flex items-center gap-4">
-            <dt>
-              <span className="sr-only">Email</span>
-              <IconMail className="h-5 w-5 text-muted-foreground" />
-            </dt>
-            <dd>
-              <a href={`mailto:${contact.email}`}>{contact.email}</a>
-            </dd>
-          </div>
+          {contact.alternatePhone ? (
+            <div className="flex items-center gap-4">
+              <dt>
+                <span className="sr-only">Phone</span>
+                <IconPhone className="h-5 w-5 text-muted-foreground" />
+              </dt>
+              <dd>
+                <a href={`tel:${contact.alternatePhone}`}>{formatPhoneNumber(contact.alternatePhone)}</a>
+              </dd>
+            </div>
+          ) : null}
+          {contact.email ? (
+            <div className="flex items-center gap-4">
+              <dt>
+                <span className="sr-only">Email</span>
+                <IconMail className="h-5 w-5 text-muted-foreground" />
+              </dt>
+              <dd>
+                <a href={`mailto:${contact.email}`}>{contact.email}</a>
+              </dd>
+            </div>
+          ) : null}
+          {contact.alternateEmail ? (
+            <div className="flex items-center gap-4">
+              <dt>
+                <span className="sr-only">Email</span>
+                <IconMail className="h-5 w-5 text-muted-foreground" />
+              </dt>
+              <dd>
+                <a href={`mailto:${contact.alternateEmail}`}>{contact.alternateEmail}</a>
+              </dd>
+            </div>
+          ) : null}
         </dl>
       </CardContent>
       {!user.isMember || user.contactAssignments.some((a) => a.contactId === contact.id) ? (

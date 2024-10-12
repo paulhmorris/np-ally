@@ -9,6 +9,13 @@ export const CheckboxSchema = z
   .transform((val) => val === "on")
   .or(z.undefined());
 
+export const PhoneNumberSchema = z
+  .string()
+  .transform((val) => val.replace(/\D/g, ""))
+  .pipe(z.string().length(10, { message: "Invalid phone number" }));
+
+export const EmailSchema = z.string().email({ message: "Invalid email address" });
+
 export const CurrencySchema = z.preprocess(
   (v) => (typeof v === "string" && v[0] === "$" ? v.slice(1) : v),
   z.coerce
@@ -48,14 +55,10 @@ export const NewContactSchema = z.object({
   firstName: z.string().max(255).optional(),
   lastName: z.string().max(255).optional(),
   organizationName: z.string().max(255).optional(),
-  email: zfd.text(z.string().email({ message: "Invalid email address" }).optional()),
-  phone: zfd.text(
-    z
-      .string()
-      .transform((val) => val.replace(/\D/g, ""))
-      .pipe(z.string().length(10, { message: "Invalid phone number" }))
-      .optional(),
-  ),
+  email: zfd.text(EmailSchema.optional()),
+  alternateEmail: zfd.text(EmailSchema.optional()),
+  phone: zfd.text(PhoneNumberSchema.optional()),
+  alternatePhone: zfd.text(PhoneNumberSchema.optional()),
   typeId: z.coerce.number().pipe(z.nativeEnum(ContactType)),
   address: AddressSchema.optional(),
   assignedUserIds: zfd.repeatableOfType(zfd.text()).optional(),

@@ -24,7 +24,7 @@ import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType } from "~/lib/constants";
-import { forbidden, getPrismaErrorText, notFound, serverError } from "~/lib/responses.server";
+import { forbidden, getPrismaErrorText, notFound } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
 import { UpdateContactSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
@@ -213,7 +213,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         { description: message, title: "Error updating contact" },
       );
     }
-    throw serverError("An error occurred while updating the contact. Please try again.");
+    return Toasts.jsonWithError(null, {
+      title: "Error",
+      description: "An error occurred while updating the contact. Please try again.",
+    });
   }
 };
 
