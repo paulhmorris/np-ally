@@ -12,7 +12,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { unauthorized } from "~/lib/responses.server";
 import { sessionStorage } from "~/lib/session.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
 import { hashPassword } from "~/services.server/auth";
 import { expirePasswordReset, getPasswordResetByToken } from "~/services.server/password";
@@ -69,21 +69,17 @@ export async function action({ request }: ActionFunctionArgs) {
   const { newPassword, token } = result.data;
   const reset = await getPasswordResetByToken(token);
   if (!reset) {
-    return toast.json(request, {}, { type: "error", title: "Token not found", description: "Please try again." });
+    return Toasts.jsonWithError({ success: false }, { title: "Token not found", description: "Please try again." });
   }
 
   // Check expiration
   if (reset.expiresAt < new Date()) {
-    return toast.json(request, {}, { type: "error", title: "Token expired", description: "Please try again." });
+    return Toasts.jsonWithError({ success: false }, { title: "Token expired", description: "Please try again." });
   }
 
   // Check token against param
   if (token !== tokenParam) {
-    return toast.json(
-      request,
-      { success: false },
-      { type: "error", title: "Invalid token", description: "Please try again." },
-    );
+    return Toasts.jsonWithError({ success: false }, { title: "Invalid token", description: "Please try again." });
   }
 
   // Check user
@@ -92,11 +88,7 @@ export async function action({ request }: ActionFunctionArgs) {
     include: { contact: true },
   });
   if (!userFromToken) {
-    return toast.json(
-      request,
-      { success: false },
-      { type: "error", title: "User not found", description: "Please try again." },
-    );
+    return Toasts.jsonWithError({ success: false }, { title: "User not found", description: "Please try again." });
   }
 
   const hashedPassword = await hashPassword(newPassword);
@@ -115,8 +107,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // Use token
   await expirePasswordReset(token);
 
-  return toast.redirect(request, "/login", {
-    type: "success",
+  return Toasts.redirectWithSuccess("/login", {
     title: `Password ${isReset ? "reset" : "set up"}`,
     description: `Your password has been ${isReset ? "reset" : "set up"}. Login with your new password.`,
   });

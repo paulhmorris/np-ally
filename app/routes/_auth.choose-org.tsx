@@ -12,7 +12,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { db } from "~/integrations/prisma.server";
 import { sessionStorage } from "~/lib/session.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { normalizeEnum } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
 import { SessionService } from "~/services.server/session";
@@ -50,14 +50,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   if (!user.memberships.length) {
-    return toast.redirect(
-      request,
+    return Toasts.redirectWithError(
       "/login",
-      {
-        type: "error",
-        title: "Error",
-        description: "You are not a member of any organizations.",
-      },
+      { title: "Error", description: "You are not a member of any organizations." },
       {
         headers: {
           "Set-Cookie": await sessionStorage.destroySession(session),

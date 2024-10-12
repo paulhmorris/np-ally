@@ -16,7 +16,7 @@ import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { ContactType, EngagementType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { getContactTypes } from "~/services.server/contact";
 import { getEngagementTypes } from "~/services.server/engagement";
@@ -80,8 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    return toast.redirect(request, `/engagements/${engagement.id}`, {
-      type: "success",
+    return Toasts.redirectWithSuccess(`/engagements/${engagement.id}`, {
       title: "Success",
       description: `Engagement recorded.`,
     });
@@ -89,20 +88,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     Sentry.captureException(error);
     console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return toast.json(
-        request,
+      return Toasts.jsonWithError(
         { message: getPrismaErrorText(error) },
-        { type: "error", title: "Database Error", description: getPrismaErrorText(error) },
+        { title: "Database Error", description: getPrismaErrorText(error) },
       );
     }
-    return toast.json(
-      request,
+    return Toasts.jsonWithError(
       { message: "An unknown error occurred" },
-      {
-        type: "error",
-        title: "An unknown error occurred",
-        description: error instanceof Error ? error.message : "",
-      },
+      { title: "An unknown error occurred", description: error instanceof Error ? error.message : "" },
     );
   }
 };

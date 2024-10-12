@@ -5,7 +5,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { IconPlus } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, useFieldArray, validationError } from "remix-validated-form";
+import { setFormDefaults, useFieldArray, ValidatedForm, validationError } from "remix-validated-form";
 
 import { PageHeader } from "~/components/common/page-header";
 import { ReceiptSelector } from "~/components/common/receipt-selector";
@@ -20,7 +20,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { getPrismaErrorText } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
 import { TransactionSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
@@ -103,8 +103,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    return toast.redirect(request, `/accounts/${transaction.account.id}`, {
-      type: "success",
+    return Toasts.redirectWithSuccess(`/accounts/${transaction.account.id}`, {
       title: "Success",
       description: `Expense of ${formatCentsAsDollars(totalInCents)} charged to account ${transaction.account.code}`,
     });
@@ -115,11 +114,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       description = getPrismaErrorText(error);
     }
-    return toast.redirect(request, "/expense/new", {
-      type: "error",
-      title: "Error creating expense",
-      description,
-    });
+    return Toasts.jsonWithError({ success: false }, { title: "Error creating expense", description });
   }
 };
 

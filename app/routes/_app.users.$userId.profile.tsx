@@ -16,7 +16,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { notFound } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { loader } from "~/routes/_app.users.$userId";
 import { SessionService } from "~/services.server/session";
 
@@ -50,14 +50,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (authorizedUser.isMember) {
     // Users can only edit themselves
     if (authorizedUser.id !== id) {
-      return toast.json(
-        request,
+      return Toasts.jsonWithWarning(
         { message: "You do not have permission to edit this user." },
-        {
-          type: "warning",
-          title: "Permission denied",
-          description: "You do not have permission to edit this user.",
-        },
+        { title: "Permission denied", description: "You do not have permission to edit this user." },
         { status: 403 },
       );
     }
@@ -68,28 +63,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       username !== userToBeUpdated.username ||
       accountId !== userToBeUpdated.accountId
     ) {
-      return toast.json(
-        request,
+      return Toasts.jsonWithWarning(
         { message: "You do not have permission to edit this field." },
-        {
-          type: "warning",
-          title: "Permission denied",
-          description: "You do not have permission to edit this field.",
-        },
+        { title: "Permission denied", description: "You do not have permission to edit this field." },
         { status: 403 },
       );
     }
   }
 
   if (authorizedUser.systemRole !== UserRole.SUPERADMIN && role === UserRole.SUPERADMIN) {
-    return toast.json(
-      request,
+    return Toasts.jsonWithWarning(
       { message: "You do not have permission to create a Super Admin." },
-      {
-        type: "warning",
-        title: "Permission denied",
-        description: "You do not have permission to create a Super Admin.",
-      },
+      { title: "Permission denied", description: "You do not have permission to create a Super Admin." },
       { status: 403 },
     );
   }
@@ -113,11 +98,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     },
   });
 
-  return toast.json(
-    request,
-    { user: updatedUser },
-    { type: "success", title: "User updated", description: "Great job." },
-  );
+  return Toasts.jsonWithSuccess({ user: updatedUser }, { title: "User updated", description: "Great job." });
 };
 
 export default function UserDetailsPage() {

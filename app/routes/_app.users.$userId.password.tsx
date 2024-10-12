@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
@@ -11,7 +11,7 @@ import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { getPrismaErrorText, unauthorized } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { hashPassword, verifyLogin } from "~/services.server/auth";
 import { SessionService } from "~/services.server/session";
 
@@ -82,7 +82,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
       },
     });
 
-    return toast.redirect(request, `/users/${params.userId}/password`, { type: "success", title: "Password updated!" });
+    return Toasts.redirectWithSuccess(`/users/${params.userId}/password`, { title: "Password updated!" });
   } catch (error) {
     console.error(error);
     Sentry.captureException(error);
@@ -90,7 +90,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       message = getPrismaErrorText(error);
     }
-    return toast.json(request, {}, { type: "error", title: "An error occurred", description: message });
+    return Toasts.jsonWithError({ success: false }, { title: "An error occurred", description: message });
   }
 }
 

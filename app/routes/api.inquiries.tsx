@@ -9,7 +9,7 @@ import { zfd } from "zod-form-data";
 import { NewInquiryEmail } from "emails/new-inquiry";
 import { sendEmail } from "~/integrations/email.server";
 import { Sentry } from "~/integrations/sentry";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
 export const validator = withZod(
@@ -68,19 +68,16 @@ export async function action({ request }: ActionFunctionArgs) {
       html,
     });
 
-    return toast.json(
-      request,
+    return Toasts.jsonWithSuccess(
       { success: true, messageId },
-      { type: "success", title: "Inquiry sent", description: "We'll be in touch soon!" },
+      { title: "Inquiry sent", description: "We'll be in touch soon!" },
     );
   } catch (error) {
     console.error(error);
     Sentry.captureException(error);
-    return toast.json(
-      request,
+    return Toasts.jsonWithSuccess(
       { success: false, message: JSON.stringify(error) },
       {
-        type: "error",
         title: "Error sending email",
         description: error instanceof Error ? error.message : "An unknown error occurred",
       },

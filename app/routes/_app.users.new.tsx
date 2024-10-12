@@ -18,7 +18,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";
 import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { CheckboxSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
 import { sendPasswordSetupEmail } from "~/services.server/mail";
@@ -69,15 +69,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Someone trying to create a SUPERADMIN
   if (systemRole === UserRole.SUPERADMIN && !authorizedUser.isSuperAdmin) {
-    return toast.json(
-      request,
+    return Toasts.jsonWithWarning(
       { message: "You do not have permission to create a Super Admin" },
       {
-        type: "warning",
         title: "Permission denied",
         description: "You do not have permission to create a Super Admin",
       },
-      { status: 403 },
     );
   }
 
@@ -128,8 +125,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await sendPasswordSetupEmail({ email: user.username, token, orgId });
   }
 
-  return toast.redirect(request, `/users/${user.id}`, {
-    type: "success",
+  return Toasts.redirectWithSuccess(`/users/${user.id}`, {
     title: "User created",
     description: sendPasswordSetup
       ? "They will receive an email with instructions to set their password."

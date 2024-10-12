@@ -4,7 +4,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { ValidatedForm, setFormDefaults, validationError } from "remix-validated-form";
+import { setFormDefaults, ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 dayjs.extend(utc);
@@ -19,7 +19,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { ContactType, EngagementType } from "~/lib/constants";
 import { notFound } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { getContactTypes } from "~/services.server/contact";
 import { getEngagementTypes } from "~/services.server/engagement";
 import { SessionService } from "~/services.server/session";
@@ -90,10 +90,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: result.data,
   });
 
-  return toast.redirect(request, `/engagements/${engagement.id}`, {
-    type: "success",
-    title: "Engagement updated",
-  });
+  return Toasts.redirectWithSuccess(`/engagements/${engagement.id}`, { title: "Engagement updated" });
 };
 
 export default function EditEngagementPage() {

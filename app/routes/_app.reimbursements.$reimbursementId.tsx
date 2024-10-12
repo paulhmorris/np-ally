@@ -21,7 +21,7 @@ import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { capitalize, formatCentsAsDollars } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
 import { sendReimbursementRequestUpdateEmail } from "~/services.server/mail";
@@ -134,11 +134,9 @@ export async function action({ request }: ActionFunctionArgs) {
       orgId,
       note,
     });
-    return toast.json(
-      request,
+    return Toasts.jsonWithInfo(
       { reimbursementRequest: rr },
       {
-        type: "info",
         title: "The reimbursement request has been reopened and the requester will be notified.",
         description: "",
       },
@@ -191,11 +189,9 @@ export async function action({ request }: ActionFunctionArgs) {
 
       const balance = account.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
       if (balance < amount) {
-        return toast.json(
-          request,
+        return Toasts.jsonWithWarning(
           { message: "Insufficient Funds" },
           {
-            type: "warning",
             title: "Insufficient Funds",
             description: `The reimbursement request couldn't be completed because account ${
               account.code
@@ -236,11 +232,9 @@ export async function action({ request }: ActionFunctionArgs) {
         note,
       });
 
-      return toast.json(
-        request,
+      return Toasts.jsonWithSuccess(
         { reimbursementRequest: rr },
         {
-          type: "success",
           title: "Reimbursement Request Approved",
           description: `The reimbursement request has been approved and account ${account.code} has been adjusted.`,
         },
@@ -248,17 +242,14 @@ export async function action({ request }: ActionFunctionArgs) {
     } catch (error) {
       Sentry.captureException(error);
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        return toast.json(
-          request,
+        return Toasts.jsonWithError(
           { message: getPrismaErrorText(error) },
-          { type: "error", title: "Database Error", description: getPrismaErrorText(error) },
+          { title: "Database Error", description: getPrismaErrorText(error) },
         );
       }
-      return toast.json(
-        request,
+      return Toasts.jsonWithError(
         { message: "An unknown error occurred" },
         {
-          type: "error",
           title: "An unknown error occurred",
           description: error instanceof Error ? error.message : "",
         },
@@ -279,11 +270,9 @@ export async function action({ request }: ActionFunctionArgs) {
     note,
   });
   const normalizedAction = _action === ReimbursementRequestStatus.REJECTED ? "rejected" : "voided";
-  return toast.json(
-    request,
+  return Toasts.jsonWithSuccess(
     { reimbursementRequest: rr },
     {
-      type: "success",
       title: `Reimbursement request ${normalizedAction}`,
       description: `The reimbursement request has been ${normalizedAction} and the requester will be notified.`,
     },

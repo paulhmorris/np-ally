@@ -20,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { getPrismaErrorText, notFound } from "~/lib/responses.server";
-import { toast } from "~/lib/toast.server";
+import { Toasts } from "~/lib/toast.server";
 import { cn, formatCentsAsDollars } from "~/lib/utils";
 import { SessionService } from "~/services.server/session";
 
@@ -78,8 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    return toast.redirect(request, `/transactions/${id}`, {
-      type: "success",
+    return Toasts.redirectWithSuccess(`/transactions/${id}`, {
       title: "Transaction updated",
       description: `Transaction has been updated.`,
     });
@@ -90,15 +89,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       message = getPrismaErrorText(error);
     }
-    return toast.json(
-      request,
-      { success: false },
-      {
-        type: "error",
-        title: "Error saving transaction",
-        description: message,
-      },
-    );
+    return Toasts.jsonWithError({ success: false }, { title: "Error saving transaction", description: message });
   }
 };
 
