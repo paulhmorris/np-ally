@@ -1,17 +1,16 @@
-import { PrismaInstrumentation } from "@prisma/instrumentation";
-import type { TriggerConfig } from "@trigger.dev/sdk/v3";
+import { prismaExtension } from "@trigger.dev/build/extensions/prisma";
+import { defineConfig } from "@trigger.dev/sdk/v3";
 
-import { Sentry } from "~/integrations/sentry";
+import { Sentry } from "./app/integrations/sentry";
 
-export const config: TriggerConfig = {
+export default defineConfig({
+  dirs: ["./app/jobs"],
   project: "proj_onljbcqyipyvqioltokh",
-  triggerDirectories: ["./app/jobs"],
-  instrumentations: [new PrismaInstrumentation()],
+  build: {
+    extensions: [prismaExtension({ schema: "prisma/schema.prisma" })],
+  },
   // eslint-disable-next-line @typescript-eslint/require-await
   onFailure: async (_, error, _params) => {
     Sentry.captureException(error);
   },
-  dependenciesToBundle: ["nanoid"],
-  additionalFiles: ["./prisma/schema.prisma"],
-  additionalPackages: ["prisma@5.15.0", "patch-package"],
-};
+});
