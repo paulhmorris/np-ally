@@ -276,10 +276,12 @@ enum ReimbursementRequestStatus {
 model Contact {
   id                   String                @id @default(cuid())
   email                String?
+  alternateEmail       String?
   firstName            String?
   lastName             String?
   organizationName     String?
   phone                String?
+  alternatePhone       String?
   address              Address?
   type                 ContactType           @relation(fields: [typeId], references: [id])
   typeId               Int
