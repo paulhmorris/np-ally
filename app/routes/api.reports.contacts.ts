@@ -1,34 +1,16 @@
 import { ExcelBuilder, ExcelSchemaBuilder } from "@chronicstone/typed-xlsx";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod";
-import { fromZodError } from "zod-validation-error";
+import { LoaderFunctionArgs } from "@remix-run/node";
 
 import { db } from "~/integrations/prisma.server";
 import { ContactType } from "~/lib/constants";
 import { Toasts } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
-export const TransactionsReportSchema = z.object({
-  startDate: z.string(),
-  endDate: z.string(),
-});
-
 export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
-  const { searchParams } = new URL(request.url);
-  const startDate = searchParams.get("startDate");
-  const endDate = searchParams.get("endDate");
 
-  const parsedParams = TransactionsReportSchema.safeParse({
-    startDate,
-    endDate,
-  });
-  if (!parsedParams.success) {
-    return json({ message: fromZodError(parsedParams.error).toString() }, { status: 400 });
-  }
-
-  const contacts = await db.contact.findMany({
+  const _contacts = await db.contact.findMany({
     where: {
       orgId,
       typeId: { notIn: [ContactType.Staff] },
@@ -38,6 +20,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
       firstName: true,
       lastName: true,
       organizationName: true,
+      email: true,
+      alternateEmail: true,
+      phone: true,
+      alternatePhone: true,
       org: {
         select: {
           name: true,
@@ -56,20 +42,30 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  if (!contacts.length) {
+  if (!_contacts.length) {
     return Toasts.redirectWithError("/reports", {
       title: "No contacts found",
       description: `No contacts found for report.`,
     });
   }
 
-  const org = contacts[0].org;
+  const org = _contacts[0].org;
 
-  const schema = ExcelSchemaBuilder.create<(typeof contacts)[0]>()
+  const contacts = _contacts.map((c) => ({
+    ...c,
+    accounts: [...new Set(c.transactions.map((t) => t.account.code))].map((a) => a).join(", "),
+  }));
+
+  const schema = ExcelSchemaBuilder.create<(typeof _contacts)[0] & { accounts: string }>()
     .column("Transaction ID", { key: "id" })
     .column("First Name", { key: "firstName" })
     .column("Last Name", { key: "lastName" })
+    .column("Email", { key: "email" })
+    .column("Alternate Email", { key: "alternateEmail" })
+    .column("Phone", { key: "phone" })
+    .column("Alternate Phone", { key: "alternatePhone" })
     .column("Organization Name", { key: "organizationName" })
+    .column("Accounts Donated To", { key: "accounts" })
 
     .build();
 
@@ -80,7 +76,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return new Response(file, {
     headers: {
-      "Content-Disposition": `attachment; filename=${org.name}-transactions-report-${parsedParams.data.startDate}-${parsedParams.data.endDate}.xlsx`,
+      "Content-Disposition": `attachment; filename=${org.name}-contacts-report-${new Date().getTime()}.xlsx`,
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     },
   });

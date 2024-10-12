@@ -81,13 +81,15 @@ class Session implements ISessionService {
 
     const currentMembership = user.memberships.find((m) => m.orgId === org?.id);
     if (!currentMembership) {
-      console.warn("No membership in the current org - logging out...");
-      throw await this.logout(request);
+      if (org) {
+        console.warn("No membership in the current org - logging out...");
+        throw await this.logout(request);
+      }
     }
 
     return {
       ...user,
-      role: currentMembership.role,
+      role: currentMembership?.role || MembershipRole.MEMBER,
       systemRole: user.role,
       org: org ?? null,
     };

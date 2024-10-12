@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { Link, MetaFunction } from "@remix-run/react";
 import { IconCloudDownload } from "@tabler/icons-react";
 import dayjs from "dayjs";
@@ -16,16 +17,19 @@ export const meta: MetaFunction = () => {
 
 export default function AdminReports() {
   const isClient = useIsClient();
-  const [startDate, setStartDate] = useState(dayjs().subtract(3, "month").format("YYYY-MM-DD"));
-  const [endDate, setEndDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [trxStartDate, setTrxStartDate] = useState(dayjs().subtract(3, "month").format("YYYY-MM-DD"));
+  const [trxEndDate, setTrxEndDate] = useState(dayjs().format("YYYY-MM-DD"));
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  const url = isClient ? new URL("/api/reports/transactions", window?.location.origin) : undefined;
-  if (url) {
-    url.searchParams.append("startDate", startDate);
-    url.searchParams.append("endDate", endDate);
-    url.searchParams.append("tzOffset", dayjs().utcOffset().toString());
+  // Trx report
+  const trxUrl = isClient ? new URL("/api/reports/transactions", window?.location.origin) : undefined;
+  if (trxUrl) {
+    trxUrl.searchParams.append("trxStartDate", trxStartDate);
+    trxUrl.searchParams.append("trxEndDate", trxEndDate);
+    trxUrl.searchParams.append("tzOffset", dayjs().utcOffset().toString());
   }
+
+  // Contacts report
+  const contactsUrl = isClient ? new URL("/api/reports/contacts", window?.location.origin) : undefined;
 
   return (
     <>
@@ -35,30 +39,41 @@ export default function AdminReports() {
         <h2 className="mb-2 font-bold">Transactions Report</h2>
         <div className="max-w-xs space-y-2">
           <div className="space-y-1">
-            <Label htmlFor="startDate">Start Date</Label>
+            <Label htmlFor="trxStartDate">Start Date</Label>
             <span className="ml-1 text-destructive">*</span>
             <Input
-              id="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              name="startDate"
+              id="trxStartDate"
+              value={trxStartDate}
+              onChange={(e) => setTrxStartDate(e.target.value)}
+              name="trxStartDate"
               type="date"
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="endDate">End Date</Label>
+            <Label htmlFor="trxEndDate">End Date</Label>
             <span className="ml-1 text-destructive">*</span>
             <Input
-              id="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              name="endDate"
+              id="trxEndDate"
+              value={trxEndDate}
+              onChange={(e) => setTrxEndDate(e.target.value)}
+              name="trxEndDate"
               type="date"
             />
           </div>
           {isClient ? (
-            <Button asChild>
-              <Link reloadDocument to={url ? url.toString() : ""} className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link reloadDocument to={trxUrl ? trxUrl.toString() : ""} className="flex items-center gap-2">
+                <IconCloudDownload className="size-4" />
+                <span>Download</span>
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+        <h2 className="mb-2 mt-8 font-bold">Contacts Report</h2>
+        <div className="max-w-xs space-y-2">
+          {isClient ? (
+            <Button variant="outline" asChild>
+              <Link reloadDocument to={contactsUrl ? contactsUrl.toString() : ""} className="flex items-center gap-2">
                 <IconCloudDownload className="size-4" />
                 <span>Download</span>
               </Link>

@@ -50,7 +50,7 @@ async function seed() {
     db.engagementType.createMany({ data: engagementTypes }),
   ]);
 
-  const email = "paul@remix.run";
+  const email = "paulh.morris@gmail.com";
 
   const hashedPassword = await bcrypt.hash("password", 10);
 
