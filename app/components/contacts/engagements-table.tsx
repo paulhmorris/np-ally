@@ -41,6 +41,16 @@ type Engagement = Prisma.EngagementGetPayload<{
 }>;
 const columns: Array<ColumnDef<Engagement>> = [
   {
+    id: "action",
+    header: () => <span className="sr-only">Action</span>,
+    cell: ({ row }) => (
+      <Link to={`/engagements/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
+  {
     accessorKey: "contact",
     accessorFn: (row) => `${row.contact.firstName} ${row.contact.lastName}`,
     header: ({ column }) => <DataTableColumnHeader column={column} title="Contact" />,
@@ -97,16 +107,6 @@ const columns: Array<ColumnDef<Engagement>> = [
         </div>
       );
     },
-    enableColumnFilter: false,
-  },
-  {
-    id: "action",
-    header: () => <span className="sr-only">Action</span>,
-    cell: ({ row }) => (
-      <Link to={`/engagements/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
     enableColumnFilter: false,
   },
 ];

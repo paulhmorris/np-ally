@@ -12,7 +12,7 @@ import { PageContainer } from "~/components/page-container";
 import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
-import { TransactionItemType } from "~/lib/constants";
+import { TransactionCategory, TransactionItemType } from "~/lib/constants";
 import { Toasts } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
@@ -83,6 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       data: {
         ...rest,
         orgId,
+        categoryId: TransactionCategory.Other,
         description: description ? description : `Transfer to ${toAccountId}`,
         accountId: fromAccountId,
         amountInCents: -1 * amountInCents,
@@ -100,6 +101,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       data: {
         ...rest,
         orgId,
+        categoryId: TransactionCategory.Other,
         description: description ? description : `Transfer from ${toAccountId}`,
         accountId: toAccountId,
         amountInCents: amountInCents,

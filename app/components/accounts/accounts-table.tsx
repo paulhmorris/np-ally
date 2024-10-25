@@ -16,6 +16,16 @@ export function AccountsTable({ data }: { data: Array<Account> }) {
 
 const columns = [
   {
+    id: "view",
+    header: () => <span className="sr-only">Action</span>,
+    cell: ({ row }) => (
+      <Link to={`/accounts/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
+  {
     accessorKey: "code",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Code" />,
     cell: ({ row }) => {
@@ -67,16 +77,6 @@ const columns = [
         </div>
       );
     },
-    enableColumnFilter: false,
-  },
-  {
-    id: "view",
-    header: () => <span className="sr-only">Action</span>,
-    cell: ({ row }) => (
-      <Link to={`/accounts/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
     enableColumnFilter: false,
   },
 ] satisfies Array<ColumnDef<Account & { balance: number }>>;

@@ -79,7 +79,6 @@ export async function sendReimbursementRequestUpdateEmail({
   email,
   status,
   orgId,
-  note,
 }: {
   email: User["username"];
   status: ReimbursementRequestStatus;
@@ -89,7 +88,7 @@ export async function sendReimbursementRequestUpdateEmail({
   try {
     const org = await db.organization.findUniqueOrThrow({ where: { id: orgId } });
     const url = constructOrgURL("/", org).toString();
-    const html = render(<ReimbursementRequestUpdateEmail status={status} note={note} url={url} />);
+    const html = render(<ReimbursementRequestUpdateEmail status={status} url={url} />);
 
     const data = await sendEmail({
       from: constructOrgMailFrom(org),

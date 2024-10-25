@@ -62,6 +62,9 @@ module.exports = {
       fontFamily: {
         sans: ["'DM Sans Variable'", ...defaultTheme.fontFamily.sans],
       },
+      transitionDuration: {
+        DEFAULT: "75ms",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

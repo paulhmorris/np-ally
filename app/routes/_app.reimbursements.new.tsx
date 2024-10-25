@@ -123,7 +123,12 @@ export default function NewReimbursementPage() {
       <PageContainer>
         <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-2xl">
           <FormField name="vendor" label="Vendor" />
-          <FormTextarea name="description" label="Description" />
+          <FormTextarea
+            required
+            name="description"
+            label="Description"
+            placeholder="Leave some notes about what you purchased..."
+          />
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <div className="w-auto">
               <FormField name="date" label="Date" type="date" defaultValue={getToday()} required />
@@ -148,7 +153,7 @@ export default function NewReimbursementPage() {
               name="accountId"
               label="Account"
               placeholder="Select account"
-              description="The account that will be deducted."
+              description="The account that will be deducted from."
               options={accounts.map((t) => ({
                 value: t.id,
                 label: `${t.code} - ${t.type.name}`,

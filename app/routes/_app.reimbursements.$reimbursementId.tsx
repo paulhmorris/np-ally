@@ -38,13 +38,25 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 const validator = withZod(
-  z.object({
-    id: z.string().cuid(),
-    accountId: z.string().optional(),
-    amount: CurrencySchema,
-    note: z.string().max(2000).optional(),
-    _action: z.nativeEnum(ReimbursementRequestStatus),
-  }),
+  z
+    .object({
+      id: z.string().cuid(),
+      amount: CurrencySchema,
+      categoryId: z.coerce.number(),
+      accountId: z.string().optional(),
+      description: z.string().max(2000).optional(),
+      _action: z.nativeEnum(ReimbursementRequestStatus),
+    })
+    .superRefine((data, ctx) => {
+      if (data._action === ReimbursementRequestStatus.APPROVED) {
+        if (!data.accountId) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Account is required for approvals.",
+          });
+        }
+      }
+    }),
 );
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -99,8 +111,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   rr.receipts = await generateS3Urls(rr.receipts);
   const accounts = await db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } });
+  const transactionCategories = await db.transactionCategory.findMany();
 
-  return typedjson({ reimbursementRequest: rr, accounts });
+  return typedjson({ reimbursementRequest: rr, accounts, transactionCategories });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -113,7 +126,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return validationError(result.error);
   }
 
-  const { _action, amount, accountId, note, id } = result.data;
+  const { _action, amount, accountId, description, categoryId, id } = result.data;
 
   // Reopen
   if (_action === ReimbursementRequestStatus.PENDING) {
@@ -132,7 +145,6 @@ export async function action({ request }: ActionFunctionArgs) {
       email: rr.user.username,
       status: _action,
       orgId,
-      note,
     });
     return Toasts.jsonWithInfo(
       { reimbursementRequest: rr },
@@ -157,6 +169,7 @@ export async function action({ request }: ActionFunctionArgs) {
       const rr = await db.reimbursementRequest.findUniqueOrThrow({
         where: { id, orgId },
         select: {
+          id: true,
           accountId: true,
           user: {
             select: {
@@ -205,8 +218,9 @@ export async function action({ request }: ActionFunctionArgs) {
           data: {
             orgId,
             accountId,
+            categoryId,
+            description,
             amountInCents: amount * -1,
-            description: note || "Approved reimbursement request",
             date: dayjs().startOf("day").toDate(),
             transactionItems: {
               create: {
@@ -214,6 +228,7 @@ export async function action({ request }: ActionFunctionArgs) {
                 amountInCents: amount * -1,
                 methodId: TransactionItemMethod.Other,
                 typeId: TransactionItemType.Other_Outgoing,
+                description: `Reimbursement ID: ${rr.id}`,
               },
             },
           },
@@ -229,7 +244,6 @@ export async function action({ request }: ActionFunctionArgs) {
         email: rr.user.username,
         status: ReimbursementRequestStatus.APPROVED,
         orgId,
-        note,
       });
 
       return Toasts.jsonWithSuccess(
@@ -267,7 +281,6 @@ export async function action({ request }: ActionFunctionArgs) {
     email: rr.user.username,
     status: _action,
     orgId,
-    note,
   });
   const normalizedAction = _action === ReimbursementRequestStatus.REJECTED ? "rejected" : "voided";
   return Toasts.jsonWithSuccess(
@@ -281,7 +294,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function ReimbursementRequestPage() {
-  const { reimbursementRequest: rr, accounts } = useTypedLoaderData<typeof loader>();
+  const { reimbursementRequest: rr, accounts, transactionCategories } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -310,7 +323,7 @@ export default function ReimbursementRequestPage() {
                           : "secondary"
                   }
                 >
-                  {rr.status}
+                  {capitalize(rr.status)}
                 </Badge>
               </dd>
               <dt className="font-semibold capitalize">Submitted By</dt>
@@ -377,7 +390,11 @@ export default function ReimbursementRequestPage() {
               method="post"
               validator={validator}
               className="flex w-full"
-              defaultValues={{ accountId: rr.accountId, amount: rr.amountInCents / 100.0 }}
+              defaultValues={{
+                accountId: rr.accountId,
+                amount: rr.amountInCents / 100.0,
+                description: rr.description ?? "",
+              }}
             >
               <input type="hidden" name="id" value={rr.id} />
               {rr.status === ReimbursementRequestStatus.PENDING ? (
@@ -390,6 +407,16 @@ export default function ReimbursementRequestPage() {
                   <div className="mt-4 space-y-4">
                     <FormField name="amount" label="Amount" isCurrency required />
                     <FormSelect
+                      required
+                      name="categoryId"
+                      label="Category"
+                      placeholder="Select category"
+                      options={transactionCategories.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                      }))}
+                    />
+                    <FormSelect
                       name="accountId"
                       label="Account to deduct from"
                       placeholder="Select account"
@@ -399,12 +426,7 @@ export default function ReimbursementRequestPage() {
                         label: `${a.code} - ${a.description}`,
                       }))}
                     />
-                    <FormTextarea
-                      label="Public note"
-                      name="note"
-                      maxLength={2000}
-                      description="This note will appear on the the transaction and/or be sent to the requester."
-                    />
+                    <FormTextarea name="description" label="Requester Notes" readOnly />
                     <Separator />
                     <div className="flex w-full flex-col gap-2 sm:flex-row-reverse sm:items-center">
                       <Button

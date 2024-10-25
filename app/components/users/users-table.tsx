@@ -9,19 +9,24 @@ export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ inc
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>
+            <span className="sr-only">Action</span>
+          </TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Username</TableHead>
           <TableHead>Role</TableHead>
           <TableHead>Created</TableHead>
-          <TableHead>
-            <span className="sr-only">Action</span>
-          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {users.map((user) => {
           return (
             <TableRow key={user.id}>
+              <TableCell>
+                <Link to={`/users/${user.id}/profile`} className="font-medium text-primary">
+                  View
+                </Link>
+              </TableCell>
               <TableCell>
                 <span>
                   {user.contact.firstName}
@@ -31,11 +36,6 @@ export function UsersTable({ users }: { users: Array<Prisma.UserGetPayload<{ inc
               <TableCell>{user.username}</TableCell>
               <TableCell>{normalizeEnum(user.role)}</TableCell>
               <TableCell>{new Date(user.createdAt).toLocaleString()}</TableCell>
-              <TableCell>
-                <Link to={`/users/${user.id}/profile`} className="font-bold text-primary">
-                  View
-                </Link>
-              </TableCell>
             </TableRow>
           );
         })}

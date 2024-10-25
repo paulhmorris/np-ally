@@ -28,16 +28,8 @@ export function UserMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="relative -mx-2 -my-1.5 flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium ring-offset-background hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:w-full">
+          <button className="relative flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-primary ring-offset-background hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:w-full">
             <span className="sr-only">Open User Menu</span>
-            {/* <Avatar aria-hidden="true">
-              <AvatarFallback className="bg-primary text-white dark:text-black" aria-hidden="true">
-                <span>
-                  {user.contact.firstName?.charAt(0).toUpperCase()}
-                  {user.contact.lastName?.charAt(0).toUpperCase()}
-                </span>
-              </AvatarFallback>
-            </Avatar> */}
             <div className="flex flex-col space-y-2 text-left md:space-y-0">
               <p className="text-base font-medium leading-none md:text-sm">
                 {`${user.contact.firstName} ${user.contact.lastName}`}
@@ -47,7 +39,7 @@ export function UserMenu() {
             <IconSelector className="ml-auto size-5 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="mb-2 w-48" align="start" forceMount>
+        <DropdownMenuContent className="mb-2 w-[215px]" align="start" forceMount>
           <div className="md:hidden">
             <DropdownMenuLabel>
               <p className="text-xs font-medium leading-none text-muted-foreground">{user.org?.name}</p>

@@ -56,7 +56,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
             id: true,
             date: true,
             amountInCents: true,
-            description: true,
+            category: true,
             contact: {
               select: {
                 id: true,
@@ -115,9 +115,9 @@ export default function AccountDetailsPage() {
           </Link>
         ) : account.type.id === AccountType.Ministry ? (
           <Link to={`/accounts/${account.id}/edit`}>
-            <Badge variant="secondary">
+            <Badge variant="warning">
               <div>
-                <IconExclamationCircle className="size-3 text-warning" />
+                <IconExclamationCircle className="size-3" />
               </div>
               <span>No linked user</span>
             </Badge>

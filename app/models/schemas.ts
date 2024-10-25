@@ -36,6 +36,7 @@ export const TransactionItemSchema = z.object({
 export const TransactionSchema = z.object({
   date: z.coerce.date().transform((d) => dayjs(d).startOf("day").toDate()),
   description: z.string().optional(),
+  categoryId: z.coerce.number(),
   accountId: z.string().cuid({ message: "Account required" }),
   contactId: z.string().optional(),
   transactionItems: z.array(TransactionItemSchema),

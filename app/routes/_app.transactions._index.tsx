@@ -30,6 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       date: true,
       amountInCents: true,
       description: true,
+      category: true,
       contact: {
         select: {
           id: true,

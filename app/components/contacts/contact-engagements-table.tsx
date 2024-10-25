@@ -16,6 +16,15 @@ export function ContactEngagementsTable({ data }: { data: Array<Engagement> }) {
 type Engagement = Prisma.EngagementGetPayload<{ include: { type: true } }>;
 const columns: Array<ColumnDef<Engagement>> = [
   {
+    id: "action",
+    cell: ({ row }) => (
+      <Link to={`/engagements/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
+  {
     accessorKey: "type",
     accessorFn: (row) => `${row.type.name}`,
     header: ({ column }) => <DataTableColumnHeader column={column} title="Type" />,
@@ -43,15 +52,6 @@ const columns: Array<ColumnDef<Engagement>> = [
         </div>
       );
     },
-    enableColumnFilter: false,
-  },
-  {
-    id: "action",
-    cell: ({ row }) => (
-      <Link to={`/engagements/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
     enableColumnFilter: false,
   },
 ];

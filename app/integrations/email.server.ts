@@ -39,6 +39,7 @@ export async function sendEmail(props: SendEmailInput) {
       },
     },
   };
+
   const command = new SendEmailCommand(input);
   const response = await client.send(command);
   if (!response.MessageId) {

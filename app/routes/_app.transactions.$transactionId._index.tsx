@@ -42,6 +42,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         description: true,
         amountInCents: true,
         contactId: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         account: {
           select: {
             id: true,
@@ -167,7 +173,8 @@ export default function TransactionDetailsPage() {
                   >{`${transaction.contact.firstName} ${transaction.contact.lastName}`}</Link>
                 </DetailItem>
               ) : null}
-              {transaction.description ? <DetailItem label="Description" value={transaction.description} /> : null}
+              <DetailItem label="Category" value={transaction.category?.name} />
+              {transaction.description ? <DetailItem label="Note" value={transaction.description} /> : null}
               {transaction.receipts.length > 0 ? (
                 <div className="items-center py-1.5 text-sm sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
                   <dt className="self-start font-semibold capitalize">Receipts</dt>

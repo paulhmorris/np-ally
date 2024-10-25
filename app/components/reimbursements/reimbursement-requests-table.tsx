@@ -9,7 +9,7 @@ import { Badge } from "~/components/ui/badge";
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
 import { Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { formatCentsAsDollars } from "~/lib/utils";
+import { capitalize, formatCentsAsDollars } from "~/lib/utils";
 
 type ReimbursementRequest = Prisma.ReimbursementRequestGetPayload<{
   include: {
@@ -27,6 +27,16 @@ export function ReimbursementRequestsTable({ data }: { data: Array<Reimbursement
   return <DataTable data={data} columns={columns} facets={facets} />;
 }
 const columns: Array<ColumnDef<ReimbursementRequest>> = [
+  {
+    id: "action",
+    header: () => <span className="sr-only">Action</span>,
+    cell: ({ row }) => (
+      <Link to={`/reimbursements/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
   {
     accessorKey: "user",
     accessorFn: (row) => `${row.user.contact.firstName} ${row.user.contact.lastName}`,
@@ -98,7 +108,7 @@ const columns: Array<ColumnDef<ReimbursementRequest>> = [
               : "secondary";
       return (
         <div>
-          <Badge variant={variant}>{row.getValue("status")}</Badge>
+          <Badge variant={variant}>{capitalize(row.getValue("status"))}</Badge>
         </div>
       );
     },
@@ -107,16 +117,6 @@ const columns: Array<ColumnDef<ReimbursementRequest>> = [
       return value.includes(row.getValue(id));
     },
     enableColumnFilter: true,
-  },
-  {
-    id: "action",
-    header: () => <span className="sr-only">Action</span>,
-    cell: ({ row }) => (
-      <Link to={`/reimbursements/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
-    enableColumnFilter: false,
   },
 ];
 

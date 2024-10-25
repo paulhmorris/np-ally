@@ -15,7 +15,7 @@ type Transaction = Prisma.TransactionGetPayload<{
     id: true;
     date: true;
     amountInCents: true;
-    description: true;
+    category: true;
     contact: {
       select: {
         id: true;
@@ -31,6 +31,16 @@ export function AccountTransactionsTable({ data }: { data: Array<Transaction> })
 }
 
 const columns: Array<ColumnDef<Transaction>> = [
+  {
+    id: "view",
+    header: () => <span className="sr-only">Action</span>,
+    cell: ({ row }) => (
+      <Link to={`/transactions/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
   {
     accessorKey: "date",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
@@ -60,12 +70,13 @@ const columns: Array<ColumnDef<Transaction>> = [
     enableColumnFilter: false,
   },
   {
-    accessorKey: "description",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
+    accessorKey: "category",
+    accessorFn: (row) => row.category?.name,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
     cell: ({ row }) => {
       return (
-        <div>
-          <span className="max-w-[500px] truncate font-medium">{row.getValue("description")}</span>
+        <div className="max-w-[180px] truncate">
+          <span className="font-medium">{row.getValue("category")}</span>
         </div>
       );
     },
@@ -91,16 +102,6 @@ const columns: Array<ColumnDef<Transaction>> = [
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return value.includes(row.getValue(id));
     },
-  },
-  {
-    id: "view",
-    header: () => <span className="sr-only">Action</span>,
-    cell: ({ row }) => (
-      <Link to={`/transactions/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
-    enableColumnFilter: false,
   },
 ];
 
