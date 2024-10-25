@@ -6,10 +6,9 @@ import { capitalize } from "~/lib/utils";
 interface Props {
   url: string;
   status: ReimbursementRequestStatus;
-  note?: string;
 }
 
-export function ReimbursementRequestUpdateEmail({ status, note, url }: Props) {
+export function ReimbursementRequestUpdateEmail({ status, url }: Props) {
   return (
     <Html>
       <Head />
@@ -23,7 +22,6 @@ export function ReimbursementRequestUpdateEmail({ status, note, url }: Props) {
           </Text>
           <Hr />
           <Text style={paragraph}>Administrator note:</Text>
-          <Text style={adminNote}>{note ? note : "N/A"}</Text>
           <Section style={btnContainer}>
             <Button style={button} href={url}>
               Log In
@@ -57,12 +55,6 @@ const container = {
 const paragraph = {
   fontSize: "16px",
   lineHeight: "26px",
-};
-
-const adminNote = {
-  fontSize: "16px",
-  lineHeight: "26px",
-  fontStyle: "italic",
 };
 
 const btnContainer = {
