@@ -23,7 +23,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   return (
     <nav
       className={cn(
-        "fixed left-0 z-10 hidden min-h-full w-64 flex-col space-x-2 border-r border-border bg-card py-10 pl-3 pr-6 md:flex",
+        "fixed left-0 z-10 hidden min-h-full w-64 flex-col border-r border-border bg-card px-5 py-10 md:flex",
         props.className,
       )}
     >
@@ -40,7 +40,7 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
               <IconSelector className="ml-auto size-5 shrink-0 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="mb-2 w-56 space-y-1" align="center" forceMount>
+          <DropdownMenuContent className="mb-2 w-[215px] space-y-1" align="center" forceMount>
             <Form action="/api/change-org" method="post">
               <input type="hidden" name="pathname" value={location.pathname} />
               {user.memberships.map((m) => (
