@@ -200,5 +200,3 @@ export const adminNavLinks: ReadonlyArray<AppNavLink> = [
 ] as const;
 
 export const superAdminNavLinks: ReadonlyArray<AppNavLink> = [] as const;
-
-export const TransactionDescriptions = ["Professional Memberships"] as const;

@@ -1,5 +1,5 @@
 import { ReimbursementRequestStatus } from "@prisma/client";
-import { Body, Button, Container, Head, Hr, Html, Preview, Section, Text } from "@react-email/components";
+import { Body, Button, Container, Head, Html, Preview, Section, Text } from "@react-email/components";
 
 import { capitalize } from "~/lib/utils";
 
@@ -20,8 +20,6 @@ export function ReimbursementRequestUpdateEmail({ status, url }: Props) {
             Your reimbursement request has been marked as{" "}
             <span style={{ fontWeight: "bold", display: "inline", ...paragraph }}>{capitalize(status)}</span>.
           </Text>
-          <Hr />
-          <Text style={paragraph}>Administrator note:</Text>
           <Section style={btnContainer}>
             <Button style={button} href={url}>
               Log In

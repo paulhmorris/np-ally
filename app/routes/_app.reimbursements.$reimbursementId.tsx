@@ -15,11 +15,11 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Callout } from "~/components/ui/callout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { FormField, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
-import { TransactionDescriptions, TransactionItemMethod, TransactionItemType } from "~/lib/constants";
+import { TransactionItemMethod, TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
 import { capitalize, formatCentsAsDollars } from "~/lib/utils";
@@ -38,13 +38,25 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 const validator = withZod(
-  z.object({
-    id: z.string().cuid(),
-    accountId: z.string().optional(),
-    amount: CurrencySchema,
-    description: z.string().max(2000).optional(),
-    _action: z.nativeEnum(ReimbursementRequestStatus),
-  }),
+  z
+    .object({
+      id: z.string().cuid(),
+      amount: CurrencySchema,
+      categoryId: z.coerce.number(),
+      accountId: z.string().optional(),
+      description: z.string().max(2000).optional(),
+      _action: z.nativeEnum(ReimbursementRequestStatus),
+    })
+    .superRefine((data, ctx) => {
+      if (data._action === ReimbursementRequestStatus.APPROVED) {
+        if (!data.accountId) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Account is required for approvals.",
+          });
+        }
+      }
+    }),
 );
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -99,8 +111,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   rr.receipts = await generateS3Urls(rr.receipts);
   const accounts = await db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } });
+  const transactionCategories = await db.transactionCategory.findMany();
 
-  return typedjson({ reimbursementRequest: rr, accounts });
+  return typedjson({ reimbursementRequest: rr, accounts, transactionCategories });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -113,7 +126,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return validationError(result.error);
   }
 
-  const { _action, amount, accountId, description, id } = result.data;
+  const { _action, amount, accountId, description, categoryId, id } = result.data;
 
   // Reopen
   if (_action === ReimbursementRequestStatus.PENDING) {
@@ -205,6 +218,7 @@ export async function action({ request }: ActionFunctionArgs) {
           data: {
             orgId,
             accountId,
+            categoryId,
             description,
             amountInCents: amount * -1,
             date: dayjs().startOf("day").toDate(),
@@ -280,7 +294,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function ReimbursementRequestPage() {
-  const { reimbursementRequest: rr, accounts } = useTypedLoaderData<typeof loader>();
+  const { reimbursementRequest: rr, accounts, transactionCategories } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -393,6 +407,16 @@ export default function ReimbursementRequestPage() {
                   <div className="mt-4 space-y-4">
                     <FormField name="amount" label="Amount" isCurrency required />
                     <FormSelect
+                      required
+                      name="categoryId"
+                      label="Category"
+                      placeholder="Select category"
+                      options={transactionCategories.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                      }))}
+                    />
+                    <FormSelect
                       name="accountId"
                       label="Account to deduct from"
                       placeholder="Select account"
@@ -402,16 +426,7 @@ export default function ReimbursementRequestPage() {
                         label: `${a.code} - ${a.description}`,
                       }))}
                     />
-                    <FormSelect
-                      required
-                      name="description"
-                      label="Description"
-                      placeholder="Select description"
-                      options={TransactionDescriptions.map((d) => ({
-                        value: d,
-                        label: d,
-                      }))}
-                    />
+                    <FormTextarea name="description" label="Requester Notes" readOnly />
                     <Separator />
                     <div className="flex w-full flex-col gap-2 sm:flex-row-reverse sm:items-center">
                       <Button
