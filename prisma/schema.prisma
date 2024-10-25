@@ -165,7 +165,7 @@ model Transaction {
   id            String   @id @default(cuid())
   date          DateTime
   amountInCents Int
-  categoryId    Int
+  categoryId    Int?
   description   String?  @db.Text
   account       Account  @relation(fields: [accountId], references: [id])
   accountId     String
@@ -173,7 +173,7 @@ model Transaction {
   contactId     String?
 
   receipts         Receipt[]
-  category         TransactionCategory @relation(fields: [categoryId], references: [id])
+  category         TransactionCategory? @relation(fields: [categoryId], references: [id])
   transactionItems TransactionItem[]
 
   createdAt DateTime @default(now())
