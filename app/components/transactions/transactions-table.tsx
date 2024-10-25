@@ -96,7 +96,7 @@ const columns = [
   },
   {
     accessorKey: "category",
-    accessorFn: (row) => row.category.name,
+    accessorFn: (row) => row.category?.name,
     header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
     cell: ({ row }) => {
       return (

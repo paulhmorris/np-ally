@@ -173,7 +173,7 @@ export default function TransactionDetailsPage() {
                   >{`${transaction.contact.firstName} ${transaction.contact.lastName}`}</Link>
                 </DetailItem>
               ) : null}
-              <DetailItem label="Category" value={transaction.category.name} />
+              <DetailItem label="Category" value={transaction.category?.name} />
               {transaction.description ? <DetailItem label="Note" value={transaction.description} /> : null}
               {transaction.receipts.length > 0 ? (
                 <div className="items-center py-1.5 text-sm sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
