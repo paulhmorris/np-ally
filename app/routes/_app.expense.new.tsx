@@ -19,6 +19,7 @@ import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
+import { TransactionDescriptions } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
@@ -134,10 +135,16 @@ export default function AddExpensePage() {
                 <div className="w-auto">
                   <FormField required name="date" label="Date" type="date" defaultValue={getToday()} />
                 </div>
-                <FormField
+                <FormSelect
+                  required
                   name="description"
                   label="Description"
-                  description="Will be shown on transaction tables and reports"
+                  description="Shown on transaction tables and reports"
+                  placeholder="Select description"
+                  options={TransactionDescriptions.map((d) => ({
+                    value: d,
+                    label: d,
+                  }))}
                 />
               </div>
               <FormSelect

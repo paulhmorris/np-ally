@@ -12,12 +12,12 @@ import { ReceiptSelector } from "~/components/common/receipt-selector";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { Callout } from "~/components/ui/callout";
-import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
+import { FormField, FormSelect } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
-import { TransactionItemMethod } from "~/lib/constants";
+import { TransactionDescriptions, TransactionItemMethod } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
@@ -123,7 +123,16 @@ export default function NewReimbursementPage() {
       <PageContainer>
         <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-2xl">
           <FormField name="vendor" label="Vendor" />
-          <FormTextarea name="description" label="Description" />
+          <FormSelect
+            required
+            name="description"
+            label="Description"
+            placeholder="Select description"
+            options={TransactionDescriptions.map((d) => ({
+              value: d,
+              label: d,
+            }))}
+          />
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <div className="w-auto">
               <FormField name="date" label="Date" type="date" defaultValue={getToday()} required />
@@ -148,7 +157,7 @@ export default function NewReimbursementPage() {
               name="accountId"
               label="Account"
               placeholder="Select account"
-              description="The account that will be deducted."
+              description="The account that will be deducted from."
               options={accounts.map((t) => ({
                 value: t.id,
                 label: `${t.code} - ${t.type.name}`,

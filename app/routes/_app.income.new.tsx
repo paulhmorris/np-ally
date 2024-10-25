@@ -22,7 +22,7 @@ import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { notifySubscribersJob } from "~/jobs/income-notification.server";
-import { TransactionItemType } from "~/lib/constants";
+import { TransactionDescriptions, TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
@@ -91,10 +91,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const transaction = await db.transaction.create({
       data: {
-        contactId: contactId || undefined,
-        amountInCents: totalInCents,
-        transactionItems: { createMany: { data: trxItems } },
         orgId,
+        amountInCents: totalInCents,
+        contactId: contactId || undefined,
+        transactionItems: { createMany: { data: trxItems } },
         receipts: receiptIds.length > 0 ? { connect: receiptIds.map((id) => ({ id })) } : undefined,
         ...rest,
       },
@@ -168,10 +168,16 @@ export default function AddIncomePage() {
                 <div className="w-auto">
                   <FormField required name="date" label="Date" type="date" defaultValue={getToday()} />
                 </div>
-                <FormField
+                <FormSelect
+                  required
                   name="description"
                   label="Description"
                   description="Shown on transaction tables and reports"
+                  placeholder="Select description"
+                  options={TransactionDescriptions.map((d) => ({
+                    value: d,
+                    label: d,
+                  }))}
                 />
               </div>
               <FormSelect
