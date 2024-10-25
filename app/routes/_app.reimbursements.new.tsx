@@ -1,4 +1,5 @@
 import { Prisma, ReimbursementRequestStatus } from "@prisma/client";
+import { render } from "@react-email/render";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { type MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -7,6 +8,7 @@ import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 
+import { ReimbursementRequestEmail } from "emails/reimbursement-request";
 import { PageHeader } from "~/components/common/page-header";
 import { ReceiptSelector } from "~/components/common/receipt-selector";
 import { ErrorComponent } from "~/components/error-component";
@@ -14,14 +16,15 @@ import { PageContainer } from "~/components/page-container";
 import { Callout } from "~/components/ui/callout";
 import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { sendEmail } from "~/integrations/email.server";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
-import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
 import { TransactionItemMethod } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
-import { getToday } from "~/lib/utils";
+import { constructOrgMailFrom, constructOrgURL, getToday } from "~/lib/utils";
 import { CurrencySchema } from "~/models/schemas";
+import { generateS3Urls } from "~/services.server/receipt";
 import { SessionService } from "~/services.server/session";
 import { getTransactionItemMethods } from "~/services.server/transaction";
 
@@ -89,10 +92,58 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               }
             : undefined,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        amountInCents: true,
+        account: { select: { code: true } },
+        user: {
+          select: {
+            contact: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+        receipts: {
+          select: {
+            id: true,
+            title: true,
+            s3Url: true,
+            s3Key: true,
+            s3UrlExpiry: true,
+          },
+        },
+        org: {
+          select: {
+            name: true,
+            host: true,
+            subdomain: true,
+            replyToEmail: true,
+            administratorEmail: true,
+          },
+        },
+      },
     });
 
-    await reimbursementRequestJob.trigger({ reimbursementRequestId: rr.id });
+    await generateS3Urls(rr.receipts);
+    const url = constructOrgURL("/dashboards/admin", rr.org).toString();
+    const { contact } = rr.user;
+
+    await sendEmail({
+      from: constructOrgMailFrom(rr.org),
+      to: `${rr.org.administratorEmail}@${rr.org.host}`,
+      subject: "New Reimbursement Request",
+      html: render(
+        <ReimbursementRequestEmail
+          accountName={rr.account.code}
+          amountInCents={rr.amountInCents}
+          url={url}
+          requesterName={`${contact.firstName} ${contact.lastName}`}
+        />,
+      ),
+    });
 
     return Toasts.redirectWithSuccess(`/dashboards/${user.isMember ? "staff" : "admin"}`, {
       title: "Reimbursement request submitted",
