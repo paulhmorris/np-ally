@@ -9,7 +9,7 @@ import { Badge } from "~/components/ui/badge";
 import { DataTable } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
 import { Facet } from "~/components/ui/data-table/data-table-toolbar";
-import { formatCentsAsDollars } from "~/lib/utils";
+import { capitalize, formatCentsAsDollars } from "~/lib/utils";
 
 type ReimbursementRequest = Prisma.ReimbursementRequestGetPayload<{
   include: {
@@ -108,7 +108,7 @@ const columns: Array<ColumnDef<ReimbursementRequest>> = [
               : "secondary";
       return (
         <div>
-          <Badge variant={variant}>{row.getValue("status")}</Badge>
+          <Badge variant={variant}>{capitalize(row.getValue("status"))}</Badge>
         </div>
       );
     },

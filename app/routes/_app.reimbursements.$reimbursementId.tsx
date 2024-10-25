@@ -309,7 +309,7 @@ export default function ReimbursementRequestPage() {
                           : "secondary"
                   }
                 >
-                  {rr.status}
+                  {capitalize(rr.status)}
                 </Badge>
               </dd>
               <dt className="font-semibold capitalize">Submitted By</dt>
