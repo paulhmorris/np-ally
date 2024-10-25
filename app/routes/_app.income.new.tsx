@@ -127,7 +127,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             title: "Error notifying subscribers",
             description: "We couldn't find the account for this transaction. Please contact support.",
           },
-          { status: 404 },
         );
       }
 
@@ -145,11 +144,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   } catch (error) {
     console.error(error);
     Sentry.captureException(error);
-    let description = "An error occurred while creating the expense";
+    let description = "An error occurred while creating the income";
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       description = getPrismaErrorText(error);
     }
-    return Toasts.jsonWithError({ success: false }, { title: "Error creating expense", description });
+    return Toasts.jsonWithError({ success: false }, { title: "Error creating income", description });
   }
 };
 
