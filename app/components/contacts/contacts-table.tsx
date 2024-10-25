@@ -14,6 +14,16 @@ export function ContactsTable({ data }: { data: Array<Contact> }) {
 type Contact = Prisma.ContactGetPayload<{ include: { type: true } }>;
 const columns: Array<ColumnDef<Contact>> = [
   {
+    id: "action",
+    header: () => <span className="sr-only">Action</span>,
+    cell: ({ row }) => (
+      <Link to={`/contacts/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
+  {
     accessorKey: "firstName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="First" />,
     cell: ({ row }) => {
@@ -75,16 +85,6 @@ const columns: Array<ColumnDef<Contact>> = [
         </div>
       );
     },
-    enableColumnFilter: false,
-  },
-  {
-    id: "action",
-    header: () => <span className="sr-only">Action</span>,
-    cell: ({ row }) => (
-      <Link to={`/contacts/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
     enableColumnFilter: false,
   },
 ];

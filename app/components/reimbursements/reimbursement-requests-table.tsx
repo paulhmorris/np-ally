@@ -28,6 +28,16 @@ export function ReimbursementRequestsTable({ data }: { data: Array<Reimbursement
 }
 const columns: Array<ColumnDef<ReimbursementRequest>> = [
   {
+    id: "action",
+    header: () => <span className="sr-only">Action</span>,
+    cell: ({ row }) => (
+      <Link to={`/reimbursements/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
+  {
     accessorKey: "user",
     accessorFn: (row) => `${row.user.contact.firstName} ${row.user.contact.lastName}`,
     header: ({ column }) => <DataTableColumnHeader column={column} title="User" />,
@@ -107,16 +117,6 @@ const columns: Array<ColumnDef<ReimbursementRequest>> = [
       return value.includes(row.getValue(id));
     },
     enableColumnFilter: true,
-  },
-  {
-    id: "action",
-    header: () => <span className="sr-only">Action</span>,
-    cell: ({ row }) => (
-      <Link to={`/reimbursements/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
-    enableColumnFilter: false,
   },
 ];
 

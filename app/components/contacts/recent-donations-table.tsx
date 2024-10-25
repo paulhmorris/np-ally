@@ -20,17 +20,22 @@ export function RecentTransactionsTable({ transactions }: { transactions: Array<
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Date</TableHead>
-              <TableHead>Account</TableHead>
-              <TableHead>Amount</TableHead>
               <TableHead>
                 <span className="sr-only">Action</span>
               </TableHead>
+              <TableHead className="w-[100px]">Date</TableHead>
+              <TableHead>Account</TableHead>
+              <TableHead>Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {transactions.map((trx) => (
               <TableRow key={trx.id}>
+                <TableCell>
+                  <Link className="font-medium text-primary" to={`/transactions/${trx.id}`}>
+                    View
+                  </Link>
+                </TableCell>
                 <TableCell>{dayjs(trx.date).utc().format("MM/DD/YYYY")}</TableCell>
                 <TableCell>
                   <Link className="hover:text-primary" to={`/accounts/${trx.accountId}`}>
@@ -38,11 +43,6 @@ export function RecentTransactionsTable({ transactions }: { transactions: Array<
                   </Link>
                 </TableCell>
                 <TableCell>{formatCentsAsDollars(trx.amountInCents)}</TableCell>
-                <TableCell>
-                  <Link className="font-medium text-primary" to={`/transactions/${trx.id}`}>
-                    View
-                  </Link>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>

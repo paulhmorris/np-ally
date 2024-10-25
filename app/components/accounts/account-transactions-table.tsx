@@ -32,6 +32,16 @@ export function AccountTransactionsTable({ data }: { data: Array<Transaction> })
 
 const columns: Array<ColumnDef<Transaction>> = [
   {
+    id: "view",
+    header: () => <span className="sr-only">Action</span>,
+    cell: ({ row }) => (
+      <Link to={`/transactions/${row.original.id}`} className="font-medium text-primary">
+        View
+      </Link>
+    ),
+    enableColumnFilter: false,
+  },
+  {
     accessorKey: "date",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
     cell: ({ row }) => {
@@ -91,16 +101,6 @@ const columns: Array<ColumnDef<Transaction>> = [
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return value.includes(row.getValue(id));
     },
-  },
-  {
-    id: "view",
-    header: () => <span className="sr-only">Action</span>,
-    cell: ({ row }) => (
-      <Link to={`/transactions/${row.original.id}`} className="font-medium text-primary">
-        View
-      </Link>
-    ),
-    enableColumnFilter: false,
   },
 ];
 
