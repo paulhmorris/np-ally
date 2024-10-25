@@ -61,6 +61,48 @@ export enum TransactionItemMethod {
   Other = 7,
 }
 
+export enum TransactionCategory {
+  Professional_Services = 1,
+  Supplies = 2,
+  Travel = 3,
+  Meals = 4,
+  Taxes = 5,
+  Rent = 6,
+  Utilities = 7,
+  Insurance = 8,
+  Marketing = 9,
+  Training = 10,
+  Equipment = 11,
+  Repairs = 12,
+  Miscellaneous = 13,
+  Salaries = 14,
+  Fees = 15,
+  Donations = 16,
+  Grants = 17,
+  Other = 18,
+}
+
+export const transactionCategories: Array<{ id: TransactionCategory; name: string }> = [
+  { id: 1, name: "Professional Services" },
+  { id: 2, name: "Supplies" },
+  { id: 3, name: "Travel" },
+  { id: 4, name: "Meals" },
+  { id: 5, name: "Taxes" },
+  { id: 6, name: "Rent" },
+  { id: 7, name: "Utilities" },
+  { id: 8, name: "Insurance" },
+  { id: 9, name: "Marketing" },
+  { id: 10, name: "Training" },
+  { id: 11, name: "Equipment" },
+  { id: 12, name: "Repairs" },
+  { id: 13, name: "Miscellaneous" },
+  { id: 14, name: "Salaries" },
+  { id: 15, name: "Fees" },
+  { id: 16, name: "Donations" },
+  { id: 17, name: "Grants" },
+  { id: 18, name: "Other" },
+] as const;
+
 export const transactionItemMethods: Array<{ id: TransactionItemMethod; name: string }> = [
   { id: 1, name: "PayPal" },
   { id: 2, name: "Check" },

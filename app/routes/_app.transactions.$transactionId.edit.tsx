@@ -14,7 +14,7 @@ import { PageHeader } from "~/components/common/page-header";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { BackButton } from "~/components/ui/back-button";
-import { FormField } from "~/components/ui/form";
+import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { db } from "~/integrations/prisma.server";
@@ -28,6 +28,7 @@ const schema = withZod(
   z.object({
     id: z.string().cuid(),
     date: z.string(),
+    categoryId: z.string(),
     description: z.string().optional(),
   }),
 );
@@ -42,6 +43,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     include: {
       account: true,
       contact: true,
+      category: true,
       transactionItems: {
         include: {
           type: true,
@@ -51,9 +53,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     },
   });
 
+  const categories = await db.transactionCategory.findMany();
+
   if (!transaction) throw notFound({ message: "Transaction not found" });
 
-  return typedjson({ transaction });
+  return typedjson({ transaction, categories });
 };
 
 export const meta: MetaFunction = () => [{ title: "Transaction Edit" }];
@@ -67,7 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { date, description, id } = result.data;
+  const { date, description, categoryId, id } = result.data;
 
   try {
     await db.transaction.update({
@@ -75,6 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       data: {
         date: new Date(date),
         description: description || undefined,
+        categoryId: +categoryId,
       },
     });
 
@@ -94,7 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function TransactionDetailsPage() {
-  const { transaction } = useTypedLoaderData<typeof loader>();
+  const { transaction, categories } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -112,6 +117,14 @@ export default function TransactionDetailsPage() {
                   {`${transaction.account.code}`} - {transaction.account.description}
                 </Link>
               </DetailItem>
+              {transaction.contact ? (
+                <DetailItem label="Contact">
+                  <Link
+                    to={`/contacts/${transaction.contactId}`}
+                    className="font-medium text-primary"
+                  >{`${transaction.contact.firstName} ${transaction.contact.lastName}`}</Link>
+                </DetailItem>
+              ) : null}
               <ValidatedForm
                 id="transaction-edit"
                 validator={schema}
@@ -119,6 +132,7 @@ export default function TransactionDetailsPage() {
                 defaultValues={{
                   date: dayjs(transaction.date).utc().format("YYYY-MM-DD"),
                   description: transaction.description ?? "",
+                  categoryId: String(transaction.categoryId),
                 }}
                 className="flex flex-col"
               >
@@ -130,19 +144,27 @@ export default function TransactionDetailsPage() {
                   </dd>
                 </div>
                 <div className="items-center py-1.5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                  <dt className="text-sm font-semibold capitalize">Description</dt>
+                  <dt className="text-sm font-semibold capitalize">Category</dt>
                   <dd className={cn("mt-1 sm:col-span-2 sm:mt-0")}>
-                    <FormField name="description" label="Description" hideLabel type="text" />
+                    <FormSelect
+                      hideLabel
+                      required
+                      name="categoryId"
+                      label="Category"
+                      placeholder="Select category"
+                      options={categories.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                      }))}
+                    />
                   </dd>
                 </div>
-                {transaction.contact ? (
-                  <DetailItem label="Contact">
-                    <Link
-                      to={`/contacts/${transaction.contactId}`}
-                      className="font-medium text-primary"
-                    >{`${transaction.contact.firstName} ${transaction.contact.lastName}`}</Link>
-                  </DetailItem>
-                ) : null}
+                <div className="items-start py-1.5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <dt className="text-sm font-semibold capitalize">Description</dt>
+                  <dd className={cn("mt-1 sm:col-span-2 sm:mt-0")}>
+                    <FormTextarea name="description" label="Description" hideLabel />
+                  </dd>
+                </div>
                 <SubmitButton className="ml-auto">Save</SubmitButton>
               </ValidatedForm>
             </dl>

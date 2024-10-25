@@ -87,6 +87,7 @@ model Organization {
   engagements            Engagement[]
   engagementTypes        EngagementType[]
   announcements          Announcement[]
+  transactionCategories  TransactionCategory[]
 
   @@unique([host, subdomain])
 }
@@ -161,22 +162,36 @@ model AccountSubscription {
 }
 
 model Transaction {
-  id               String            @id @default(cuid())
-  date             DateTime
-  amountInCents    Int
-  description      String?           @db.Text
-  account          Account           @relation(fields: [accountId], references: [id])
-  accountId        String
-  contact          Contact?          @relation(fields: [contactId], references: [id])
-  contactId        String?
-  transactionItems TransactionItem[]
+  id            String   @id @default(cuid())
+  date          DateTime
+  amountInCents Int
+  categoryId    Int
+  description   String?  @db.Text
+  account       Account  @relation(fields: [accountId], references: [id])
+  accountId     String
+  contact       Contact? @relation(fields: [contactId], references: [id])
+  contactId     String?
+
   receipts         Receipt[]
+  category         TransactionCategory @relation(fields: [categoryId], references: [id])
+  transactionItems TransactionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   orgId String
+}
+
+model TransactionCategory {
+  id           Int           @id @default(autoincrement())
+  name         String
+  transactions Transaction[]
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orgId String?
+
+  @@unique([name, orgId])
 }
 
 model TransactionItem {

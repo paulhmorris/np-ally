@@ -16,6 +16,7 @@ type Transaction = Prisma.TransactionGetPayload<{
     date: true;
     amountInCents: true;
     description: true;
+    category: true;
     contact: {
       select: {
         id: true;
@@ -94,12 +95,13 @@ const columns = [
     enableColumnFilter: false,
   },
   {
-    accessorKey: "description",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
+    accessorKey: "category",
+    accessorFn: (row) => row.category.name,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
     cell: ({ row }) => {
       return (
         <div className="max-w-[180px] truncate">
-          <span className="font-medium">{row.getValue("description")}</span>
+          <span className="font-medium">{row.getValue("category")}</span>
         </div>
       );
     },

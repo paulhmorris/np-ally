@@ -56,7 +56,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
             id: true,
             date: true,
             amountInCents: true,
-            description: true,
+            category: true,
             contact: {
               select: {
                 id: true,

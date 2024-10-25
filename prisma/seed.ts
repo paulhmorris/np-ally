@@ -10,6 +10,7 @@ import {
   contactTypes,
   defaultAccounts,
   engagementTypes,
+  transactionCategories,
   transactionItemMethods,
   transactionItemTypes,
 } from "~/lib/constants";
@@ -19,6 +20,7 @@ const db = new PrismaClient();
 async function seed() {
   // cleanup the existing database
   await db.$transaction([
+    db.transactionCategory.deleteMany(),
     db.transactionItem.deleteMany(),
     db.transaction.deleteMany(),
     db.membership.deleteMany(),
@@ -43,6 +45,7 @@ async function seed() {
   const org2 = await db.organization.create({ data: { name: "Moms of Courage", host: "momsofcourage.org" } });
 
   await db.$transaction([
+    db.transactionCategory.createMany({ data: transactionCategories }),
     db.transactionItemType.createMany({ data: transactionItemTypes }),
     db.transactionItemMethod.createMany({ data: transactionItemMethods }),
     db.contactType.createMany({ data: contactTypes }),
@@ -220,6 +223,7 @@ async function seed() {
         description: faker.lorem.word(),
         accountId: account.id,
         contactId: donorContact.id,
+        categoryId: faker.number.int({ min: 1, max: 18 }),
         orgId: org.id,
         transactionItems: {
           createMany: {
@@ -251,6 +255,7 @@ async function seed() {
         description: faker.lorem.word(),
         accountId: account2.id,
         contactId: donorContact2.id,
+        categoryId: faker.number.int({ min: 1, max: 18 }),
         orgId: org2.id,
         transactionItems: {
           createMany: {

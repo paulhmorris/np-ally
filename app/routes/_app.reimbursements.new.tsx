@@ -12,12 +12,12 @@ import { ReceiptSelector } from "~/components/common/receipt-selector";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { Callout } from "~/components/ui/callout";
-import { FormField, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { reimbursementRequestJob } from "~/jobs/reimbursement-request.server";
-import { TransactionDescriptions, TransactionItemMethod } from "~/lib/constants";
+import { TransactionItemMethod } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
 import { getToday } from "~/lib/utils";
@@ -123,15 +123,11 @@ export default function NewReimbursementPage() {
       <PageContainer>
         <ValidatedForm id="reimbursement-form" method="post" validator={validator} className="space-y-4 sm:max-w-2xl">
           <FormField name="vendor" label="Vendor" />
-          <FormSelect
+          <FormTextarea
             required
             name="description"
             label="Description"
-            placeholder="Select description"
-            options={TransactionDescriptions.map((d) => ({
-              value: d,
-              label: d,
-            }))}
+            placeholder="Leave some notes about what you purchased..."
           />
           <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
             <div className="w-auto">

@@ -15,14 +15,14 @@ import { PageContainer } from "~/components/page-container";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
-import { FormField, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { notifySubscribersJob } from "~/jobs/income-notification.server";
-import { TransactionDescriptions, TransactionItemType } from "~/lib/constants";
+import { TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
@@ -39,37 +39,41 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts] = await Promise.all([
-    db.contact.findMany({ where: { orgId }, include: { type: true } }),
-    getContactTypes(orgId),
-    db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
-    getTransactionItemMethods(orgId),
-    db.transactionItemType.findMany({
-      where: {
-        AND: [
-          { OR: [{ orgId }, { orgId: null }] },
-          { OR: [{ direction: TransactionItemTypeDirection.IN }, { id: TransactionItemType.Fee }] },
-        ],
-      },
-    }),
-    db.receipt.findMany({
-      // Admins can see all receipts, users can only see their own
-      where: {
-        orgId,
-        userId: user.isMember ? user.id : undefined,
-        reimbursementRequests: { none: {} },
-        transactions: { none: {} },
-      },
-      include: { user: { select: { contact: { select: { email: true } } } } },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, categories, receipts] =
+    await db.$transaction([
+      db.contact.findMany({ where: { orgId }, include: { type: true } }),
+      getContactTypes(orgId),
+      db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+      getTransactionItemMethods(orgId),
+      db.transactionItemType.findMany({
+        where: {
+          AND: [
+            { OR: [{ orgId }, { orgId: null }] },
+            { OR: [{ direction: TransactionItemTypeDirection.IN }, { id: TransactionItemType.Fee }] },
+          ],
+        },
+      }),
+      db.transactionCategory.findMany({ orderBy: { id: "asc" } }),
+      db.receipt.findMany({
+        // Admins can see all receipts, users can only see their own
+        where: {
+          orgId,
+          userId: user.isMember ? user.id : undefined,
+          reimbursementRequests: { none: {} },
+          transactions: { none: {} },
+        },
+        include: { user: { select: { contact: { select: { email: true } } } } },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
   return typedjson({
     contacts,
     contactTypes,
     accounts,
     transactionItemMethods,
     transactionItemTypes,
+    categories,
     receipts,
     ...setFormDefaults("income-form", {
       transactionItems: [{ id: nanoid() }],
@@ -153,7 +157,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AddIncomePage() {
-  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts } =
+  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts, categories } =
     useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "income-form" });
 
@@ -170,16 +174,22 @@ export default function AddIncomePage() {
                 </div>
                 <FormSelect
                   required
-                  name="description"
-                  label="Description"
-                  description="Shown on transaction tables and reports"
-                  placeholder="Select description"
-                  options={TransactionDescriptions.map((d) => ({
-                    value: d,
-                    label: d,
+                  name="categoryId"
+                  label="Category"
+                  placeholder="Select category"
+                  options={categories.map((c) => ({
+                    value: c.id,
+                    label: c.name,
                   }))}
                 />
               </div>
+              <FormTextarea
+                required
+                name="description"
+                label="Note"
+                description="Shown on transaction tables and reports"
+                placeholder="Select description"
+              />
               <FormSelect
                 required
                 name="accountId"

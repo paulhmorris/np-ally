@@ -14,12 +14,11 @@ import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { FormField, FormSelect } from "~/components/ui/form";
+import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
-import { TransactionDescriptions } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
 import { formatCentsAsDollars, getToday } from "~/lib/utils";
@@ -36,36 +35,39 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts] = await Promise.all([
-    db.contact.findMany({ where: { orgId }, include: { type: true } }),
-    getContactTypes(orgId),
-    db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
-    getTransactionItemMethods(orgId),
-    db.transactionItemType.findMany({
-      where: {
-        OR: [{ orgId }, { orgId: null }],
-        direction: TransactionItemTypeDirection.OUT,
-      },
-    }),
-    db.receipt.findMany({
-      // Admins can see all receipts, users can only see their own
-      where: {
-        orgId,
-        userId: user.isMember ? user.id : undefined,
-        reimbursementRequests: { none: {} },
-        transactions: { none: {} },
-      },
-      include: { user: { select: { contact: { select: { email: true } } } } },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const [contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, categories, receipts] =
+    await Promise.all([
+      db.contact.findMany({ where: { orgId }, include: { type: true } }),
+      getContactTypes(orgId),
+      db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } }),
+      getTransactionItemMethods(orgId),
+      db.transactionItemType.findMany({
+        where: {
+          OR: [{ orgId }, { orgId: null }],
+          direction: TransactionItemTypeDirection.OUT,
+        },
+      }),
+      db.transactionCategory.findMany({ orderBy: { id: "asc" } }),
+      db.receipt.findMany({
+        // Admins can see all receipts, users can only see their own
+        where: {
+          orgId,
+          userId: user.isMember ? user.id : undefined,
+          reimbursementRequests: { none: {} },
+          transactions: { none: {} },
+        },
+        include: { user: { select: { contact: { select: { email: true } } } } },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
   return typedjson({
+    contacts,
+    contactTypes,
     accounts,
     transactionItemMethods,
     transactionItemTypes,
-    contacts,
-    contactTypes,
+    categories,
     receipts,
     ...setFormDefaults("expense-form", {
       transactionItems: [{ id: nanoid() }],
@@ -87,10 +89,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const { transactionItems: trxItems, totalInCents } = await generateTransactionItems(transactionItems, orgId);
     const transaction = await db.transaction.create({
       data: {
-        contactId: contactId || undefined,
-        amountInCents: totalInCents,
-        transactionItems: { createMany: { data: trxItems } },
         orgId,
+        amountInCents: totalInCents,
+        contactId: contactId || undefined,
+        transactionItems: { createMany: { data: trxItems } },
         receipts: receiptIds.length > 0 ? { connect: receiptIds.map((id) => ({ id })) } : undefined,
         ...rest,
       },
@@ -120,7 +122,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AddExpensePage() {
-  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, receipts } =
+  const { contacts, contactTypes, accounts, transactionItemMethods, transactionItemTypes, categories, receipts } =
     useTypedLoaderData<typeof loader>();
   const [items, { push, remove }] = useFieldArray("transactionItems", { formId: "expense-form" });
 
@@ -137,16 +139,22 @@ export default function AddExpensePage() {
                 </div>
                 <FormSelect
                   required
-                  name="description"
-                  label="Description"
-                  description="Shown on transaction tables and reports"
-                  placeholder="Select description"
-                  options={TransactionDescriptions.map((d) => ({
-                    value: d,
-                    label: d,
+                  name="categoryId"
+                  label="Category"
+                  placeholder="Select category"
+                  options={categories.map((c) => ({
+                    value: c.id,
+                    label: c.name,
                   }))}
                 />
               </div>
+              <FormTextarea
+                required
+                name="description"
+                label="Note"
+                description="Shown on transaction tables and reports"
+                placeholder="Select description"
+              />
               <FormSelect
                 required
                 name="accountId"
