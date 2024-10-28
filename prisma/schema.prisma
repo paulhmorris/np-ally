@@ -247,6 +247,7 @@ model ReimbursementRequest {
   date          DateTime
   vendor        String?
   description   String?                    @db.Text
+  approverNote  String?                    @db.Text
   user          User                       @relation(fields: [userId], references: [id])
   userId        String
   account       Account                    @relation(fields: [accountId], references: [id])
