@@ -45,6 +45,7 @@ const validator = withZod(
       categoryId: z.coerce.number(),
       accountId: z.string().optional(),
       description: z.string().max(2000).optional(),
+      trxDescription: z.string().max(2000).optional(),
       _action: z.nativeEnum(ReimbursementRequestStatus),
     })
     .superRefine((data, ctx) => {
@@ -405,6 +406,7 @@ export default function ReimbursementRequestPage() {
                     </Callout>
                   </legend>
                   <div className="mt-4 space-y-4">
+                    <FormTextarea name="description" label="Requester Notes" readOnly />
                     <FormField name="amount" label="Amount" isCurrency required />
                     <FormSelect
                       required
@@ -426,7 +428,11 @@ export default function ReimbursementRequestPage() {
                         label: `${a.code} - ${a.description}`,
                       }))}
                     />
-                    <FormTextarea name="description" label="Requester Notes" readOnly />
+                    <FormTextarea
+                      name="trxDescription"
+                      label="Approver Notes"
+                      description="Shows as the transaction description"
+                    />
                     <Separator />
                     <div className="flex w-full flex-col gap-2 sm:flex-row-reverse sm:items-center">
                       <Button
