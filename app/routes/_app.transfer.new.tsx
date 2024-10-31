@@ -83,7 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       data: {
         ...rest,
         orgId,
-        categoryId: TransactionCategory.Other,
+        categoryId: TransactionCategory.Expense_Other,
         description: description ? description : `Transfer to ${toAccountId}`,
         accountId: fromAccountId,
         amountInCents: -1 * amountInCents,
@@ -101,7 +101,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       data: {
         ...rest,
         orgId,
-        categoryId: TransactionCategory.Other,
+        categoryId: TransactionCategory.Income_Other,
         description: description ? description : `Transfer from ${toAccountId}`,
         accountId: toAccountId,
         amountInCents: amountInCents,
