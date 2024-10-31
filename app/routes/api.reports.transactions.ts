@@ -8,8 +8,8 @@ import { Toasts } from "~/lib/toast.server";
 import { SessionService } from "~/services.server/session";
 
 export const TransactionsReportSchema = z.object({
-  startDate: z.string(),
-  endDate: z.string(),
+  trxStartDate: z.string(),
+  trxEndDate: z.string(),
 });
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -31,8 +31,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     where: {
       orgId,
       AND: [
-        { transaction: { date: { gte: new Date(parsedParams.data.startDate) } } },
-        { transaction: { date: { lte: new Date(parsedParams.data.endDate) } } },
+        { transaction: { date: { gte: new Date(parsedParams.data.trxStartDate) } } },
+        { transaction: { date: { lte: new Date(parsedParams.data.trxEndDate) } } },
       ],
     },
     select: {
@@ -113,7 +113,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return new Response(file, {
     headers: {
-      "Content-Disposition": `attachment; filename=${org.name}-transactions-report-${parsedParams.data.startDate}-${parsedParams.data.endDate}.xlsx`,
+      "Content-Disposition": `attachment; filename=${org.name}-transactions-report-${parsedParams.data.trxStartDate}-${parsedParams.data.trxEndDate}.xlsx`,
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     },
   });

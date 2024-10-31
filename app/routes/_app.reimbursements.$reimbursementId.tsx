@@ -8,6 +8,7 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
+import { zfd } from "zod-form-data";
 
 import { PageHeader } from "~/components/common/page-header";
 import { PageContainer } from "~/components/page-container";
@@ -38,25 +39,28 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 const validator = withZod(
-  z
-    .object({
+  z.discriminatedUnion("_action", [
+    z.object({
+      _action: z.literal(ReimbursementRequestStatus.APPROVED),
       id: z.string().cuid(),
       amount: CurrencySchema,
-      categoryId: z.coerce.number(),
+      categoryId: zfd.numeric(z.number().positive()),
       accountId: z.string().optional(),
-      description: z.string().max(2000).optional(),
-      _action: z.nativeEnum(ReimbursementRequestStatus),
-    })
-    .superRefine((data, ctx) => {
-      if (data._action === ReimbursementRequestStatus.APPROVED) {
-        if (!data.accountId) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Account is required for approvals.",
-          });
-        }
-      }
+      approverNote: z.string().max(2000).optional(),
     }),
+    z.object({
+      _action: z.literal(ReimbursementRequestStatus.VOID),
+      id: z.string().cuid(),
+    }),
+    z.object({
+      _action: z.literal(ReimbursementRequestStatus.PENDING),
+      id: z.string().cuid(),
+    }),
+    z.object({
+      _action: z.literal(ReimbursementRequestStatus.REJECTED),
+      id: z.string().cuid(),
+    }),
+  ]),
 );
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -75,6 +79,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       accountId: true,
       description: true,
       amountInCents: true,
+      approverNote: true,
       user: {
         select: {
           username: true,
@@ -110,10 +115,32 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   });
 
   rr.receipts = await generateS3Urls(rr.receipts);
-  const accounts = await db.account.findMany({ where: { orgId }, orderBy: { code: "asc" } });
-  const transactionCategories = await db.transactionCategory.findMany();
 
-  return typedjson({ reimbursementRequest: rr, accounts, transactionCategories });
+  const [relatedTrx, accounts, transactionCategories] = await db.$transaction([
+    // In case of REOPEN, have to jump through a few hoops to get the related transaction's category to fill in the form
+    db.transactionItem.findFirst({
+      where: { description: `Reimbursement ID: ${rr.id}` },
+      select: {
+        transaction: {
+          select: {
+            category: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    db.account.findMany({
+      where: { orgId },
+      select: { id: true, code: true, description: true },
+      orderBy: { code: "asc" },
+    }),
+    db.transactionCategory.findMany({ select: { id: true, name: true } }),
+  ]);
+
+  return typedjson({ reimbursementRequest: rr, accounts, transactionCategories, relatedTrx });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -126,7 +153,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return validationError(result.error);
   }
 
-  const { _action, amount, accountId, description, categoryId, id } = result.data;
+  const { _action, id } = result.data;
 
   // Reopen
   if (_action === ReimbursementRequestStatus.PENDING) {
@@ -157,6 +184,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Approved
   if (_action === ReimbursementRequestStatus.APPROVED) {
+    const { amount, categoryId, accountId, approverNote } = result.data;
     if (!accountId) {
       return validationError({
         fieldErrors: {
@@ -219,7 +247,7 @@ export async function action({ request }: ActionFunctionArgs) {
             orgId,
             accountId,
             categoryId,
-            description,
+            description: approverNote,
             amountInCents: amount * -1,
             date: dayjs().startOf("day").toDate(),
             transactionItems: {
@@ -235,7 +263,7 @@ export async function action({ request }: ActionFunctionArgs) {
         }),
         db.reimbursementRequest.update({
           where: { id, orgId },
-          data: { status: _action },
+          data: { status: _action, approverNote },
           include: { account: true },
         }),
       ]);
@@ -254,6 +282,7 @@ export async function action({ request }: ActionFunctionArgs) {
         },
       );
     } catch (error) {
+      console.error(error);
       Sentry.captureException(error);
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         return Toasts.jsonWithError(
@@ -290,11 +319,10 @@ export async function action({ request }: ActionFunctionArgs) {
       description: `The reimbursement request has been ${normalizedAction} and the requester will be notified.`,
     },
   );
-  // TODO: Send email to requester
 }
 
 export default function ReimbursementRequestPage() {
-  const { reimbursementRequest: rr, accounts, transactionCategories } = useTypedLoaderData<typeof loader>();
+  const { reimbursementRequest: rr, accounts, transactionCategories, relatedTrx } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -347,8 +375,15 @@ export default function ReimbursementRequestPage() {
 
               {rr.description ? (
                 <>
-                  <dt className="font-semibold capitalize">Notes</dt>
+                  <dt className="font-semibold capitalize">Requester Notes</dt>
                   <dd className="col-span-2 text-muted-foreground">{rr.description}</dd>
+                </>
+              ) : null}
+
+              {rr.approverNote ? (
+                <>
+                  <dt className="font-semibold capitalize">Approver Notes</dt>
+                  <dd className="col-span-2 text-muted-foreground">{rr.approverNote}</dd>
                 </>
               ) : null}
 
@@ -391,9 +426,9 @@ export default function ReimbursementRequestPage() {
               validator={validator}
               className="flex w-full"
               defaultValues={{
-                accountId: rr.accountId,
                 amount: rr.amountInCents / 100.0,
-                description: rr.description ?? "",
+                categoryId: relatedTrx?.transaction.category?.id.toString() as unknown as number,
+                ...rr,
               }}
             >
               <input type="hidden" name="id" value={rr.id} />
@@ -405,11 +440,12 @@ export default function ReimbursementRequestPage() {
                     </Callout>
                   </legend>
                   <div className="mt-4 space-y-4">
+                    <FormTextarea name="description" label="Requester Notes" readOnly />
                     <FormField name="amount" label="Amount" isCurrency required />
                     <FormSelect
                       required
                       name="categoryId"
-                      label="Category"
+                      label="Transaction Category"
                       placeholder="Select category"
                       options={transactionCategories.map((c) => ({
                         value: c.id,
@@ -426,7 +462,11 @@ export default function ReimbursementRequestPage() {
                         label: `${a.code} - ${a.description}`,
                       }))}
                     />
-                    <FormTextarea name="description" label="Requester Notes" readOnly />
+                    <FormTextarea
+                      name="approverNote"
+                      label="Approver Notes"
+                      description="Also appears as the transaction description"
+                    />
                     <Separator />
                     <div className="flex w-full flex-col gap-2 sm:flex-row-reverse sm:items-center">
                       <Button

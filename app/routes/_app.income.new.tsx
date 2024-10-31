@@ -1,4 +1,5 @@
 import { Prisma, TransactionItemTypeDirection } from "@prisma/client";
+import { render } from "@react-email/render";
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
@@ -7,6 +8,7 @@ import { nanoid } from "nanoid";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { setFormDefaults, useFieldArray, ValidatedForm, validationError } from "remix-validated-form";
 
+import { IncomeNotificationEmail } from "emails/income-notification";
 import { PageHeader } from "~/components/common/page-header";
 import { ReceiptSelector } from "~/components/common/receipt-selector";
 import { ContactDropdown } from "~/components/contacts/contact-dropdown";
@@ -19,13 +21,13 @@ import { FormField, FormSelect, FormTextarea } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { SubmitButton } from "~/components/ui/submit-button";
+import { sendEmail } from "~/integrations/email.server";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
-import { notifySubscribersJob } from "~/jobs/income-notification.server";
 import { TransactionItemType } from "~/lib/constants";
 import { getPrismaErrorText } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
-import { formatCentsAsDollars, getToday } from "~/lib/utils";
+import { constructOrgMailFrom, constructOrgURL, formatCentsAsDollars, getToday } from "~/lib/utils";
 import { CheckboxSchema, TransactionSchema } from "~/models/schemas";
 import { getContactTypes } from "~/services.server/contact";
 import { SessionService } from "~/services.server/session";
@@ -112,11 +114,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               select: {
                 contact: {
                   select: {
+                    firstName: true,
                     email: true,
                   },
                 },
               },
             },
+          },
+        },
+        org: {
+          select: {
+            name: true,
+            host: true,
+            subdomain: true,
+            replyToEmail: true,
           },
         },
       },
@@ -134,11 +145,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         );
       }
 
-      const key = nanoid();
-      await notifySubscribersJob.trigger(
-        { to: email, orgId, accountName: transaction.account.code, amountInCents: transaction.amountInCents },
-        { idempotencyKey: key },
-      );
+      const org = transaction.org;
+      await sendEmail({
+        from: constructOrgMailFrom(org),
+        to: email,
+        subject: "You have new income!",
+        html: render(
+          <IncomeNotificationEmail
+            url={constructOrgURL("/", org).toString()}
+            accountName={transaction.account.code}
+            amountInCents={transaction.amountInCents}
+            userFirstname={transaction.account.user?.contact.firstName ?? "User"}
+          />,
+        ),
+      });
     }
 
     return Toasts.redirectWithSuccess(`/accounts/${transaction.account.id}`, {

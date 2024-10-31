@@ -227,7 +227,18 @@ export default function TransactionDetailsPage() {
                   <TableRow key={item.id}>
                     <TableCell>{item.type.name}</TableCell>
                     <TableCell>{item.method?.name}</TableCell>
-                    <TableCell>{item.description}</TableCell>
+                    <TableCell>
+                      {item.description?.includes("Reimbursement ID:") && !authorizedUser.isMember ? (
+                        <Link
+                          to={`/reimbursements/${item.description.split(": ")[1]}`}
+                          className="font-medium text-primary"
+                        >
+                          Reimbursement
+                        </Link>
+                      ) : (
+                        item.description
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">{formatCentsAsDollars(item.amountInCents, 2)}</TableCell>
                   </TableRow>
                 ))}
