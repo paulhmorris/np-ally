@@ -11,11 +11,10 @@ import { BigButton } from "~/components/ui/big-button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { db } from "~/integrations/prisma.server";
-import { sessionStorage } from "~/lib/session.server";
 import { Toasts } from "~/lib/toast.server";
 import { normalizeEnum } from "~/lib/utils";
 import { CheckboxSchema } from "~/models/schemas";
-import { SessionService } from "~/services.server/session";
+import { SessionService, sessionStorage } from "~/services.server/session";
 
 const validator = withZod(
   z.object({

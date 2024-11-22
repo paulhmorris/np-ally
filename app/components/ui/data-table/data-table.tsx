@@ -1,9 +1,10 @@
-import { useLocation } from "@remix-run/react";
+import { useLocation, useSearchParams } from "@remix-run/react";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import {
   ColumnDef,
   ColumnFiltersState,
   FilterFn,
+  PaginationState,
   SortingState,
   Updater,
   VisibilityState,
@@ -38,24 +39,35 @@ interface DataTableProps<TData> {
   data: Array<TData>;
   columns: Array<ColumnDef<TData>>;
   facets?: Array<Facet>;
+  serverPagination?: boolean;
+  rowCount?: number;
 }
 
-export function DataTable<TData>({ data, columns, facets }: DataTableProps<TData>) {
+export const DEFAULT_PAGE_SIZE = 20;
+
+export function DataTable<TData>({ data, columns, facets, serverPagination, rowCount }: DataTableProps<TData>) {
   const location = useLocation();
   const [savedSort, setSavedSort, removeSavedSort] = useLocalStorage<SortingState>(
     `data-table-sort-${location.pathname.slice(1)}`,
     [],
   );
+
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const defaultSortState: SortingState = savedSort && savedSort.length > 0 ? savedSort : [];
   const [sorting, setSorting] = useState<SortingState>(defaultSortState);
+  const [search, setSearch] = useSearchParams();
+
+  const defaultPaginationState: PaginationState = {
+    pageIndex: Number(search.get("page") || 0),
+    pageSize: Number(search.get("pageSize") || 20),
+  };
+  const [pagination, setPagination] = useState<PaginationState>(defaultPaginationState);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [rowSelection, setRowSelection] = useState({});
 
-  function setSort(updaterOrValue: Updater<SortingState>) {
+  function updateSort(updaterOrValue: Updater<SortingState>) {
     if (typeof updaterOrValue === "function") {
       const newValue = updaterOrValue(sorting);
       if (newValue.length === 0) {
@@ -69,36 +81,55 @@ export function DataTable<TData>({ data, columns, facets }: DataTableProps<TData
     return updaterOrValue;
   }
 
+  function updatePagination(updaterOrValue: Updater<PaginationState>) {
+    if (typeof updaterOrValue === "function") {
+      const { pageIndex, pageSize } = updaterOrValue(pagination);
+      const params = new URLSearchParams(search);
+      params.set("pageSize", String(pageSize));
+      params.set("page", String(pageIndex + 1));
+      setSearch(params, { replace: true, preventScrollReset: true });
+      setPagination({ pageIndex, pageSize });
+    }
+    return updaterOrValue;
+  }
+
+  function updateGlobalFilter(value: string) {
+    const params = new URLSearchParams(search);
+    if (value === "") {
+      params.delete("s");
+      setSearch(params, { replace: true, preventScrollReset: true });
+      setGlobalFilter("");
+      return;
+    }
+    params.set("s", String(value));
+    setSearch(params, { replace: true, preventScrollReset: true });
+    setGlobalFilter(value);
+  }
+
   const table = useReactTable({
     data,
     columns,
+    rowCount,
+    manualPagination: serverPagination,
     filterFns: { fuzzy: fuzzyFilter },
     globalFilterFn: fuzzyFilter,
-    initialState: {
-      sorting,
-      pagination: {
-        pageIndex: 0,
-        pageSize: 20,
-      },
-    },
     state: {
       sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
+      pagination,
       globalFilter,
+      columnFilters,
+      columnVisibility,
     },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSort,
+    onSortingChange: updateSort,
+    onPaginationChange: serverPagination ? updatePagination : setPagination,
+    onGlobalFilterChange: updateGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 

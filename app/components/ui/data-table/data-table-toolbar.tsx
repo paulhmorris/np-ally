@@ -24,7 +24,7 @@ export function DataTableToolbar<TData>({ table, facets }: DataTableToolbarProps
     <div className="flex items-center justify-between">
       <div className="flex flex-1 flex-wrap items-center gap-2">
         <Input
-          placeholder="Search..."
+          placeholder="Filter..."
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           value={table.getState().globalFilter ?? ""}
           onChange={(e) => table.setGlobalFilter(e.target.value)}

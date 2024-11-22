@@ -215,7 +215,7 @@ async function seed() {
     })),
   });
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 100; i++) {
     await db.transaction.create({
       data: {
         amountInCents: faker.number.int({ min: 100, max: 100_000 }),

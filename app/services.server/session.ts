@@ -1,9 +1,9 @@
 import { MembershipRole, Organization, User, UserRole } from "@prisma/client";
-import { Session as RemixSession, SessionData, redirect } from "@remix-run/node";
+import { Session as RemixSession, SessionData, createCookieSessionStorage, redirect } from "@remix-run/node";
+import { createThemeSessionResolver } from "remix-themes";
 
 import { db } from "~/integrations/prisma.server";
 import { unauthorized } from "~/lib/responses.server";
-import { sessionStorage } from "~/lib/session.server";
 
 type UserWithMembershipRoleAndOrg = Omit<User, "role"> & {
   role: MembershipRole;
@@ -243,3 +243,15 @@ class Session implements ISessionService {
 }
 
 export const SessionService = new Session();
+
+export const sessionStorage = createCookieSessionStorage({
+  cookie: {
+    name: "__session",
+    httpOnly: true,
+    path: "/",
+    sameSite: "lax",
+    secrets: [process.env.SESSION_SECRET],
+    secure: process.env.NODE_ENV === "production",
+  },
+});
+export const themeSessionResolver = createThemeSessionResolver(sessionStorage);

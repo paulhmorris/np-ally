@@ -11,12 +11,11 @@ import { FormField } from "~/components/ui/form";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { db } from "~/integrations/prisma.server";
 import { unauthorized } from "~/lib/responses.server";
-import { sessionStorage } from "~/lib/session.server";
 import { Toasts } from "~/lib/toast.server";
 import { getSearchParam } from "~/lib/utils";
 import { hashPassword } from "~/services.server/auth";
 import { expirePasswordReset, getPasswordResetByToken } from "~/services.server/password";
-import { SessionService } from "~/services.server/session";
+import { SessionService, sessionStorage } from "~/services.server/session";
 
 const validator = withZod(
   z

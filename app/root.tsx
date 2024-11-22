@@ -12,10 +12,9 @@ import { Notifications } from "~/components/notifications";
 import { GlobalLoader } from "~/components/ui/global-loader";
 import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
-import { themeSessionResolver } from "~/lib/session.server";
 import { getToast } from "~/lib/toast.server";
 import { cn } from "~/lib/utils";
-import { SessionService } from "~/services.server/session";
+import { SessionService, themeSessionResolver } from "~/services.server/session";
 import stylesheet from "~/tailwind.css?url";
 
 // prettier-ignore
