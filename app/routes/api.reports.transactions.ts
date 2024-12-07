@@ -16,13 +16,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await SessionService.requireAdmin(request);
   const orgId = await SessionService.requireOrgId(request);
   const { searchParams } = new URL(request.url);
-  const startDate = searchParams.get("startDate");
-  const endDate = searchParams.get("endDate");
+  const trxStartDate = searchParams.get("trxStartDate");
+  const trxEndDate = searchParams.get("trxEndDate");
 
-  const parsedParams = TransactionsReportSchema.safeParse({
-    startDate,
-    endDate,
-  });
+  const parsedParams = TransactionsReportSchema.safeParse({ trxStartDate, trxEndDate });
   if (!parsedParams.success) {
     return json({ message: fromZodError(parsedParams.error).toString() }, { status: 400 });
   }
@@ -81,7 +78,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!transactionItems.length) {
     return Toasts.redirectWithError("/reports", {
       title: "No transactions found",
-      description: `No transactions found from ${startDate} to ${endDate}. Update your date filters.`,
+      description: `No transactions found from ${trxStartDate} to ${trxEndDate}. Update your date filters.`,
     });
   }
 
