@@ -57,6 +57,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
           date: true,
           description: true,
           amountInCents: true,
+          category: {
+            select: {
+              name: true,
+            },
+          },
           account: {
             select: {
               code: true,
@@ -87,6 +92,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const schema = ExcelSchemaBuilder.create<(typeof transactionItems)[0]>()
     .column("Transaction ID", { key: "transaction.id" })
     .column("Transaction Description", { key: "transaction.description" })
+    .column("Category", { key: "transaction.category.name" })
     .column("Item Description", { key: "description" })
     .column("Amount", {
       key: "amountInCents",

@@ -93,18 +93,18 @@ export function DataTable<TData>({ data, columns, facets, serverPagination, rowC
     return updaterOrValue;
   }
 
-  function updateGlobalFilter(value: string) {
-    const params = new URLSearchParams(search);
-    if (value === "") {
-      params.delete("s");
-      setSearch(params, { replace: true, preventScrollReset: true });
-      setGlobalFilter("");
-      return;
-    }
-    params.set("s", String(value));
-    setSearch(params, { replace: true, preventScrollReset: true });
-    setGlobalFilter(value);
-  }
+  // function updateGlobalFilter(value: string) {
+  //   const params = new URLSearchParams(search);
+  //   if (value === "") {
+  //     params.delete("s");
+  //     setSearch(params, { replace: true, preventScrollReset: true });
+  //     setGlobalFilter("");
+  //     return;
+  //   }
+  //   params.set("s", String(value));
+  //   setSearch(params, { replace: true, preventScrollReset: true });
+  //   setGlobalFilter(value);
+  // }
 
   const table = useReactTable({
     data,
@@ -122,7 +122,7 @@ export function DataTable<TData>({ data, columns, facets, serverPagination, rowC
     },
     onSortingChange: updateSort,
     onPaginationChange: serverPagination ? updatePagination : setPagination,
-    onGlobalFilterChange: updateGlobalFilter,
+    onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),

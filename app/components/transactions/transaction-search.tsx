@@ -1,0 +1,27 @@
+import { IconSearch } from "@tabler/icons-react";
+
+import { Input } from "~/components/ui/input";
+import { useDebouncedValue } from "~/hooks/useDebouncedValue";
+
+export function TransactionSearch() {
+  const [search, setSearch] = useDebouncedValue();
+
+  return (
+    <div className="relative">
+      <label htmlFor="transaction-search" className="sr-only">
+        Search Transactions
+      </label>
+      <Input
+        id="transaction-search"
+        type="text"
+        name="s"
+        placeholder="Search by amount, e.g. 732.13"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        minLength={3}
+        className="pl-10"
+      />
+      <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
+}

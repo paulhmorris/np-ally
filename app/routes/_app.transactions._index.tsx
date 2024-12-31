@@ -9,6 +9,7 @@ dayjs.extend(utc);
 import { PageHeader } from "~/components/common/page-header";
 import { ErrorComponent } from "~/components/error-component";
 import { PageContainer } from "~/components/page-container";
+import { TransactionSearch } from "~/components/transactions/transaction-search";
 import { DataTable, DEFAULT_PAGE_SIZE } from "~/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/ui/data-table/data-table-column-header";
 import { Facet } from "~/components/ui/data-table/data-table-toolbar";
@@ -26,16 +27,34 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const take = Number(url.searchParams.get("pageSize") ?? DEFAULT_PAGE_SIZE);
   const skip = Number(url.searchParams.get("page") ?? 1) * take - take;
 
+  const search = url.searchParams.get("s")?.replaceAll("$", "").replaceAll(".", "");
+
   const where: Prisma.TransactionFindManyArgs["where"] = {
-    orgId,
-    account: user.isMember
-      ? {
-          user: {
-            id: user.id,
-          },
-        }
-      : undefined,
+    AND: [
+      {
+        orgId,
+        account: user.isMember
+          ? {
+              user: {
+                id: user.id,
+              },
+            }
+          : undefined,
+      },
+      search
+        ? {
+            OR: [
+              {
+                amountInCents: {
+                  equals: Number(search.replace(/\D/g, "")),
+                },
+              },
+            ],
+          }
+        : {},
+    ],
   };
+
   const [rowCount, transactions] = await db.$transaction([
     db.transaction.count({ where }),
     db.transaction.findMany({
@@ -75,6 +94,9 @@ export default function TransactionsIndexPage() {
   return (
     <>
       <PageHeader title="Transactions" />
+      <div className="mt-1 max-w-xs">
+        <TransactionSearch />
+      </div>
       <PageContainer>
         <DataTable data={transactions} rowCount={rowCount} columns={columns} facets={facets} serverPagination />
       </PageContainer>
