@@ -2,9 +2,16 @@ import { useSearchParams } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { useDebounce } from "use-debounce";
 
-export function useDebouncedValue(ms = 500): [string, (value: string) => void] {
+type Options = {
+  delay?: number;
+  minLength?: number;
+};
+
+type ReturnValue = [string, (value: string) => void];
+
+export function useDebouncedValue({ delay = 500, minLength = 3 }: Options = { delay: 500, minLength: 3 }): ReturnValue {
   const [value, setValue] = useState("");
-  const [debouncedValue] = useDebounce(value, ms);
+  const [debouncedValue] = useDebounce(value, delay);
   const [_, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -17,7 +24,7 @@ export function useDebouncedValue(ms = 500): [string, (value: string) => void] {
     }
 
     // Needs at least 3 characters
-    if (debouncedValue.length < 3) {
+    if (debouncedValue.length < minLength) {
       return;
     }
 

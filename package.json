@@ -43,9 +43,9 @@
     "@radix-ui/react-tooltip": "^1.1.2",
     "@react-email/components": "0.0.19",
     "@react-email/render": "^0.0.15",
-    "@remix-run/node": "^2.14.0",
-    "@remix-run/react": "^2.14.0",
-    "@remix-run/serve": "^2.14.0",
+    "@remix-run/node": "^2.13.1",
+    "@remix-run/react": "^2.13.1",
+    "@remix-run/serve": "^2.13.1",
     "@remix-validated-form/with-zod": "^2.0.7",
     "@sentry/profiling-node": "^8.22.0",
     "@sentry/remix": "^8.22.0",
@@ -54,7 +54,6 @@
     "@tanstack/react-table": "^8.17.3",
     "@trigger.dev/sdk": "3.1.0",
     "@vercel/analytics": "^1.3.1",
-    "@vercel/remix": "^2.14.0",
     "bcryptjs": "^2.4.3",
     "chokidar": "^3.6.0",
     "class-variance-authority": "^0.7.0",
@@ -64,6 +63,7 @@
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.11",
     "express": "^4.19.2",
+    "isbot": "^5.1.19",
     "nanoid": "^5.0.7",
     "nprogress": "^0.2.0",
     "patch-package": "^8.0.0",
@@ -92,7 +92,7 @@
     "@axe-core/playwright": "^4.9.1",
     "@faker-js/faker": "^8.4.1",
     "@playwright/test": "^1.44.1",
-    "@remix-run/dev": "^2.14.0",
+    "@remix-run/dev": "^2.13.1",
     "@sentry/vite-plugin": "^2.21.1",
     "@testing-library/cypress": "^10.0.2",
     "@testing-library/jest-dom": "^6.4.5",
@@ -111,6 +111,7 @@
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
+    "@vercel/remix": "^2.13.1",
     "@vitejs/plugin-react": "^4.3.0",
     "@vitest/coverage-v8": "^1.6.0",
     "autoprefixer": "^10.4.19",
@@ -144,12 +145,12 @@
     "vitest": "^1.6.0"
   },
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "volta": {
-    "node": "20.18.0"
+    "node": "22.12.0"
   }
 }
