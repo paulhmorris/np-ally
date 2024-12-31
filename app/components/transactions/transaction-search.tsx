@@ -4,7 +4,7 @@ import { Input } from "~/components/ui/input";
 import { useDebouncedValue } from "~/hooks/useDebouncedValue";
 
 export function TransactionSearch() {
-  const [search, setSearch] = useDebouncedValue();
+  const [search, setSearch] = useDebouncedValue({ minLength: 2 });
 
   return (
     <div className="relative">
@@ -18,7 +18,7 @@ export function TransactionSearch() {
         placeholder="Search by amount, e.g. 732.13"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        minLength={3}
+        minLength={2}
         className="pl-10"
       />
       <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
