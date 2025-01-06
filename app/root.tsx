@@ -1,6 +1,14 @@
 import "@fontsource-variable/dm-sans/wght.css";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from "@remix-run/react";
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  ShouldRevalidateFunctionArgs,
+  useRouteError,
+} from "@remix-run/react";
 import { captureRemixErrorBoundaryError, withSentry } from "@sentry/remix";
 import { Analytics } from "@vercel/analytics/react";
 import { useEffect } from "react";
@@ -21,6 +29,24 @@ import stylesheet from "~/tailwind.css?url";
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet, as: "style" },
 ];
+
+export const shouldRevalidate = ({ currentUrl, nextUrl, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) => {
+  // Don't revalidate on searches and pagination
+  const currentSearch = currentUrl.searchParams;
+  const nextSearch = nextUrl.searchParams;
+  if (
+    nextSearch.has("page") ||
+    nextSearch.has("s") ||
+    nextSearch.has("pageSize") ||
+    currentSearch.has("page") ||
+    currentSearch.has("s") ||
+    currentSearch.has("pageSize")
+  ) {
+    return false;
+  }
+
+  return defaultShouldRevalidate;
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (process.env.MAINTENANCE_MODE && new URL(request.url).pathname !== "/maintenance") {
