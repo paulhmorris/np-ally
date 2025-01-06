@@ -27,7 +27,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const take = Number(url.searchParams.get("pageSize") ?? DEFAULT_PAGE_SIZE);
   const skip = Number(url.searchParams.get("page") ?? 1) * take - take;
 
-  const search = url.searchParams.get("s")?.replaceAll("$", "").replaceAll(".", "");
+  const search = url.searchParams
+    .get("s")
+    ?.replaceAll("$", "")
+    .replaceAll(".", "")
+    .replace(/[^\d-]/g, "");
 
   const where: Prisma.TransactionFindManyArgs["where"] = {
     AND: [
@@ -43,13 +47,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
       search
         ? {
-            OR: [
-              {
-                amountInCents: {
-                  equals: Number(search.replace(/\D/g, "")),
-                },
-              },
-            ],
+            amountInCents: {
+              equals: Number(search),
+            },
           }
         : {},
     ],
