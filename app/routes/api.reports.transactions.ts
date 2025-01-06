@@ -103,9 +103,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .column("Date", { key: "transaction.date" })
     .column("Account Code", { key: "transaction.account.code" })
     .column("Account Description", { key: "transaction.account.description" })
+    .column("Organization", {
+      key: "transaction.contact",
+      transform: (c) => (c && c.organizationName ? c.organizationName : ""),
+    })
     .column("Contact", {
       key: "transaction.contact",
-      transform: (c) => (c && c.organizationName ? c.organizationName : c ? `${c.firstName} ${c.lastName}` : "N/A"),
+      transform: (c) => ((c && c.firstName) || c?.lastName ? `${c.firstName} ${c.lastName}` : "N/A"),
     })
     .build();
 
