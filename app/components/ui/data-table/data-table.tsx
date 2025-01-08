@@ -43,7 +43,7 @@ interface DataTableProps<TData> {
   rowCount?: number;
 }
 
-export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 40;
 
 export function DataTable<TData>({ data, columns, facets, serverPagination, rowCount }: DataTableProps<TData>) {
   const location = useLocation();
@@ -59,7 +59,7 @@ export function DataTable<TData>({ data, columns, facets, serverPagination, rowC
 
   const defaultPaginationState: PaginationState = {
     pageIndex: Number(search.get("page") || 0),
-    pageSize: Number(search.get("pageSize") || 20),
+    pageSize: Number(search.get("pageSize") || DEFAULT_PAGE_SIZE),
   };
   const [pagination, setPagination] = useState<PaginationState>(defaultPaginationState);
 
