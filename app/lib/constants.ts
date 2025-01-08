@@ -88,6 +88,8 @@ export enum TransactionCategory {
   Expense_Travel_Local = 24,
   Expense_Accounting_Compliance = 25,
   Expense_Travel_Domestic_and_International = 26,
+  Internal_Transfer_Gain = 27,
+  Internal_Transfer_Loss = 28,
 }
 
 export const transactionCategories: Array<{ id: TransactionCategory; name: string }> = [
