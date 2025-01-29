@@ -26,7 +26,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return validationError(result.error);
         }
 
-        const { orgId, pathname } = result.data;
+        const { orgId } = result.data;
 
         // Ensure the user is a member of the selected organization
         await db.membership.findUniqueOrThrow({ where: { userId_orgId: { userId, orgId } }, select: { id: true } });
@@ -35,7 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         session.set(SessionService.ORGANIZATION_SESSION_KEY, orgId);
 
         const url = new URL(request.url);
-        const redirectUrl = new URL(pathname || "/", url.origin);
+        const redirectUrl = new URL("/", url.origin);
         return redirect(redirectUrl.toString(), {
           status: 303,
           headers: {

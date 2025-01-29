@@ -1,4 +1,4 @@
-import { Form, Link, NavLink, useLocation } from "@remix-run/react";
+import { Form, Link, NavLink } from "@remix-run/react";
 import { IconHome, IconSelector, IconWorld } from "@tabler/icons-react";
 import { type ComponentPropsWithoutRef } from "react";
 
@@ -16,7 +16,6 @@ import { cn, normalizeEnum } from "~/lib/utils";
 
 export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
   const user = useUser();
-  const location = useLocation();
   const hasMultipleOrgs = user.memberships.length > 1;
   const role = user.memberships.find((m) => m.orgId === user.org?.id)?.role;
 
@@ -42,7 +41,6 @@ export function DesktopNav(props: ComponentPropsWithoutRef<"nav">) {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="mb-2 w-[215px] space-y-1" align="center" forceMount>
             <Form action="/api/change-org" method="post">
-              <input type="hidden" name="pathname" value={location.pathname} />
               {user.memberships.map((m) => (
                 <DropdownMenuItem asChild key={m.orgId} className="cursor-pointer" disabled={user.org?.id === m.orgId}>
                   <button type="submit" name="orgId" value={m.orgId} className="w-full">
