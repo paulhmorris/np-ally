@@ -5,6 +5,7 @@ import { Sentry } from "./app/integrations/sentry";
 
 export default defineConfig({
   dirs: ["./app/jobs"],
+  maxDuration: 300,
   project: "proj_onljbcqyipyvqioltokh",
   build: {
     extensions: [prismaExtension({ schema: "prisma/schema.prisma" })],
