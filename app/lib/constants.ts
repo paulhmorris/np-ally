@@ -213,7 +213,7 @@ export const adminNavLinks: ReadonlyArray<AppNavLink> = [
   { name: "Users", to: "/users", end: false, icon: IconUsersGroup },
   { name: "Reimbursements", to: "/reimbursements", end: true, icon: IconCoin },
   // { name: "Receipts", to: "/receipts", end: true, icon: IconReceipt },
-  { name: "Organization", to: "/organization/settings", end: false, icon: IconAffiliate },
+  { name: "Organization", to: "/organization", end: false, icon: IconAffiliate },
   { name: "Reports", to: "/reports", end: true, icon: IconFileSpreadsheet },
 ] as const;
 

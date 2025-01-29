@@ -1,11 +1,10 @@
 import { Prisma } from "@prisma/client";
-import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { MetaFunction, useLoaderData } from "@remix-run/react";
+import { ActionFunctionArgs } from "@remix-run/node";
+import { useRouteLoaderData } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 
-import { PageHeader } from "~/components/common/page-header";
 import { PageContainer } from "~/components/page-container";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
@@ -15,6 +14,7 @@ import { db } from "~/integrations/prisma.server";
 import { Sentry } from "~/integrations/sentry";
 import { handlePrismaError, serverError } from "~/lib/responses.server";
 import { Toasts } from "~/lib/toast.server";
+import { loader } from "~/routes/_app.organization";
 import { SessionService } from "~/services.server/session";
 
 const schema = withZod(
@@ -27,23 +27,6 @@ const schema = withZod(
     inquiriesEmail: z.string().optional(),
   }),
 );
-
-export async function loader({ request }: LoaderFunctionArgs) {
-  await SessionService.requireAdmin(request);
-  const orgId = await SessionService.requireOrgId(request);
-
-  try {
-    const org = await db.organization.findUniqueOrThrow({ where: { id: orgId } });
-    return json({ org });
-  } catch (error) {
-    console.error(error);
-    Sentry.captureException(error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw handlePrismaError(error);
-    }
-    throw serverError("Unknown error occurred");
-  }
-}
 
 export async function action({ request }: ActionFunctionArgs) {
   await SessionService.requireAdmin(request);
@@ -67,15 +50,17 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  return [{ title: `Settings | ${data?.org.name}` }];
-};
-
 export default function OrganizationSettings() {
-  const { org } = useLoaderData<typeof loader>();
+  const data = useRouteLoaderData<typeof loader>("routes/_app.organization");
+
+  if (!data) {
+    throw new Error("No org data found");
+  }
+
+  const { org } = data;
+
   return (
     <>
-      <PageHeader title={`${org.name} Settings`} />
       <div className="mt-4 grid grid-cols-3 items-center gap-2 text-sm sm:max-w-2xl">
         <dt className="font-semibold capitalize">Full domain</dt>
         <dd className="col-span-2 text-muted-foreground">
