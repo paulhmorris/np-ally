@@ -88,7 +88,7 @@ export default function Index() {
               const total = a.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
               return (
                 <div key={a.id} className="h-full">
-                  <AccountBalanceCard title={a.description} totalCents={total} code={a.code} />
+                  <AccountBalanceCard title={a.description} totalCents={total} code={a.code} accountId={a.id} />
                 </div>
               );
             })}

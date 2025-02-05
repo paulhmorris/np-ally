@@ -126,7 +126,12 @@ export default function AccountDetailsPage() {
       </div>
       <PageContainer>
         <div className="max-w-md">
-          <AccountBalanceCard totalCents={total} title={account.description} code={account.type.name} />
+          <AccountBalanceCard
+            totalCents={total}
+            title={account.description}
+            code={account.type.name}
+            accountId={account.id}
+          />
         </div>
         <div className="mt-12">
           <h2 className="mb-4 text-2xl font-semibold">Transactions</h2>
