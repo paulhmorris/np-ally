@@ -76,9 +76,11 @@ export default function Index() {
         <div className="mb-4">{announcement ? <AnnouncementCard announcement={announcement} /> : null}</div>
         {user.isMember ? (
           <div className="space-y-5">
-            <div className="max-w-[320px]">
-              <AccountBalanceCard totalCents={total} accountId={user.accountId ?? undefined} />
-            </div>
+            {user.accountId ? (
+              <div className="max-w-[320px]">
+                <AccountBalanceCard totalCents={total} accountId={user.accountId} />
+              </div>
+            ) : null}
             {reimbursementRequests.length > 0 ? (
               <div className="max-w-2xl">
                 <ReimbursementRequestsList requests={reimbursementRequests} />
