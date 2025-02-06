@@ -30,7 +30,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const orgId = await SessionService.requireOrgId(request);
 
   invariant(params.accountId, "accountId not found");
-  if (user.isMember && user.accountId !== params.accountId) {
+  const isUsersAccount = user.isMember && user.accountId === params.accountId;
+  const isSubscribedAccount = user.contact.accountSubscriptions.some((a) => a.accountId === params.accountId);
+  if (!isUsersAccount && !isSubscribedAccount) {
     throw unauthorized("You are not authorized to view this account.");
   }
 

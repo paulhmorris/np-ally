@@ -38,9 +38,8 @@ async function main() {
                 subscriberId: user.contactId,
               },
             },
-            update: { orgId: defaultOrg.id },
+            update: {},
             create: {
-              orgId: defaultOrg.id,
               accountId: user.account.id,
               subscriberId: user.contactId,
             },
@@ -69,7 +68,6 @@ async function main() {
 
       // Link everything to the default organization
       const account = await tx.account.updateMany({ data: { orgId: defaultOrg.id } });
-      const accountSubscription = await tx.accountSubscription.updateMany({ data: { orgId: defaultOrg.id } });
       const transaction = await tx.transaction.updateMany({ data: { orgId: defaultOrg.id } });
       const transactionItem = await tx.transactionItem.updateMany({ data: { orgId: defaultOrg.id } });
       const reimbursementRequest = await tx.reimbursementRequest.updateMany({ data: { orgId: defaultOrg.id } });
@@ -83,7 +81,6 @@ async function main() {
       console.info("Linked everything to the default organization:");
       console.info({
         account,
-        accountSubscription,
         transaction,
         transactionItem,
         reimbursementRequest,

@@ -113,7 +113,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         subscribers: {
           create: {
             subscriberId: user.contactId,
-            orgId,
           },
         },
       },

@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const user = await SessionService.requireUser(request);
   const orgId = await SessionService.requireOrgId(request);
 
-  const [total, reimbursementRequests, announcement] = await Promise.all([
+  const [total, reimbursementRequests, announcement, accountSubscriptions] = await Promise.all([
     db.transaction.aggregate({
       where: {
         orgId,
@@ -60,14 +60,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
         id: "desc",
       },
     }),
+    db.account.findMany({
+      where: { orgId, id: { in: user.contact.accountSubscriptions.map((s) => s.accountId) } },
+      include: {
+        transactions: true,
+      },
+      orderBy: { code: "asc" },
+    }),
   ]);
 
-  return typedjson({ total: total._sum.amountInCents, reimbursementRequests, announcement });
+  return typedjson({ total: total._sum.amountInCents, reimbursementRequests, announcement, accountSubscriptions });
 }
 
 export default function Index() {
   const user = useUser();
-  const { total, reimbursementRequests, announcement } = useTypedLoaderData<typeof loader>();
+  const { total, reimbursementRequests, announcement, accountSubscriptions } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -75,12 +82,20 @@ export default function Index() {
       <PageContainer className="max-w-4xl">
         <div className="mb-4">{announcement ? <AnnouncementCard announcement={announcement} /> : null}</div>
         {user.isMember ? (
-          <div className="space-y-5">
+          <div className="grid auto-rows-fr grid-cols-1 gap-4 lg:grid-cols-2">
             {user.accountId ? (
-              <div className="max-w-[320px]">
+              <div className="h-full">
                 <AccountBalanceCard totalCents={total} accountId={user.accountId} />
               </div>
             ) : null}
+            {accountSubscriptions.map((a) => {
+              const total = a.transactions.reduce((acc, t) => acc + t.amountInCents, 0);
+              return (
+                <div key={a.id} className="h-full">
+                  <AccountBalanceCard title={a.description} totalCents={total} code={a.code} accountId={a.id} />
+                </div>
+              );
+            })}
             {reimbursementRequests.length > 0 ? (
               <div className="max-w-2xl">
                 <ReimbursementRequestsList requests={reimbursementRequests} />
