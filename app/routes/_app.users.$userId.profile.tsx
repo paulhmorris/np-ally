@@ -87,7 +87,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const hasSubscribedAccountIds = subscribedAccountIds && subscribedAccountIds.length > 0;
   const updatedUser = await db.user.update({
     where: {
       id,
@@ -108,18 +107,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       contact: {
         update: {
           ...contact,
-          accountSubscriptions: hasSubscribedAccountIds
-            ? {
-                connect: subscribedAccountIds.map((id) => ({
-                  accountId_subscriberId: {
-                    accountId: id,
-                    subscriberId: userToBeUpdated.contactId,
-                  },
-                })),
-              }
-            : {
-                set: [],
-              },
+          accountSubscriptions: {
+            // Rebuild the account subscriptions
+            deleteMany: {},
+            create: subscribedAccountIds ? subscribedAccountIds.map((id) => ({ accountId: id })) : undefined,
+          },
         },
       },
     },
