@@ -43,10 +43,20 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
             some: { orgId },
           },
         },
-        include: {
+        select: {
+          id: true,
+          username: true,
+          role: true,
           contactAssignments: {
-            include: {
-              contact: true,
+            select: {
+              id: true,
+              contactId: true,
+              contact: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
             },
           },
           password: true,

@@ -5,6 +5,7 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { useTypedRouteLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
+import { zfd } from "zod-form-data";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Button } from "~/components/ui/button";
@@ -29,8 +30,12 @@ const validator = withZod(
     lastName: z.string().min(1, { message: "Last name is required" }),
     username: z.string().email({ message: "Invalid email address" }).optional(),
     role: z.nativeEnum(UserRole),
-    accountId: z.string().optional(),
-    // accountSubscriptions: z.array(z.string()).optional(),
+    accountId: z.preprocess((val) => {
+      if (val === "Select an account") {
+        return undefined;
+      }
+    }, z.string().optional()),
+    subscribedAccountIds: zfd.repeatableOfType(zfd.text()).optional(),
   }),
 );
 
@@ -43,7 +48,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { username, role, id, accountId, ...contact } = result.data;
+  const { username, role, id, accountId, subscribedAccountIds, ...contact } = result.data;
 
   const userToBeUpdated = await db.user.findUnique({ where: { id } });
   if (!userToBeUpdated) {
@@ -82,6 +87,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
+  const hasSubscribedAccountIds = subscribedAccountIds && subscribedAccountIds.length > 0;
   const updatedUser = await db.user.update({
     where: {
       id,
@@ -92,10 +98,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: {
       role,
       username,
-      account: accountId ? { connect: { id: accountId } } : { disconnect: true },
+      account: accountId
+        ? {
+            connect: {
+              id: accountId,
+            },
+          }
+        : { disconnect: true },
       contact: {
         update: {
           ...contact,
+          accountSubscriptions: hasSubscribedAccountIds
+            ? {
+                connect: subscribedAccountIds.map((id) => ({
+                  accountId_subscriberId: {
+                    accountId: id,
+                    subscriberId: userToBeUpdated.contactId,
+                  },
+                })),
+              }
+            : {
+                set: [],
+              },
         },
       },
     },
@@ -166,7 +190,9 @@ export default function UserDetailsPage() {
           )}
         </div>
         <fieldset className="mt-4 sm:max-w-2xl">
-          <legend className="text-sm font-medium">Account Subscriptions</legend>
+          <legend className="text-sm font-medium">
+            Account Subscriptions <span className="text-xs text-muted-foreground">(optional)</span>
+          </legend>
           <p className="text-sm text-muted-foreground">
             Users can be subscribed to another account. When they log in, they will see it on their dashboard.
           </p>
@@ -175,7 +201,7 @@ export default function UserDetailsPage() {
               return (
                 <Label key={a.id} className="inline-flex cursor-pointer items-center gap-2">
                   <Checkbox
-                    name="subscribedAccounts"
+                    name="subscribedAccountIds"
                     value={a.id}
                     defaultChecked={user.contact.accountSubscriptions.some((acc) => acc.accountId === a.id)}
                   />
