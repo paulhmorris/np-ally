@@ -28,56 +28,77 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   try {
-    const accounts = await db.account.findMany({
-      where: {
-        orgId,
-        OR: [{ user: null }, { user: { id: params.userId } }],
-      },
-      orderBy: { code: "asc" },
-    });
-
-    const userWithPassword = await db.user.findUniqueOrThrow({
-      where: {
-        id: params.userId,
-        memberships: {
-          some: { orgId },
+    const [accounts, userWithPassword, accountsThatCanBeSubscribedTo] = await Promise.all([
+      db.account.findMany({
+        where: {
+          orgId,
+          OR: [{ user: null }, { user: { id: params.userId } }],
         },
-      },
-      include: {
-        contactAssignments: {
-          include: {
-            contact: true,
+        orderBy: { code: "asc" },
+      }),
+      db.user.findUniqueOrThrow({
+        where: {
+          id: params.userId,
+          memberships: {
+            some: { orgId },
           },
         },
-        password: true,
-        account: {
-          select: {
-            id: true,
-            code: true,
-            description: true,
+        include: {
+          contactAssignments: {
+            include: {
+              contact: true,
+            },
           },
-        },
-        contact: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            type: {
-              select: {
-                name: true,
+          password: true,
+          account: {
+            select: {
+              id: true,
+              code: true,
+              description: true,
+            },
+          },
+          contact: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              type: {
+                select: {
+                  name: true,
+                },
+              },
+              accountSubscriptions: {
+                select: {
+                  accountId: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+      db.account.findMany({
+        where: { orgId },
+        select: {
+          id: true,
+          code: true,
+          description: true,
+          subscribers: {
+            select: {
+              subscriberId: true,
+            },
+          },
+        },
+        orderBy: { code: "asc" },
+      }),
+    ]);
 
     const { password: _password, ...userWithoutPassword } = userWithPassword;
 
     return typedjson({
       accounts,
       user: userWithoutPassword,
+      accountsThatCanBeSubscribedTo,
       hasPassword: !!_password,
       ...setFormDefaults("user-form", {
         ...userWithPassword,
