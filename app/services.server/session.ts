@@ -140,9 +140,24 @@ class Session implements ISessionService {
     const user = await db.user.findUnique({
       where: { id: userId },
       include: {
-        contact: true,
+        contact: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            typeId: true,
+            accountSubscriptions: {
+              where: {
+                account: { orgId },
+              },
+              select: {
+                accountId: true,
+              },
+            },
+          },
+        },
         memberships: {
-          where: { orgId },
           include: {
             org: true,
           },

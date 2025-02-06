@@ -5,12 +5,15 @@ import { withZod } from "@remix-validated-form/with-zod";
 import { useTypedRouteLoaderData } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
+import { zfd } from "zod-form-data";
 
 import { ErrorComponent } from "~/components/error-component";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
 import { FormField, FormSelect } from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
 import { SelectItem } from "~/components/ui/select";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { useUser } from "~/hooks/useUser";
@@ -27,7 +30,12 @@ const validator = withZod(
     lastName: z.string().min(1, { message: "Last name is required" }),
     username: z.string().email({ message: "Invalid email address" }).optional(),
     role: z.nativeEnum(UserRole),
-    accountId: z.string().optional(),
+    accountId: z.preprocess((val) => {
+      if (val === "Select an account") {
+        return undefined;
+      }
+    }, z.string().optional()),
+    subscribedAccountIds: zfd.repeatableOfType(zfd.text()).optional(),
   }),
 );
 
@@ -40,7 +48,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { username, role, id, accountId, ...contact } = result.data;
+  const { username, role, id, accountId, subscribedAccountIds, ...contact } = result.data;
 
   const userToBeUpdated = await db.user.findUnique({ where: { id } });
   if (!userToBeUpdated) {
@@ -89,10 +97,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: {
       role,
       username,
-      account: accountId ? { connect: { id: accountId } } : { disconnect: true },
+      account: accountId
+        ? {
+            connect: {
+              id: accountId,
+            },
+          }
+        : { disconnect: true },
       contact: {
         update: {
           ...contact,
+          accountSubscriptions: {
+            // Rebuild the account subscriptions
+            deleteMany: {},
+            create: subscribedAccountIds ? subscribedAccountIds.map((id) => ({ accountId: id })) : undefined,
+          },
         },
       },
     },
@@ -114,8 +133,8 @@ export default function UserDetailsPage() {
 
   return (
     <>
-      <ValidatedForm id="user-form" validator={validator} method="post" className="sm:max-w-md">
-        <div className="space-y-4">
+      <ValidatedForm id="user-form" validator={validator} method="post">
+        <div className="space-y-4 sm:max-w-md">
           <div className="flex gap-2">
             <FormField label="First name" id="firstName" name="firstName" required />
             <FormField label="Last name" id="lastName" name="lastName" required />
@@ -161,13 +180,37 @@ export default function UserDetailsPage() {
           ) : (
             <input type="hidden" name="accountId" value={user.account?.id} />
           )}
-          <ButtonGroup>
-            <SubmitButton>Save</SubmitButton>
-            <Button type="reset" variant="outline">
-              Reset
-            </Button>
-          </ButtonGroup>
         </div>
+        <fieldset className="mt-4 sm:max-w-2xl">
+          <legend className="text-sm font-medium">
+            Account Subscriptions <span className="text-xs text-muted-foreground">(optional)</span>
+          </legend>
+          <p className="text-sm text-muted-foreground">
+            Users can be subscribed to another account. When they log in, they will see it on their dashboard.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {layoutData.accountsThatCanBeSubscribedTo.map((a) => {
+              return (
+                <Label key={a.id} className="inline-flex cursor-pointer items-center gap-2">
+                  <Checkbox
+                    name="subscribedAccountIds"
+                    value={a.id}
+                    defaultChecked={user.contact.accountSubscriptions.some((acc) => acc.accountId === a.id)}
+                  />
+                  <span>
+                    {a.code} - {a.description}
+                  </span>
+                </Label>
+              );
+            })}
+          </div>
+        </fieldset>
+        <ButtonGroup className="mt-4">
+          <SubmitButton>Save</SubmitButton>
+          <Button type="reset" variant="outline">
+            Reset
+          </Button>
+        </ButtonGroup>
       </ValidatedForm>
       <div className="mt-4 max-w-lg">
         {user.contactAssignments.length > 0 ? (

@@ -168,7 +168,6 @@ async function seed() {
       subscribers: {
         create: {
           subscriberId: user.contactId,
-          orgId: org.id,
         },
       },
       description: "Jessica Caudle - Ministry Fund",
@@ -188,7 +187,6 @@ async function seed() {
       subscribers: {
         create: {
           subscriberId: user.contactId,
-          orgId: org2.id,
         },
       },
       description: "MoC - Ministry Fund",

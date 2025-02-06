@@ -61,12 +61,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   let user;
   if (userId) {
     const dbUser = await db.user.findUnique({
-      where: {
-        id: userId,
-      },
+      where: { id: userId },
       include: {
-        contact: true,
         contactAssignments: true,
+        contact: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            typeId: true,
+            accountSubscriptions: {
+              where: org
+                ? {
+                    account: {
+                      orgId: org.id,
+                    },
+                  }
+                : {},
+              select: {
+                accountId: true,
+              },
+            },
+          },
+        },
         memberships: {
           include: {
             org: {
