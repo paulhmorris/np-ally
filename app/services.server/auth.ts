@@ -1,6 +1,6 @@
 import { Password, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
 
 import { sendEmail } from "~/integrations/email.server";
 import { db } from "~/integrations/prisma.server";
@@ -14,7 +14,9 @@ export function comparePasswords(password: string, hash: string) {
 }
 
 export async function generateVerificationCode(userId: string) {
+  const nanoid = customAlphabet("123456789ABCDEFGHJKLMNPQRSTUVWXYZ", 6);
   const verificationCode = nanoid(6);
+
   const user = await db.user.update({
     where: { id: userId },
     data: {
@@ -126,6 +128,7 @@ export async function verifyLogin({
         },
       });
     }
+    return null;
   }
 
   const { password: _password, ...userWithoutPassword } = userWithPassword;
