@@ -48,7 +48,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       search
         ? {
             amountInCents: {
-              equals: Number(search),
+              equals: Math.abs(Number(search)),
             },
           }
         : {},
