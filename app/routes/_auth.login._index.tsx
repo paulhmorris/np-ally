@@ -7,21 +7,16 @@ import { z } from "zod";
 
 import { AuthCard } from "~/components/auth/auth-card";
 import { ErrorComponent } from "~/components/error-component";
-import { Checkbox } from "~/components/ui/checkbox";
 import { FormField } from "~/components/ui/form";
-import { Label } from "~/components/ui/label";
 import { SubmitButton } from "~/components/ui/submit-button";
 import { Toasts } from "~/lib/toast.server";
-import { safeRedirect } from "~/lib/utils";
-import { CheckboxSchema } from "~/models/schemas";
-import { verifyLogin } from "~/services.server/auth";
+import { generateVerificationCode, verifyLogin } from "~/services.server/auth";
 import { SessionService } from "~/services.server/session";
 
 const validator = withZod(
   z.object({
     email: z.string().min(1, { message: "Email is required" }).email(),
     password: z.string().min(8, { message: "Password must be 8 or more characters." }),
-    remember: CheckboxSchema,
     redirectTo: z.string().optional(),
   }),
 );
@@ -44,13 +39,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return validationError(result.error);
   }
 
-  const { email, password, remember, redirectTo } = result.data;
+  const { email, password, redirectTo } = result.data;
   const user = await verifyLogin({ username: email, password });
 
   if (!user) {
     return validationError({
       fieldErrors: {
         email: "Email or password is incorrect",
+      },
+    });
+  }
+
+  if (user.lockoutExpiration && user.lockoutExpiration > new Date()) {
+    return validationError({
+      fieldErrors: {
+        email: "Your account is locked. Please try again in 15 minutes.",
       },
     });
   }
@@ -65,31 +68,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  // If the user has a default membership or only one org, we can just log them in to that org
-  const defaultMembership = user.memberships.find((m) => m.isDefault);
-  if (user.memberships.length === 1 || defaultMembership) {
-    return SessionService.createUserSession({
-      request,
-      userId: user.id,
-      orgId: defaultMembership?.orgId ?? user.memberships[0].orgId,
-      redirectTo: safeRedirect(redirectTo, "/"),
-      remember: !!remember,
-    });
-  }
-  // Users who are in multiple organizations need to choose which one to log in to
-  const url = new URL(request.url);
-  const redirectUrl = new URL("/choose-org", url.origin);
-  if (redirectTo) {
-    redirectUrl.searchParams.set("redirectTo", redirectTo);
-  }
-
-  // Log the user in but require them to choose an organization
-  return SessionService.createUserSession({
-    request,
-    userId: user.id,
-    redirectTo: redirectUrl.toString(),
-    remember: !!remember,
-  });
+  await generateVerificationCode(user.id);
+  const url = new URL("/login/verify", request.url);
+  url.searchParams.set("email", email);
+  url.searchParams.set("redirectTo", redirectTo || "/");
+  return redirect(url.toString());
 };
 
 export const meta: MetaFunction = () => [{ title: "Login" }];
@@ -122,14 +105,6 @@ export default function LoginPage() {
         />
 
         <input type="hidden" name="redirectTo" value={redirectTo} />
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Checkbox id="remember" name="remember" aria-label="Remember this device for 7 days" />
-            <Label htmlFor="remember" className="cursor-pointer">
-              Remember this device for 7 days
-            </Label>
-          </div>
-        </div>
         <SubmitButton className="w-full">Log in</SubmitButton>
       </ValidatedForm>
     </AuthCard>
