@@ -47,7 +47,7 @@ export async function checkVerificationCode(email: string, code: string) {
     return null;
   }
 
-  if (user.verificationCode !== code) {
+  if (user.verificationCode?.toLowerCase() !== code.toLowerCase()) {
     console.info("DEBUG: Verification code does not match");
     return null;
   }
